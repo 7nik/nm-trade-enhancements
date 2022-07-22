@@ -1,0 +1,40 @@
+@import url(../../node_modules/tippy.js/dist/tippy.css);
+@import url(./addLastActionAgo.css);
+@import url(./addTradePreview.css);
+@import url(./addTradeWindowEnhancements.css);
+@import url(./addWishlistButton.css);
+@import url(./makePiecePeekable.css);
+@import url(./skipPromoPage.css);
+
+:root {
+    --core-gem-icon: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAMCAYAAAC9QufkAAACTUlEQVQoU3VRW0iTYRh+3m/7928rt9LNZaZzSzecCzNqDDWEKAqFyEpZrMPwVDCCIOh610HSTRB0oAPdBNkBlKLb8CK6KDqAGUROiqw128G5/fv/r2/LiV303Hx87/s+PM/7vIQVDNznusJ8sjfgMl5yO6TIsU5putI7fjPV6XdIt4JO4/mFD5gaHCS11KPKwJHLif2qyq52e2Snv1F+m8iop8Jdhtfn7mW2L2n8ttcubevYIn8R82f2+OnZCpnT0fFkd1HDpChUdXmN6GiSUVTxc+ZHPjr3S73CCTZ3tQSfQy5x0oyhr8eHF9Q/nuzhGq4BvMViZvA1GtBWZ4DJQIgn1dzcomIq2ZP1BK/dAItRV7I7y/UYpYGz0w+UbK5fp2fUGvTAVl8NsyA6q/VIZDUspMvrlSFrGtbnFUEmDkYPaWjosTe9uHSnqKiBKpsVO/oCsNqtMAglSUfI5rUyURWv8j0LFMSf4SXXs5MEzilyesqfS2buFpaVdovNgu5DQdRs2gAS/jgX8zkVv+ez0PIqiOENSdKJsfDGd6tpj45OeBYT+QnhoM3RUIPe8G6Y1xlRFEl+/ZRCPquCMfaeTDg8FrJ//OdUXDgYiTzpTGdyN5RC0bvZacPeg7uQSgJLmSKYnmZ0Oj48HK6dJhI7r71zJZRodNKz8C31VDhwtfia4fK4hCJ9tpqMB0IhS1mxglXblULJwXDk0b50avm6s7mpodm3NS5JfGQoXPu8ovhfcqkRi8VYPN6+01FXf9Hd6r4wP1vzKhajv7GvwR8AsNgcRdQufwAAAABJRU5ErkJggg==);
+}
+
+/* to avoid jumps of the sidebar buttons in the header */
+#freebies-nav-btn {
+    width: 70px;
+}
+
+/* style text tooltip the same way as NM */
+.tippy-box[data-theme~='tooltip'] {
+    max-width: 250px;
+    background: #FBF8CF;
+    color: #2c2830;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .15);
+}
+.tippy-box[data-theme~='tooltip'] .tippy-arrow {
+    color: #FBF8CF;
+}
+.tippy-box[data-theme~='tooltip'] .i {
+    width: 18px;
+    height: 15px;
+    margin: 0 0 3px 2px;
+}
+.tippy-box[data-theme~='tooltip'] .i.core {
+    background-image: var(--core-gem-icon);
+    background-size: auto;
+    width: 15px;
+}
+.tippy-box[data-theme~='tooltip'] .pipe {
+    margin-bottom: 4px;
+}

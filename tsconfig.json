@@ -1,0 +1,17 @@
+{
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "sourceMap": false,
+    "inlineSources": false,
+    "strict": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "baseUrl": "./"
+  },
+  "include": ["app/**/*", "node_modules/@types", "declaration.d.ts"],
+  "exclude": ["dist/*", "packages/*"]
+}

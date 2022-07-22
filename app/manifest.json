@@ -1,0 +1,59 @@
+{
+  "name": "NeonMob Trade Enhancements",
+  "short_name": "NM Enhancer",
+  "description": "Adds enhancements to improve trading and usage experience",
+  "version": "3.0.0",
+  "manifest_version": 3,
+  "default_locale": "en",
+  "icons": {
+    "16": "images/icon-16.png",
+    "128": "images/icon-128.png"
+  },
+  "background": {
+    "service_worker": "scripts/background.js"
+  },
+  "action": {
+    "default_icon": {
+      "19": "images/icon-19.png",
+      "38": "images/icon-38.png"
+    },
+    "default_title": "NeonMob Trade Enhancements",
+    "default_popup": "pages/popup.html"
+  },
+  "options_page": "pages/options.html",
+  "options_ui": {
+    "page": "pages/options.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.neonmob.com/*",
+        "https://staging.neonmob.com/*"
+      ],
+      "css": [
+        "styles/contentScript.css"
+      ],
+      "js": [
+        "scripts/contentScript.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [{
+    "resources": ["scripts/pageScript.js"],
+    "matches": [
+      "https://www.neonmob.com/*",
+      "https://staging.neonmob.com/*"
+    ]
+  }],
+  "host_permissions": [
+    "https://www.neonmob.com/*",
+    "https://staging.neonmob.com/*"
+  ],
+  "permissions": [
+    "cookies",
+    "notifications",
+    "storage"
+  ]
+}

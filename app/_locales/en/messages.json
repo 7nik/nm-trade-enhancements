@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "NeonMob Trade Enhancements",
+    "description": "The name of the application"
+  },
+  "appShortName": {
+    "message": "NM Enhancer",
+    "description": "The short_name (maximum of 12 characters recommended) is a short version of the app's name."
+  },
+  "appDescription": {
+    "message": "Adds enhancements to improve trading and usage experience",
+    "description": "The description of the application"
+  },
+  "browserActionTitle": {
+    "message": "NeonMob Trade Enhancements",
+    "description": "The title of the browser action button"
+  }
+}

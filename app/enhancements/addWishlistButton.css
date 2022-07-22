@@ -1,0 +1,30 @@
+
+.btn.wishlist-btn {
+    padding: 14px 18px;
+}
+#wishlist--animate {
+    position: fixed;
+    top: 0;
+    height: 100vh;
+    width: 100vw;
+    background: rgba(37,26,48,.9);
+    z-index: 5;
+    color: silver;
+}
+#wishlist--animate > i {
+    position: absolute;
+    font-size: 20pt;
+    animation-name: flyout;
+    animation-duration: var(--time);
+    animation-fill-mode: forwards;
+}
+@keyframes flyout {
+    from {
+        top: var(--startY);
+        left: var(--startX);
+    }
+    to {
+        top: var(--endY);
+        left: var(--endX);
+    }
+}
