@@ -9,32 +9,9 @@
 .tippy-box[data-theme~='trade'] .tippy-arrow {
     color: #efefef;
 }
-.tippy-box[data-theme~='trade'] header {
-    padding: 7px;
-    border-bottom: 1px solid rgba(0,0,0,.1);
-    text-align: center;
-    user-select: none;
-}
-.tippy-box[data-theme~='trade'] header a {
-    cursor: pointer;
-    font-weight: 500;
-    padding: 1px 4px;
-    border-radius: 7px;
-}
-.tippy-box[data-theme~='trade'] header a.off {
-    color: #888;
-    cursor: initial;
-}
-.tippy-box[data-theme~='trade'] header a:not(.off):hover {
-    background: rgba(0,0,0,.15);
-}
 .tippy-box[data-theme~='trade'][data-theme~='sidebar'] {
     box-shadow: 1px 1px 7px rgba(0, 0, 0, .15);
 }
-.tippy-box[data-theme~='trade'][data-theme~='sidebar'] .btn {
-    display: none;
-}
-
 
 /* define the trading icon preview */
 .card-trading-icon:not([data-length="0"])::before {

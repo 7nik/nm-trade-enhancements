@@ -5,8 +5,9 @@ import type { CreateSingletonInstance, CreateSingletonProps, Instance, Props } f
 import tippy, { createSingleton } from "tippy.js";
 import cardsInTrades, { getTrades } from "../utils/cardsInTrades";
 import addPatches from "../utils/patchAngular";
-import Trade from "../utils/Trade";
 import { forAllElements, getScope } from "../utils/utils";
+import NMApi from "../utils/NMApi";
+import TradePreviews from "../components/TradePreviews.svelte";
 
 /**
  * Adds a trade preview on hovering to an element
@@ -21,40 +22,17 @@ async function attachTip (elem: HTMLElement, tradeIds: number[], cardId?: number
     elem._tippy?.destroy();
     if (tradeIds.length === 0) return;
 
-    const trades = await Promise.all(tradeIds.map((id) => Trade.get(id)));
+    const trades = await Promise.all(tradeIds.map((id) => NMApi.trade.get(id)));
 
     const tip = document.createElement("div");
-    if (trades.length === 1) {
-        tip.append(trades[0].makeTradePreview(cardId));
-    } else {
-        let pos = 0;
-        const controls = document.createElement("header");
-        controls.className = "text-prominent text-small";
-        controls.innerHTML = `
-            <a class="off">&lt;</a>
-            trade with <span>${trades[0].partner.name}</span>
-            <a>&gt;</a>`;
-        const [prev, currTrade, next] = controls.children;
-
-        const showTradePreview = (change: 1|-1) => {
-            pos += change;
-            if (pos < 0 || pos >= trades.length) {
-                pos -= change;
-                return;
-            }
-            prev.classList.toggle("off", pos === 0);
-            next.classList.toggle("off", pos === trades.length - 1);
-            currTrade.textContent = trades[pos].partner.name;
-            controls.nextSibling?.replaceWith(trades[pos].makeTradePreview(cardId));
-        };
-        prev.addEventListener("click", () => showTradePreview(-1));
-        next.addEventListener("click", () => showTradePreview(+1));
-
-        tip.append(
-            controls,
-            trades[pos].makeTradePreview(cardId),
-        );
-    }
+    new TradePreviews({
+        target: tip,
+        props: {
+            trades,
+            highlightCardId: cardId,
+        },
+    // @ts-ignore
+    }).$on("click", () => elem._tippy?.hide());
 
     tippy(elem, {
         appendTo: document.body,
@@ -164,7 +142,14 @@ async function addTradePreview (notification: HTMLElement) {
         onTrigger: async (instance) => {
             if (instance.props.content) return;
             currentTradeId = tradeId;
-            const preview = (await Trade.get(tradeId)).makeTradePreview();
+            const preview = document.createElement("div");
+            new TradePreviews({
+                target: preview,
+                props: {
+                    trades: [await NMApi.trade.get(tradeId)],
+                    showButton: false
+                },
+            });
             // set only if it is still actual
             if (currentTradeId === tradeId) {
                 instance.setContent(preview);

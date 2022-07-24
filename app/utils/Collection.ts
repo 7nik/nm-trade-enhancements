@@ -4,22 +4,27 @@ import { loadValue, saveValue} from "./storage";
  * A collection of items with the property id that is automatically saved to localStorage 
  */
 export default class Collection<T extends {id:any}> {
-    name: string
-    items: T[]
+    private name: string
+    private items: T[]
 
     /**
      * Constructor.
-     * @param  {string} name - Name loading and saving the collection
-     * @param  {?object[]} items - The collection.
-     *                            If not provided, will be loaded from `localStorage`.
+     * @param name - Name loading and saving the collection
+     * @param [itemsOrSize] - The items to store or 
+     *  it max number of items loaded from `localStorage`
      */
-    constructor (name: string, items?: T[]) {
+    constructor (name: string, itemsOrSize?: T[] | number) {
         this.name = name;
-        if (items) {
-            this.items = items;
+        if (Array.isArray(itemsOrSize)) {
+            this.items = itemsOrSize;
             this.save();
         } else {
             this.items = loadValue(name, []);
+            if (typeof itemsOrSize === "number") {
+                // sort in descending order of id
+                this.items.sort((a,b) => a.id > b.id ? -1 : a.id < b.id ? 1 : 0);
+                this.items = this.items.slice(0, itemsOrSize);
+            }
         }
     }
 
@@ -27,6 +32,15 @@ export default class Collection<T extends {id:any}> {
      * Save the collection to `localStorage` if name provided.
      */
     save () { if (this.name) saveValue(this.name, this.items); }
+
+    /**
+     * Looks for an item with the given ID
+     * @param id - Item's ID
+     * @returns the item or `null`
+     */
+    find (id: any) {
+        return this.items.find((item) => item.id === id) || null;
+    }
 
     /**
      * Adds items to the collection with overwriting existing one and saves the collection.

@@ -8,6 +8,9 @@ const fs = require("fs");
 const webpack = require("webpack");
 const TerserPlugin = require('terser-webpack-plugin'); 
 const usHeader = require("userscript-header").fromPackage("./package.json");
+const sveltePreprocess = require("svelte-preprocess");
+const SvelteCheckPlugin = require("svelte-check-plugin");
+
 
 const dev = process.env.NODE_ENV === "development";
 
@@ -33,16 +36,21 @@ module.exports = {
             banner: usHeader.toString(),
             raw: true,
         }),
+        new SvelteCheckPlugin(),
     ],
     resolve: {
-        extensions: [".ts", "..."]
+        alias: {
+            svelte: path.resolve('node_modules', 'svelte')
+        },
+        extensions: [".ts", "..."],
+        mainFields: ['svelte', 'browser', 'module', 'main'],
     },
     module: {
         rules: [
             {
-              test: /\.ts$/,
-              use: 'ts-loader',
-              exclude: /node_modules/,
+                test: /\.ts$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
             },
             {
                 test: /\.js$/,
@@ -51,14 +59,23 @@ module.exports = {
             },
             { 
                 test: /\.css$/, 
-                // use: [
-                //     // { loader: "css-to-string-loader" },
-                //     { loader: "css-loader" },
-                // ],
                 loader: "css-loader",
-                // options: {
-                //     exportType: "array",
-                // }
+            },
+            {
+                test: /\.svelte$/,
+                use: {
+                    loader: "svelte-loader",
+                    options: {
+                        preprocess: sveltePreprocess({}),
+                    },
+                },
+            },
+            {
+              // required to prevent errors from Svelte on Webpack 5+, omit on Webpack 4
+              test: /node_modules\/svelte\/.*\.mjs$/,
+              resolve: {
+                fullySpecified: false
+              }
             },
         ],
     },

@@ -195,15 +195,24 @@ function applyPatches () {
         },
     ];
 
+    angular.module("nmApp").run(patcher);
     patchers.forEach(patch => patch());
 
-    angular.module("nmApp").run(patcher);
     window.addEventListener("load", () => {
         if (applied) return;
         debug("late patching");
         const getService = angular.element(document.body).injector().get;
         const func = patcher.pop() as Function;
-        func(...(patcher as string[]).map(name => getService(name)));
+        try {
+            const services = (patcher as string[]).map(name => getService(name));
+            func(...services);
+        } catch (ex: any) {
+            // sometimes, when userscript is loaded via a proxy script,
+            // it gets executed too late, so reload the page once
+            if (location.hash === "#reloaded") throw ex;
+            location.hash = "#reloaded";
+            location.reload();
+        }
     });
 }
 

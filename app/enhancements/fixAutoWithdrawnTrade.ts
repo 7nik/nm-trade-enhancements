@@ -1,7 +1,6 @@
 import type NM from "../utils/NMTypes";
 
 import Collection from "../utils/Collection";
-import Trade from "../utils/Trade";
 import NMApi from "../utils/NMApi";
 import { getScope } from "../utils/utils";
 
@@ -14,7 +13,9 @@ import { getScope } from "../utils/utils";
         return;
     }
 
+    // current active trades
     let pendingTrades = new Collection<NM.TradeEvent>("pendingTrades");
+    // the auto-withdrawn trades
     const hiddenTrades = new Collection<NM.TradeEvent>("hiddenTrades");
     const socketNotif = io.connect(
         "https://napi.neonmob.com/notifications",
@@ -34,11 +35,12 @@ import { getScope } from "../utils/utils";
         socketNotif.listeners("addItem")[0]?.(trade);
     }
 
-    socketNotif.on("loadInitial", ({ results: notifications } : { results: NM.Event<{}>[] }) => {
+    socketNotif.on("loadInitial", ({ results: notifications } : { results: NM.Event<{},string,string>[] }) => {
         const minTime = new Date(notifications[notifications.length - 1].actor.time).getTime();
-        Trade.cache.minDate = minTime;
+        // remove trades that go after the last notification
         hiddenTrades.remove((trade) => new Date(trade.actor.time).getTime() < minTime);
         if (hiddenTrades.count > 0) {
+            // add the trade to notifications
             const [addItem] = socketNotif.listeners("addItem");
             if (addItem) {
                 hiddenTrades.forEach((trade) => addItem(trade));
@@ -53,7 +55,7 @@ import { getScope } from "../utils/utils";
         if (firstTime) {
             pendingTrades.remove(trades);
             pendingTrades.forEach(async (trade) => {
-                trade.verb_phrase = (await Trade.get(trade.object.id, false)).state;
+                trade.verb_phrase = (await NMApi.trade.get(trade.object.id, false)).state;
                 addAutoWithdrawnNotification(trade);
             });
             pendingTrades = new Collection("pendingTrades", trades);

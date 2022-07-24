@@ -2,6 +2,7 @@ import type NM from "./NMTypes";
 import type { Manager } from "socket.io-client";
 
 import { getCookie } from "./utils";
+import Collection from "./Collection";
 
 let lastRequest: Promise<any> = Promise.resolve();
 /**
@@ -26,6 +27,13 @@ function api<T> (type: ("api" | "napi" | "root"), url: string, body?: RequestIni
         .then((res) => res.json());
     return lastRequest;
 }
+
+const cache: {
+    trades: Collection<NM.Trade>,
+} = {
+    trades: new Collection<NM.Trade>("cache:trades", 100),
+}
+
 
 type ListenerAddTrades = (trades: NM.TradeEvent[]) => void;
 type ListenerRemoveTrade = (trade: NM.TradeEvent) => void;
@@ -95,7 +103,7 @@ function merge<Data extends object>(data: NM.Unmerged.Container<Data>): Data {
     return mergeObj(data.payload);
 }
 
-export default {
+const API = {
     call<T> (type: ("api" | "napi" | "root"), url: string, body?: RequestInit): Promise<T> {
         return api(type, url, body);
     },
@@ -137,12 +145,23 @@ export default {
         /**
          * Get the trade info
          * @param id - trade ID
+         * @param [allowCache=true] - allow to use cache
          */
-        get (id: number): Promise<NM.Trade> {
-            return api("api", `/trades/${id}/`)
+        async get (id: number, allowCache = true): Promise<NM.Trade> {
+            if (allowCache) {
+                const trade = cache.trades.find(id);
+                if (trade) return trade;
+            }
+            const trade = await api<NM.Trade>("api", `/trades/${id}/`);
+            // make the prints go in descending order of rarity
+            trade.bidder_offer.prints.reverse().sort((a, b) => b.rarity.rarity - a.rarity.rarity);
+            trade.responder_offer.prints.reverse().sort((a, b) => b.rarity.rarity - a.rarity.rarity);
+            
+            cache.trades.add(trade);
+            return trade;
         },
         /**
-         * Listen for new trades
+         * Listen for current and new trades
          * @param callback - when trades are added
          */
         onTradesAdded (callback: ListenerAddTrades) {
@@ -153,7 +172,7 @@ export default {
             }
         },
         /**
-         * Listen for completed trades
+         * Listen for completion of trades
          * @param callback - when a trade get completed
          */
         onTradeRemoved (callback: ListenerRemoveTrade) {
@@ -215,3 +234,17 @@ export default {
         // collection: /api/users/[USER_ID]/collections/[SET_ID]
     },
 }
+
+/**
+ * When a trade gets completed, updated the cached trade object if available
+ */
+API.trade.onTradeRemoved((tradeEvent) => {
+    const trade = cache.trades.find(tradeEvent.object.id);
+    if (!trade) return;
+    trade.completed = tradeEvent.object.completed;
+    trade.completed_on = tradeEvent.object.completed;
+    trade.state = tradeEvent.verb_phrase;
+    cache.trades.save();
+});
+
+export default API;

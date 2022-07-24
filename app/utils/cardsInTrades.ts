@@ -1,6 +1,5 @@
 import type NM from "./NMTypes";
 
-import Trade from "./Trade";
 import NMAPI from "./NMApi";
 
 const cards : {
@@ -86,13 +85,16 @@ function updatePrint (tradeId: number, side: ("give" | "receive"), cid: number, 
  * @param change - add or remove the cards
  */
 async function updateTrade (tradeId: number, change: -1|1) {
-    const trade = await Trade.get(tradeId);
-    trade.yourOffer.forEach(({ id: cid, print_id: pid }) => {
-        updatePrint(tradeId, "give", cid, pid, change);
-    });
-    trade.partnerOffer.forEach(({ id: cid, print_id: pid }) => {
-        updatePrint(tradeId, "receive", cid, pid, change);
-    });
+    const trade = await NMAPI.trade.get(tradeId);
+    const youAreBidder = trade.bidder.id === NM.you.attributes.id;
+    trade[youAreBidder ? "bidder_offer" : "responder_offer"].prints
+        .forEach(({ id: cid, print_id: pid }) => {
+            updatePrint(tradeId, "give", cid, pid, change);
+        });
+    trade[youAreBidder ? "responder_offer" : "bidder_offer"].prints
+        .forEach(({ id: cid, print_id: pid }) => {
+            updatePrint(tradeId, "receive", cid, pid, change);
+        });
 };
 
 NMAPI.trade.onTradesAdded((trades) => {

@@ -138,11 +138,11 @@ declare namespace NM {
         favorite: boolean,
     }
 
-    type Event<Data extends object> = {
+    type Event<Data extends object, Verb extends string, Phrase extends string> = {
         id: string, // event id
         read: boolean,
-        verb: string,
-        verb_phrase: string,
+        verb: Verb,
+        verb_phrase: Phrase,
         actor: {
             action_data?: string|null,
             avatar: { small: Image, large: Image },
@@ -219,7 +219,7 @@ declare namespace NM {
     }
 
     type Print = {
-        id: number,
+        id: number, // card id
         name: string,
         description: string,
         rarity: {
@@ -256,8 +256,8 @@ declare namespace NM {
         sett_name_slug: string,
         is_replica: boolean,
         version: 1|2|3,
-        print_id: number,
-        print_num: number,
+        print_id: number, // global print id
+        print_num: number, // in-series print number
         prints_part_of_trade: {
             print_id: number,
             bidder_trades: number,
@@ -303,6 +303,8 @@ declare namespace NM {
     }
 
     type TradeEvent = Event<{
+        type: "trade-event",
+        noun: "trade",
         users: [
             {
                 username: string,
@@ -315,7 +317,7 @@ declare namespace NM {
         expires_on: timestamp,
         completed: timestamp | null,
         url: queryURL,
-    }>
+    }, "traded", Trade["state"]>
 
     type Sett = {
         id: number,

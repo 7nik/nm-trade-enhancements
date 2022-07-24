@@ -1,6 +1,1 @@
 @import url("../enhancements/index.css");
-
-.trade-preview--print.highlight-card {
-    border-radius: 5px;
-    box-shadow: 0 2px 5px #8400ff;
-}
