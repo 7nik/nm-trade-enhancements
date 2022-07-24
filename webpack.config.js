@@ -82,10 +82,12 @@ module.exports = {
     optimization: {
         minimize: !dev,
         minimizer: [new TerserPlugin({
-            extractComments: {
-                condition: false,
-                banner: usHeader.toString(),
+            terserOptions: {
+                output: {
+                    preamble: usHeader.toString(),
+                },
             },
+            extractComments: false,
         })],
     }
 };

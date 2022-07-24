@@ -12,10 +12,12 @@
   "userscript": {
     "name": "NeonMob Trade Enhancements",
     "namespace": "7nik",
-    "homepageURL": "https://github.com/7nik/userscripts",
-    "supportURL": "https://github.com/7nik/userscripts/issues",
-    "updateURL": "https://github.com/7nik/userscripts/raw/master/NM%20trade%20enhancement.user.js",
-    "downloadURL": "https://github.com/7nik/userscripts/raw/master/NM%20trade%20enhancement.user.js",
+    "author": "7nik",
+    "icon": "https://github.com/7nik/nm-trade-enhancements/raw/master/app/images/icon.svg",
+    "homepageURL": "https://github.com/7nik/nm-trade-enhancements",
+    "supportURL": "https://github.com/7nik/nm-trade-enhancements/issues",
+    "updateURL": "https://github.com/7nik/nm-trade-enhancements/releases/latest/download/userscript.meta.js",
+    "downloadURL": "https://github.com/7nik/nm-trade-enhancements/releases/latest/download/userscript.user.js",
     "match": "https://www.neonmob.com/*",
     "grant": [
       "GM_addStyle"
