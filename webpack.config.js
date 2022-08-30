@@ -12,7 +12,7 @@ const sveltePreprocess = require("svelte-preprocess");
 const SvelteCheckPlugin = require("svelte-check-plugin");
 
 
-const dev = process.env.NODE_ENV === "development";
+const dev = process.env.NODE_ENV === "development" || process.env.npm_lifecycle_event?.startsWith("dev-");
 
 // create the meta file of the userscript
 if (!fs.existsSync("packages")) {
@@ -36,7 +36,9 @@ module.exports = {
             banner: usHeader.toString(),
             raw: true,
         }),
-        new SvelteCheckPlugin(),
+        new SvelteCheckPlugin({
+            args: [`--ignore "dist"`],
+        }),
     ],
     resolve: {
         alias: {
@@ -89,5 +91,6 @@ module.exports = {
             },
             extractComments: false,
         })],
-    }
+    },
+    devtool: false,
 };
