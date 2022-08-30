@@ -15,18 +15,22 @@ function click (selector: string) {
  * @param {Event} ev - keyup event
  */
  function addHotkeys (ev: KeyboardEvent) {
+    // do not trigger hotkeys when user types a text
+    const typing = ["TEXTAREA", "INPUT"].includes(document.activeElement?.tagName!);
+    if (typing) return;
+
     if (["Enter", "NumpadEnter", "Space"].includes(ev.code)
-        && click("#message.show #confirm-btn, #alert.show #alert-btn")
+        && click("#message.show #confirm-btn, #message.show #ok-btn, #alert.show #alert-btn")
     ) {
         ev.preventDefault();
         ev.stopPropagation();
     }
     if (ev.code === "Escape") {
         // if a confirm message is shown
-        if (click("#message.show #cancel-btn")) {
+        if (click("#message.show")) {
             ev.stopPropagation();
         // if a trade window is open
-        } else if (click(".nm-modal--actionbar--left")) {
+        } else if (click(".nm-modal--actionbar--left span")) {
             ev.stopPropagation();
         }
         // remove tippy tips
@@ -41,6 +45,6 @@ function click (selector: string) {
     }
 }
 
-document.addEventListener("keyup", addHotkeys, true);
+document.addEventListener("keydown", addHotkeys, true);
 
 export default null;
