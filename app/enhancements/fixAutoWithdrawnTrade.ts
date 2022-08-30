@@ -2,7 +2,6 @@ import type NM from "../utils/NMTypes";
 
 import Collection from "../utils/Collection";
 import NMApi from "../utils/NMApi";
-import { getScope } from "../utils/utils";
 
 /**
  * Add notifications of auto-withdrawn trades
@@ -19,7 +18,7 @@ import { getScope } from "../utils/utils";
     const hiddenTrades = new Collection<NM.TradeEvent>("hiddenTrades");
     const socketNotif = io.connect(
         "https://napi.neonmob.com/notifications",
-        // @ts-ignore
+        // @ts-ignore - io version doesn't match
         { transports: ["websocket"] },
     );
 
@@ -59,6 +58,7 @@ import { getScope } from "../utils/utils";
                 addAutoWithdrawnNotification(trade);
             });
             pendingTrades = new Collection("pendingTrades", trades);
+            firstTime = false;
         } else {
             pendingTrades.add(trades);
         }
@@ -73,10 +73,10 @@ import { getScope } from "../utils/utils";
         if (!target) return;
         // when clicked the notification
         const notifElem = (target as Element).closest("li.nm-notifications-feed--item");
-        if (notifElem) {
-            const { notification } = getScope<{ notification:NM.TradeEvent }>(notifElem as HTMLElement);
-            if (notification.verb_phrase === "auto-withdrew") {
-                if (notification.read) return;
+        if (notifElem?.querySelector("[ng-bind-html='getVerbPhrase()']")?.textContent?.startsWith("auto-withdrew")) {
+            const id = notifElem.firstElementChild!.id;
+            const notification = hiddenTrades.find(id);
+            if (notification && !notification.read) {
                 // replace trade with read copy to avoid side-effect and save
                 hiddenTrades.add({ ...notification, read: true });
             }
