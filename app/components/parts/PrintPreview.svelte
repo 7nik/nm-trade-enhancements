@@ -1,5 +1,8 @@
+<!-- @component
+    Renders a print image
+ -->
 <script lang="ts">
-    import type NM from "app/utils/NMTypes";
+    import type NM from "../../utils/NMTypes";
 
     /**
      * The print to display
@@ -11,7 +14,8 @@
     export let highlight: boolean = false;
 </script>
 
-<svelte:options immutable={true} />
+<svelte:options immutable/>
+
 <span class="trade-preview--print" class:highlight-card={highlight}>
     <div class="piece small fluid">
         <figure class="front">
@@ -24,7 +28,7 @@
 </span>
 
 <style>
-    .trade-preview--print.highlight-card {
+    .highlight-card {
         border-radius: 5px;
         box-shadow: 0 2px 5px #8400ff;
     }

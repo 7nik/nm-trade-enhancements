@@ -1,9 +1,7 @@
 @import url(../../node_modules/tippy.js/dist/tippy.css);
 @import url(./addLastActionAgo.css);
 @import url(./addTradePreview.css);
-@import url(./addTradeWindowEnhancements.css);
 @import url(./addWishlistButton.css);
-@import url(./makePiecePeekable.css);
 @import url(./skipPromoPage.css);
 
 :root {
@@ -31,10 +29,48 @@
     margin: 0 0 3px 2px;
 }
 .tippy-box[data-theme~='tooltip'] .i.core {
-    background-image: var(--core-gem-icon);
-    background-size: auto;
     width: 15px;
 }
 .tippy-box[data-theme~='tooltip'] .pipe {
     margin-bottom: 4px;
+}
+
+/* extra icons */
+i.i.core {
+    background-image: var(--core-gem-icon);
+    background-size: auto;
+}
+/* add [class] to increase the rule specifity */
+[class].icon-trash::before {
+    margin: 0 3px;
+}
+[class][class*="icon-nmte-"]::before {
+    font-style: normal;
+    font-weight: normal;
+    vertical-align: top;
+    color: inherit;
+    cursor: pointer;
+    margin: 0 3px;
+}
+[class].icon-nmte-oop::before {
+    font-family: inherit;
+    content: "OoP";
+}
+[class].icon-nmte-rie::before {
+    font-family: inherit;
+    content: "RIE";
+}
+[class].icon-nmte-not-traded::before {
+    font-family: "glyphter nm icon font";
+    content: "\0053";
+}
+[class].icon-nmte-reset::before {
+    font-family: "icomoon nm icon font";
+    content: "\e953";
+}
+[class].icon-nmte-save::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 22 22"><path stroke="rgb(95,86,104)" stroke-width="2" fill="transparent" d="m0,2 v16 a2,2,0,0,0,2,2 h2 v-5 a1,1,0,0,1,1,-1 H15 a1,1,0,0,1,1,1 v5 H2 H18 a2,2,0,0,0,2,-2 V5 L15,0 H7 v5 a1,1,0,0,0,1,1 H12 a1,1,0,0,0,1,-1 V0 H2 a2,2,0,0,0,-2,2"/></svg>');
 }

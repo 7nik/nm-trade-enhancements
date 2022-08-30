@@ -5,6 +5,8 @@ import { debug } from "../utils/utils";
 type Scope = angular.IScope & {
     disableAutoOpeningPromo: boolean,
     updatePromo: () => void,
+    muteVideo: boolean,
+    updateVideoMuting: () => void,
 }
 
 // the nm.account.settings module is available only at the account settings page
@@ -19,13 +21,17 @@ if (window.location.pathname.startsWith("/account/")) {
                 $scope.disableAutoOpeningPromo = !loadValue("openPromo", true);
                 $scope.updatePromo = () => {
                     saveValue("openPromo", !$scope.disableAutoOpeningPromo);
-                    console.log($scope.disableAutoOpeningPromo);
+                };
+                $scope.muteVideo = loadValue("muteVideo", true);
+                $scope.updateVideoMuting = () => {
+                    saveValue("muteVideo", $scope.muteVideo);
                 };
                 debug("nmTradeEnhancementsSettingsController initiated");
             },
         ]);
     }, {
-        // add settings to enable/disable auto-opening of promo packs
+        // add settings to enable/disable auto-opening of promo packs,
+        // setting to keep animated cards (video) muted
         names: ["/static/page/account/partial/account-settings.partial.html"],
         pages: ["/account/"],
         patches: [{
@@ -49,6 +55,29 @@ if (window.location.pathname.startsWith("/account/")) {
                             </span>
                             <label class=checkbox-slider--label for=nmte-promo>
                                 Disable auto-opening of promo packs
+                            </label>
+                        </span>
+                    </div>
+                    <div class="field checkbox-slider--field">
+                        <span class=input>
+                            <span class=checkbox-slider>
+                                <input
+                                    type=checkbox
+                                    class=checkbox-slider--checkbox
+                                    id=nmte-mute
+                                    ng-model=muteVideo
+                                    ng-change=updateVideoMuting()
+                                >
+                                <span class=checkbox-slider--knob></span>
+                            </span>
+                            <label class=checkbox-slider--label for=nmte-mute>
+                                Keep animated cards muted. 
+                                <small class="text-subdued">    
+                                    If you own an animated card, on the detailed view
+                                    NMTE will show you the original animation for 
+                                    better quality. But the original animation,
+                                    unlike previews, may contain an audio.
+                                </small>
                             </label>
                         </span>
                     </div>

@@ -1,31 +1,85 @@
 import type NM from "./NMTypes";
 import type { Manager } from "socket.io-client";
 
-import { getCookie } from "./utils";
+import { debug, getCookie } from "./utils";
 import Collection from "./Collection";
+import { login } from "../components/dialogs/modals";
 
+const MAIN_SERVER = location.host;
+const NAPI_SERVER = location.host.startsWith("staging") ? "napi-staging.neonmob.com" : "napi.neonmob.com"
+
+let logging: Promise<void> | null = null;
 let lastRequest: Promise<any> = Promise.resolve();
 /**
  * API call to server
- * @param  {("api"|"napi"|"root")} type - Which API scheme use
+ * @param  {("api"|"napi"|"full")} type - Which API scheme use
  * @param  {string} url - Relative URL to API
  * @param  {RequestInit} [body] - Body (params) of the request
  * @return {Promise<Object>} Parsed JSON response
  */
-function api<T> (type: ("api" | "napi" | "root"), url: string, body?: RequestInit): Promise<T> {
+function api<T> (type: ("api" | "napi" | "full"), url: string, body?: RequestInit): Promise<T> {
     let fullUrl: string;
     switch (type) {
-        // TODO: add support of the staging server
-        case "api":  fullUrl = `https://www.neonmob.com/api${url}`; break;
-        case "napi": fullUrl = `https://napi.neonmob.com${url}`;    break;
-        case "root": fullUrl = `https://www.neonmob.com${url}`;     break;
-        default:     fullUrl = url;
+        case "api":  fullUrl = `https://${MAIN_SERVER}/api${url}`; break;
+        case "napi": fullUrl = `https://${NAPI_SERVER}${url}`;     break;
+        case "full": fullUrl = url;
     }
+    // TODO: allow parallel
     // forbid parallel requests
     lastRequest = lastRequest
         .then(() => fetch(fullUrl, body), () => fetch(fullUrl, body))
-        .then((res) => res.json());
+        .then(async (res) => {
+            if (res.ok) {
+                return res.json();
+            }
+            const data = await res.json();
+            if (res.status === 401) {
+                // await when user sign in and re-try the request
+                if (!logging) {
+                    logging = login();
+                }
+                await logging;
+                logging = null;
+                return fetch(fullUrl, body).then(res => res.json());
+            }
+            if (data.detail) {
+                return Promise.reject(data);
+            }
+            debug(fullUrl, res.status, data);
+            let detail: string;
+            switch (res.status) {
+                case 400: detail = "Oops! Could not save!"; break;
+                case 403: detail = "Sorry, you're not authorized. Make sure you are logged in to the right account!"; break;
+                case 404: detail = "We couldn't find what you're looking for. Please refresh the page or contact support@neonmob.com"; break;
+                case 503: detail = "Our servers are a little tuckered out. Please try again!"; break;
+                default: detail = "Oops! Something bad happened! Please refresh the page or contact support@neonmob.com"; break;
+            }
+            return Promise.reject({ detail });
+        });
     return lastRequest;
+}
+/**
+ * Does a POST request with CSRF token
+ * @param  {("api"|"napi"|"full")} type - Which API scheme use
+ * @param  {string} url - Relative URL to API
+ * @param  {BodyInit|object} [body] - Params of the request
+ * @return {Promise<any>} Parsed JSON response
+ */
+function post<T> (type: ("api" | "napi" | "full"), url: string, body?: BodyInit | object): Promise<T> {
+    const headers: HeadersInit = {
+        // "Content-Type": "application/json",
+        "X-CSRFToken": (getCookie("csrftoken") || ""),
+    };
+    // if it is a plain object
+    if (body && Object.getPrototypeOf(body) === Object.prototype) {
+        headers["Content-Type"] = "application/json";
+        body = JSON.stringify(body);
+    }
+    return api<T>(type, url, {
+        method: "POST",
+        body: body as BodyInit,
+        headers,
+    });
 }
 
 const cache: {
@@ -63,7 +117,7 @@ setTimeout(function fn() {
     if (typeof io !== "undefined") {
         socketTrades = io.connect(
             "https://napi.neonmob.com/trades",
-            // @ts-ignore
+            // @ts-ignore - io version doesn't match
             { transports: ["websocket"] }, 
         );
         if (listeners.addTrades.length > 0) {
@@ -103,9 +157,40 @@ function merge<Data extends object>(data: NM.Unmerged.Container<Data>): Data {
     return mergeObj(data.payload);
 }
 
+type Paginated<T> = {
+    count: number,
+    next: string | null,
+    previous: string | null,
+    results: T[],
+}
+type Paginator<T> = {
+    count: number,
+    next: (() => Promise<Paginator<T>>) | null,
+    previous: (() => Promise<Paginator<T>>) | null,
+    results: T[],
+}
+function paginator<T> (data: Paginated<T>): Paginator<T> {
+    return {
+        count: data.count,
+        results: data.results,
+        next: data.next ? () => API.get<Paginated<T>>(data.next!).then(paginator) : null,
+        previous: data.previous ? () => API.get<Paginated<T>>(data.previous!).then(paginator) : null,
+    }
+}
+
 const API = {
-    call<T> (type: ("api" | "napi" | "root"), url: string, body?: RequestInit): Promise<T> {
-        return api(type, url, body);
+    get<T> (url: string, body?: Record<string, string|number|boolean>): Promise<T> {
+        if (body) {
+            let link = new URL(url);
+            for (const key in body) {
+                link.searchParams.append(key, body[key].toString());
+            }
+            url = link.toString();
+        }
+        return api("full", url, body);
+    },
+    post<T> (url: string, body?: Record<string, string|number|boolean>): Promise<T> {
+        return post("full", url, body);
     },
 
     card: {
@@ -161,6 +246,83 @@ const API = {
             return trade;
         },
         /**
+         * Proposes a trade
+         * @param you - your ID
+         * @param yourOffer - prints ID you offer
+         * @param partner - partner's ID
+         * @param partnerOffer - prints ID you ask
+         * @param parentTrade - parent trade ID, in case of modifying or countering
+         * @returns a created trade (not really) or error message
+         */
+        create (you: number, yourOffer: number[], partner: number, partnerOffer: number[], parentTrade?: number | null) {
+            return post<NM.TradeResult>("api", "/trades/propose/", {
+                bidder: you,
+                bidder_offer: { prints: yourOffer },
+                responder: partner,
+                responder_offer: { prints: partnerOffer },
+                parent_id: parentTrade ?? null,
+            });
+        },
+        accept (id: number) {
+            return post<NM.Trade>("api", `/trades/${id}/accept/`);
+        },
+        decline (id: number) {
+            return post<NM.Trade>("api", `/trades/${id}/decline/`);
+        },
+        /**
+         * Get info about a certain card
+         * @param ownerId - the card owner ID
+         * @param cardId  - the card ID
+         * @returns 
+         */
+        async findPrint (ownerId: number, cardId: number): Promise<NM.PrintInTrade> {
+            const data = await api<Paginated<NM.PrintInTrade>>("api", `/search/prints/?user_id=${ownerId}&piece_id=${cardId}`);
+            return data.results[0];
+        },
+        /**
+         * Search for prints
+         * @param ownerId - the print owner
+         * @param options - the filters
+         * @returns paginated results
+         */
+        async findPrints (ownerId: number, options: {
+            cardId: number | null, // to get exact card
+            cardName: string | null, // partial name of a card
+            sharedWith: number | null, // user ID
+            notOwnedBy: number | null, // user ID
+            wishlistedBy: number | null, // user ID
+            settId: number | null,
+            duplicatesOnly: boolean,
+            common: boolean,
+            uncommon: boolean,
+            rare: boolean,
+            veryRare: boolean,
+            extraRare: boolean,
+            chase: boolean,
+            variant: boolean,
+            legendary: boolean,
+        }) {
+            const query = new URLSearchParams();
+            query.append("user_id", ownerId.toString());
+            let key: keyof typeof options;
+            for (key in options) {
+                if (options[key] === null) continue;
+                const str = options[key]!.toString();
+                switch (key) {
+                    case "cardId": query.append("piece_id", str); break;
+                    case "cardName": query.append("search", str); break;
+                    case "sharedWith": query.append("incomplete_by", str); break;
+                    case "notOwnedBy": query.append("not_owned_by", str); break;
+                    case "wishlistedBy": query.append("wish_list_by", str); break;
+                    case "duplicatesOnly": query.append("duplicates_only", str); break;
+                    case "settId": query.append("sett", str); break;
+                    default: query.append(key, str); break;
+                }
+            }
+
+            return paginator(await api<Paginated<NM.PrintInTrade>>("api", `/search/prints/?${query}`));
+        },
+        /**
          * Listen for current and new trades
          * @param callback - when trades are added
          */
@@ -182,8 +344,6 @@ const API = {
             }
         },
         // completedTradeInfo: napi /activityfeed/story/trade/[TRADE_ID]
-        // findPrint: /api/search/prints/?user_id=[USER_ID]&partner_id=[PARTNER_ID]&not_owned_by=[PARTNER_ID IF UNOWNED CHECKED]&duplicates_only=[TRUE IF 2+ CHECKED]&sett=[SET_ID]&common=[true or false]&uncommon=[true or false]&rare=[true or false]&veryRare=[true or false]&extremelyRare=[true or false]&chase=[true or false]&variant=[true or false]
-
     },
     sett: {
         /**
@@ -214,16 +374,52 @@ const API = {
         activityFeed (id: number, amount = 5, page = 1): Promise<NM.Activity<{}>[]> {
             return api("napi", `/activityfeed/user/${id}/?amount=${amount}&page=${page}`);
         },
+        /**
+         * Get short info about number of collected cards in each series
+         * @param id - the user ID
+         * @returns - info about collected cards in each user's collection
+         */
         ownedSettsMetrics (id: number): Promise<NM.SettMetrics[]> {
             return api("napi", `/user/${id}/owned-setts-metrics`);
         },
+        /**
+         * Get the prints the user owns
+         * @param userId - the card owner
+         * @param cardId - the card ID
+         * @returns short info about the card and the collected prints
+         */
         async ownedPrints (userId: number, cardId: number): Promise<NM.Unmerged.Prints> {
             const data = await api<NM.Unmerged.Container<NM.Unmerged.Prints>>("api", `/users/${userId}/piece/${cardId}/detail/`);
             return merge(data);
 
-        } 
+        }, 
+        /**
+         * Get the number of copies of each card the user owns
+         * @param id - the owner ID
+         * @returns array of cardID - number of copies
+         */
+        printCounts (id: number): Promise<NM.PrintCount[]> {
+            return api("napi", `/user/${id}/print-counts`);
+        },
+        /**
+         * Get recommended series based on the series
+         * @param userId - the user ID
+         * @param settId - the series ID
+         * @returns recommended series
+         */
+        async suggestedSetts (userId: number, settId: number) {
+            return (await api<Paginated<NM.Sett>>("api", `/users/${userId}/suggested-setts/?sett_id=${settId}`)).results;
+        },
+        /**
+         * Get series favorited by a user
+         * @param id - the User ID
+         * @returns array of favorited series
+         */
+        async favoriteSetts (id: number) {
+            const data = await api<NM.Unmerged.Container<NM.Unmerged.FavoriteSetts>>("api", `/users/${id}/favorites/setts/`);
+            return merge(data).results;
+        }
         // get: `/api/users/${id}`
-        // printCounts: `/user/${id}/print-counts`
         // displayCase: `/user/${id}/display-case`
         // secondsUntilFreebieReady: `/seconds-until-freebie-ready`
         // numFreebieLeft: POST '/num-freebie-left`
@@ -244,7 +440,20 @@ API.trade.onTradeRemoved((tradeEvent) => {
     trade.completed = tradeEvent.object.completed;
     trade.completed_on = tradeEvent.object.completed;
     trade.state = tradeEvent.verb_phrase;
+    trade.bidder_offer.prints.forEach((print) => {
+        if (print.own_counts) {
+            print.own_counts.bidder -= 1;
+            print.own_counts.responder += 1;
+        }
+    });
+    trade.responder_offer.prints.forEach((print) => {
+        if (print.own_counts) {
+            print.own_counts.bidder += 1;
+            print.own_counts.responder -= 1;
+        }
+    });
     cache.trades.save();
 });
 
 export default API;
+export type { Paginator };

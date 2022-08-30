@@ -1,6 +1,11 @@
+<!-- @component
+    Renders a small trade preview
+ -->
 <script lang="ts">
-    import type NM from "app/utils/NMTypes";
     
+    import type NM from "../utils/NMTypes";
+    
+    import currentUser from "../services/currentUser";
     import PrintPreview from "./parts/PrintPreview.svelte";
 
     /**
@@ -8,7 +13,7 @@
      */
     export let trades: NM.Trade[];
     /**
-     * The card ID to highlight in the trade priviews
+     * The card ID to highlight in the trade previews
      */
     export let highlightCardId = -1;
     /**
@@ -25,13 +30,13 @@
         }
     };
 
-    $: youAreBidder = trades[pos].bidder.id === NM.you.attributes.id;
+    $: youAreBidder = trades[pos].bidder.id === currentUser.id;
     $: partnerName = trades[pos][youAreBidder ? "responder" : "bidder"].name;
     $: yourOffer = youAreBidder ? trades[pos].bidder_offer.prints : trades[pos].responder_offer.prints;
     $: partnerOffer = youAreBidder ? trades[pos].responder_offer.prints : trades[pos].bidder_offer.prints;
 </script>
 
-{#if trades.length > 0}
+{#if trades.length > 1}
     <header class="text-prominent text-small">
         <span class:off={pos===0} on:click={() => switchPreview(-1)}>&lt;</span>
         trade with {partnerName}
@@ -67,8 +72,8 @@
     header span {
         cursor: pointer;
         font-weight: 500;
-        padding: 1px 4px;
-        border-radius: 7px;
+        padding: 1px 7px;
+        border-radius: 10px;
     }
     header span.off {
         color: #888;
