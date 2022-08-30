@@ -19,6 +19,10 @@
     "updateURL": "https://github.com/7nik/nm-trade-enhancements/releases/latest/download/userscript.meta.js",
     "downloadURL": "https://github.com/7nik/nm-trade-enhancements/releases/latest/download/userscript.user.js",
     "match": "https://www.neonmob.com/*",
+    "exclude": [
+      "https://www.neonmob.com/login*",
+      "https://www.neonmob.com/"
+    ],
     "grant": [
       "GM_addStyle"
     ],
