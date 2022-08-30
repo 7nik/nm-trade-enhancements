@@ -1,8 +1,14 @@
+type CssLoaderResult = {
+    /**
+     * Returns CSS as a string
+     */
+    toString(): string,
+    // CSS rules
+} & [number|null, string, string][]
+
 declare module "*.css" {
-    const content: [number|null, string, string][] & { toString():string };
-    export default content;
+    const css: CssLoaderResult;
+    export default css;
 }
-declare module "*.svelte" {
-    const content: any;
-    export default content;
-}
+// svelte plugin for VSCode and svelte-check do the rest of job
+declare module "*.svelte";
