@@ -33,10 +33,52 @@ type Paginated<Data> = Data & {
 
 declare namespace Services {
 
+    type ArtConfirm = {
+        ALERT_ICON_CLASS: "icon-warning",
+        CONFIRM_ICON_CLASS: "icon-checkmark",
+        CARATS: "carat",
+
+        getMessage: () => string,
+        getTemplateUrl: () => string,
+        getTemplateData: () => any,
+        getLevel: () => number,
+        getThemeClass: () => string,
+        getSubtext: () => string,
+        getDesctext: () => string,
+        getIconClass: () => string,
+        getParentClass: () => string,
+        getOkText: () => string,
+        hasCloseBtn: () => boolean,
+        isVisible: () => boolean,
+        hasMoreButton: () => boolean,
+        closeMs: () => number,
+        leftDiscardCarat: () => number,
+        caratsEarned: () => number,
+        caratsBalance: () => number,
+        totalDiscardCarat: () => number,
+        calProgressPercent: () => number,
+
+        showAlert: ArtMessage["showAlert"],
+        showAlertWihCancel: ArtMessage["showAlert"],
+        showConfirm: ArtMessage["showConfirm"],
+        showFreebieEarned: (data: { freePackNum:number }, callback?: (canceled: boolean) => void) => void,
+        showEarnedStatus: (data: {
+            message: string,
+            data: any,
+            rewardType: string,
+            okText?: string,
+            hasCloseBtn?: boolean,
+            parentClass?: string,
+            messageQueue?: any[],
+            callback?: (canceled: boolean) => void, 
+        }, callback?: (canceled: boolean) => void) => void,
+        close: ArtMessage["close"],
+    }
+
     type ArtConfig = {
         userTips: string[],
         tipsDismissUrl: absoluteURL,
-        targetId: number, // current user id
+        targetId?: number, // current user id
         "profile-milestones": absoluteURL,
         num_sett_concepts: number,
         max_caption_length: number,
@@ -50,7 +92,7 @@ declare namespace Services {
             "home-signin": absoluteURL,
             signout: absoluteURL,
         },    
-        profileLinks: {
+        profileLinks?: {
             "profile-creator": absoluteURL,
             "profile-collection": absoluteURL,
             "profile-milestones": absoluteURL,
@@ -148,13 +190,6 @@ declare namespace Services {
         SETT_VERSION_UNLIMITED: 2;
         SETT_VERSION_LIMITED: 3;
         BONUS_PACK_FREQUENCY: 0.14;
-        DIFFICULTIES: {
-            name: string;
-            id: number;
-            class_name: string;
-            level: number;
-            locked: boolean;
-        }[];
     }
 
     type ArtMessage = {
@@ -180,6 +215,24 @@ declare namespace Services {
         close: (canceled: boolean) => void,
     }
 
+    type ArtNotificationCenter = {
+        show: (notifType: string, options: object) => void,
+        hide: () => void,
+        getState: () => any,
+        getSuggestion: (notifType: string) => NM.Event<any, any, any>[],
+        getTradeOffer: () => NM.TradeEvent[],
+        getNotificationsByType: (notifType: string) => NM.Event<any, any, any>[],
+        getUnreadNotificationCountByType: (notifType: string) => number,
+        getTotalUnreadNotificationCount: () => number,
+        markNotificationsAsRead: (notifIds: number[], notifType: string) => void,
+        dismissTradeOffers: (notifId: number, notifType: string) => void,
+        getMilestoneSuggestions: (type: string) => null | NM.Event<any, any, any>[],
+        getTradeExpirationTime: (trade: NM.TradeEvent) => Date,
+        getSuggestionsWhenNavClick: () => void,
+        getTradeOffers: (type: string) => NM.TradeEvent[],
+        fetchTradeOffers: () => NM.TradeEvent[],
+    }
+
     type ArtOverlay = {
         closeOnBackdropClick: () => boolean,
         init: (scope: angular.IScope) => void,
@@ -187,7 +240,7 @@ declare namespace Services {
         updateTemplateContext: (name: string, context: unknown) => void,
         getType: () => string | null,
         getThemeClass: () => string | null,
-        show: (name: string, promise?: Promise<unknown>, clickBackdropToClose?: boolean, themeClass?: string, escapeToClose?: boolean) => Promise<{ name:string, status: unknown }>,
+        show: (name: string, promise?: Promise<unknown> | unknown, clickBackdropToClose?: boolean, themeClass?: string, escapeToClose?: boolean) => Promise<{ name:string, status: unknown }>,
         hide: (status?: unknown) => void,
         showLoading: (promise: Promise<unknown>) => void,
         hideLoading: () => void,
@@ -199,25 +252,25 @@ declare namespace Services {
     type ArtPieceService = {
         NO_USER_ERROR: "NO_USER_ERROR",
         SERVER_ERROR: "SERVER_ERROR",
-        syncOwnership: (user?: NM.User | ArtUser) => Promise<NM.PrintCount[]>,
-        addPrintOwnerships: (user: NM.User | ArtUser, pieces: NM.Print[] | number[]) => void,
+        syncOwnership: (user?: NM.User | ArtUser) => Promise<void>,
         filterPieces: (user: NM.User | ArtUser, collection: unknown[]) => unknown[],
+        addPrintOwnership: (user: NM.User | ArtUser, pieceOrId: NM.Print | number) => void,
+        addPrintOwnerships: (user: NM.User | ArtUser, pieces: NM.Print[] | number[]) => void,
         removePrintOwnerships: (user: NM.User | ArtUser, pieces: NM.Print[] | number[]) => void,
-        addPrintOwnership: (user: NM.User | ArtUser, pieceOfId: NM.Print | number) => void,
-        removePrintOwnership: (user: NM.User | ArtUser, pieceOfId: NM.Print | number) => void,
-        removePrintOwnershipsDiscard: (user: NM.User | ArtUser, pieces: NM.Print[] | number[]) => void,
-        removePrintOwnershipDiscard: (user: NM.User | ArtUser, piece: NM.Print) => void,
+        removePrintOwnership: (user: NM.User | ArtUser, pieceOrId: NM.Print | number, count?: number) => void,
+        removePrintOwnershipsDiscard: (user: NM.User | ArtUser, pieces: (NM.Print&{count:number})[]) => void,
+        removePrintOwnershipDiscard: (user: NM.User | ArtUser, piece: NM.Print&{count:number}) => void,
         getPieceCount: (user: NM.User | ArtUser, pieces: NM.Print[] | number[]) => number,
-        hasPiece: (user: NM.User | ArtUser, pieceOfId: NM.Print | number) => boolean,
-        getPrintCount: (user: NM.User | ArtUser, pieceOfId: NM.Print | number) => number,
-        isNewForYou: (pieceOfId: NM.Print | number) => boolean,
-        getImageRatio: (user: NM.User | ArtUser, piece: NM.Print, size: keyof NM.Print["piece_assets"]["image"]) => string,
+        hasPiece: (user: NM.User | ArtUser, pieceOrId: NM.Print | number) => boolean,
+        getPrintCount: (user: NM.User | ArtUser, pieceOrId: NM.Print | number) => number,
+        isNewForYou: (pieceOrId: NM.Print | number) => boolean,
+        getImageRatio: (user: NM.User | ArtUser, piece: NM.Print, size: keyof NM.Print["piece_assets"]["image"]) => number,
         getPromoImageUrl: (piece: NM.Print) => string,
-        getImageData: (user: NM.User | ArtUser, piece: NM.Print, size: keyof NM.Print["piece_assets"]["image"], isPublic: boolean) => string,
-        preloadImagesSeries: (user: NM.User | ArtUser, pieces: NM.Print[], size: keyof NM.Print["piece_assets"]["image"], isPublic: boolean) => void,
-        preloadImages: (user: NM.User | ArtUser, pieces: NM.Print[], size: keyof NM.Print["piece_assets"]["image"], isPublic: boolean) => void,
+        getImageData: (user: NM.User | ArtUser, piece: NM.Print, size: keyof NM.Print["piece_assets"]["image"], isPublic?: boolean) => NM.Image,
+        preloadImagesSeries: (user: NM.User | ArtUser, pieces: NM.Print[], size: keyof NM.Print["piece_assets"]["image"], isPublic: boolean) => Promise<HTMLImageElement|void>,
+        preloadImages: (user: NM.User | ArtUser, pieces: NM.Print[], size: keyof NM.Print["piece_assets"]["image"], isPublic: boolean) => Promise<HTMLImageElement[]>,
         getImageUrls: (user: NM.User | ArtUser, pieces: NM.Print[], size: keyof NM.Print["piece_assets"]["image"], isPublic: boolean) => string[],
-        toggleFavorite: (piece: NM.User | ArtUser) => void,
+        toggleFavorite: (piece: NM.Card ) => void,
     }
 
     type ArtResource = {
@@ -300,6 +353,11 @@ declare namespace Services {
         hasRewards: () => boolean,
         updateCredits: (balance: number) => void,
     }
+    
+    type ImageService = {
+        preload: (url: string) => Promise<HTMLImageElement>,
+        preloadAll: (urls: string[]) => Promise<HTMLImageElement[]>,
+    }
 
     type NMTrade = {
         tradeSortOptions: {
@@ -307,7 +365,12 @@ declare namespace Services {
             selected: boolean,
             sortOrder: "desc"|"asc"
         }[],
-        createNewTrade: (bidder: NM.User, responder: NM.User, initialPieceData: NM.PrintInTrade) => void,
+        createNewTrade: (bidder: NM.User, responder: NM.User, initialPieceData: {
+            offerType: "responder_offer" | "bidder_offer",
+            ownerId: number,
+            pieceId: number,
+            settId: number,
+        }) => void,
         loadTrade: (id: number) => void,
         postTrade: (loadingState: string, finishedState: string, verb: string) => void,
         acceptTrade: () => void,
@@ -334,6 +397,19 @@ declare namespace Services {
         // custom fields
         setOfferData: (offerType: OfferType, prints: NM.PrintInTrade[]) => void,
         hasCard: (offerType: OfferType, card: NM.PrintInTrade) => boolean,
+    }
+
+    type PieceTraderClickTracker = {
+        getList: () => number[], // user IDs
+        resetData: () => void,
+        setPieceData: (piece: NM.Card, sett: NM.SettMetrics | null, need: boolean) => void,
+        getPieceData: () => {
+            piece: NM.Card & { print_num?: number } | NM.Unmerged.Prints,
+            sett?: NM.SettMetrics,
+            need: boolean | null,
+        },
+        addUser: (userId: number) => void,
+        userClicked: (userId: number) => boolean,
     }
 
     type PoMilestones = {
@@ -391,57 +467,6 @@ declare namespace Services {
         getView: () => string | undefined,
         getState: () => string | null,
         setState: (state: string) => void,
-    }
-
-    // a custom service
-    type TradeFilterSets = {
-        getFilterSets: () => {id:string|null, name:string}[],
-        getFilterSet: (id:string) => {
-            filters: {
-                user_id: number,
-                partner_id: number,
-                search: null | string,
-                sett: null | number,
-                duplicates_only: boolean,
-                common: boolean,
-                uncommon: boolean,
-                rare: boolean,
-                veryRare: boolean,
-                extraRare: boolean,
-                variant: boolean,
-                chase: boolean,
-                legendary: boolean,
-            },
-            seriesFilter: number | "allSeries" | "infinite" | "finite" | "freePackAvailable" | "anyPackAvailable" | "outOfPrint" | undefined,
-            hiddenSeries: {
-                id: number,
-                name: string,
-                tip: string,
-            }[],
-        },
-        saveFilterSet: (filters: ReturnType<TradeFilterSets["getFilterSet"]>["filters"], seriesFilter: ReturnType<TradeFilterSets["getFilterSet"]>["seriesFilter"], hiddenSeries: ReturnType<TradeFilterSets["getFilterSet"]>["hiddenSeries"]) => string | null,
-        deleteFilterSet: (id: string | null) => boolean,
-        hasDefaultFilterSet: () => boolean,
-    }
-
-    // a custom service
-    type UserCollections = {
-        getCollections: (user: NM.User) => Promise<Record<number, NM.SettMetrics>>,
-        dropCollection: (user: NM.User) => void,
-        getProgress: (user: NM.User, settId: number) => Promise<null | {
-            name: string, // sett name
-            permalink: absoluteURL,
-            coreCount: number,
-            chaseCount: number,
-            variantCount: number,
-            legendaryCount: number,
-            totalCount: number,
-            coreOwned: number,
-            chaseOwned: number,
-            variantOwned: number,
-            legendaryOwned: number,
-            totalOwned: number,
-        }>,
     }
 
     // LumberJack logging system over Raven/console

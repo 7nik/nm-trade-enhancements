@@ -1,14 +1,14 @@
 import type IO from "socket.io-client";
 
 type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
-// type XOR<T, U> = (T | U) extends object ? (Without<T, U> & U) | (Without<U, T> & T) : T | U;
+type XOR<T, U> = (T | U) extends object ? (Without<T, U> & U) | (Without<U, T> & T) : T | U;
 
 export type fullURL = string
 export type absoluteURL = string
 export type queryURL = string // starting with "?"
 export type timestamp = string
 
-export type CurrentUser = NM.User & {
+export type CurrentUser = Omit<NM.User, "name"|"first_name"|"last_name"> & {
     timezone_offset: number,
     original_timezone_offset: number,
     email: string,
@@ -30,21 +30,7 @@ export type CurrentUser = NM.User & {
     pro_subscription_enabled: boolean,
     is_staff: boolean, // staff != ambassador
     points: number,
-    level: {
-        name: string,
-        title: number,
-        level: number,
-        copy: string,
-        next_level_points: number,
-        points_required: number,
-        icon_type: number,
-        icon_color: string, // #color
-        web_icon_selector: string,
-        app_icon_selector: string,
-        gradient_color: string, // #color
-        current_progress: number,
-        previous_level_name: string
-    },
+    level: NM.UserLevel,
     is_verified: boolean,
     vacation_mode: boolean,
     permissions: {
@@ -56,9 +42,9 @@ export type CurrentUser = NM.User & {
     carats_per_free_pack: number
 }
 
-type rarity = "Common" | "Uncommon" | "Rare" | "Very rare" | "Extra Rare" | "Chase" | "Variant" | "Legendary"
-type rarityLow = Lowercase<rarity>
-type rarityCss = "common" | "uncommon" | "rare" | "veryRare" | "extraRare" | "chase" | "variant" | "legendary"
+export type rarity = "Common" | "Uncommon" | "Rare" | "Very rare" | "Extra Rare" | "Chase" | "Variant" | "Legendary"
+export type rarityLow = Lowercase<rarity>
+export type rarityCss = "common" | "uncommon" | "rare" | "veryRare" | "extraRare" | "chase" | "variant" | "legendary"
 
 declare global {
     var NM: {
@@ -111,10 +97,46 @@ declare namespace NM {
         rewards: number,
     }
 
+    type BadgeEarned = {
+        id: string | null,
+        user_badge_id: number,
+        badge: number,
+        name: string,
+        description: string,
+        image_url: fullURL,
+        noun: string,
+        public_url: fullURL,
+        sett: {
+            id: number,
+            name: string,
+            public_url: absoluteURL,
+            status: number
+        },
+        verb_phrase: string,
+        type: string,
+        achieved: boolean,
+        rank_details: {
+            completion_order: number,
+            rank: number,
+            duration: string,
+            completion_time: string
+        },
+        metrics: null,
+        carats: number,
+        rarity: string,
+        carats_multiplier: number
+    }
+
     type Card = {
         id: number,
         name: string,
         is_replica: boolean,
+        /**
+         * Sett type:
+         * 1 - old limited;
+         * 2 - unlimited;
+         * 3 - new limited.
+         */
         version: 1|2|3,
         asset_type: "image" | "video",
         rarity: {
@@ -159,6 +181,10 @@ declare namespace NM {
             images: fullURL[],
             url?: absoluteURL,
         }
+    }
+
+    type Error = {
+        detail: string,
     }
 
     type Image = {
@@ -218,9 +244,7 @@ declare namespace NM {
         cdn_cover_image?: fullURL | null,
     }
 
-    type Print = {
-        id: number, // card id
-        name: string,
+    type Print = Omit<Card, "own_count"|"favorite"|"rarity"> & {
         description: string,
         rarity: {
             name: rarity,
@@ -228,7 +252,6 @@ declare namespace NM {
             rarity: number,
             carats: number // discard value
         },
-        asset_type: "image" | "video",
         piece_assets: {
             image: {
                 "large-promo": Image,
@@ -254,10 +277,14 @@ declare namespace NM {
         sett_id: number,
         sett_name: string,
         sett_name_slug: string,
-        is_replica: boolean,
-        version: 1|2|3,
-        print_id: number, // global print id
-        print_num: number, // in-series print number
+        /**
+         * Global print id
+         */
+        print_id: number,
+        /**
+         * In-series print number
+         */
+        print_num: number,
         prints_part_of_trade: {
             print_id: number,
             bidder_trades: number,
@@ -267,17 +294,29 @@ declare namespace NM {
 
     type PrintCount = [number /* card id */, number /* amount */]
 
-    type PrintInTrade = Print & Without<{
-        sett_name_slug: string, 
-        public_url: string, 
-        is_replica: boolean, 
-        version: number, 
-        prints_part_of_trade: object
-    }, Print> & {
-        own_counts: {
+    type PrintInTrade = Omit<Print, 
+        "sett_name_slug"|"public_url"|"is_replica"|"version"|"prints_part_of_trade"
+    > & {
+        /**
+         * Available only when part of Trade type
+         */
+        own_counts?: {
             bidder: number,
             responder: number
         }
+    }
+
+    // series completion reward
+    type Reward = {
+        sett: Pick<Sett, "id" | "name" | "creator" | "difficulty" | "public_url" | "sett_assets">,
+        rank: number,
+        completion_order: number,
+        duration: string,
+        completion_time: string,
+        carats: number,
+        difficulty_bonus: number,
+        pro_bonus: number,
+        total: number
     }
 
     type Trade = {
@@ -285,21 +324,57 @@ declare namespace NM {
         bidder: User,
         responder: User,
         bidder_offer: {
-            prints: PrintInTrade[]
-            packs: []
+            prints: PrintInTrade[],
+            packs: never[],
         },
         responder_offer: {
-            prints: PrintInTrade[]
-            packs: []
+            prints: PrintInTrade[],
+            packs: never[],
         },
         parent_id: number | null,
         completed: timestamp | null,
         created: timestamp,
-        state: "proposed" | "modified" | "countered" | "accepted" | "auto-withdrew" | "auto-declined" | "declined",
+        state: "proposed" | "modified" | "countered" | "accepted" | "auto-withdrew" | "auto-declined" | "declined" | "expired",
         expire_date: timestamp,
-        badges: [], // is received only in notifications?
+        badges: BadgeEarned[],
         completed_on: timestamp | null,
         timestamp: timestamp, // time of creation?
+        rewards?: Reward[],
+        total_carats?: number,
+        level_ups?: UserLevelUp[],
+    }
+
+    // return at trade creating
+    type TradeResult = {
+        id: number,
+        bidder: User,
+        responder: User,
+        bidder_items: {
+            id: number, // ID of proposed item???
+            created: timestamp,
+            modified: null,
+            owner: number,
+            pack: null,
+            prnt: number,
+            trade: number,
+        }[],
+        responder_items: {
+            id: number, // ID of proposed item???
+            created: timestamp,
+            modified: null,
+            owner: number,
+            pack: null,
+            prnt: number,
+            trade: number,
+        }[],
+        completed: null | timestamp,
+        completed_action: null | string, // ??
+        completed_by: null | number, // ??
+        created: timestamp,
+        is_bot_trade: boolean,
+        level_ups: UserLevelUp[],
+        modified: null,
+        parent: null,
     }
 
     type TradeEvent = Event<{
@@ -400,7 +475,13 @@ declare namespace NM {
             setts_url: absoluteURL,
             collect_url: absoluteURL,
             description: string
-        }[]
+        }[],
+        /**
+         * Sett type:
+         * 1 - old limited;
+         * 2 - unlimited;
+         * 3 - new limited.
+         */
         version: 1|2|3,
         favorite: boolean,
         base_completed: boolean,
@@ -414,20 +495,15 @@ declare namespace NM {
         notify: boolean
     }
 
-    type SettMetrics = {
-        id: number,
-        name_slug: string,
+    type SettMetrics = Pick<Sett, 
+        "id"|"name"|"name_slug"|"version"|"preview_0"|"preview_1"|"replica_parent"
+    >& {
         name_slug_regexed: string,
-        name: string,
-        status: string,
-        version: 1|2|3,
+        status: "published",
         core_piece_count: number,
         chase_piece_count: number,
         variant_piece_count: number,
         legendary_piece_count: number,
-        preview_0: fullURL,
-        preview_1: fullURL,
-        replica_parent: null | number,
         background_image: fullURL,
         cover_image: fullURL,
         pack_last_acquired: number, // timestamp
@@ -485,12 +561,52 @@ declare namespace NM {
         trader_score: number
     }
 
+    type UserLevel = {
+        name: string,
+        title: number,
+        level: number,
+        copy: string,
+        next_level_points: number,
+        points_required: number,
+        icon_type: number,
+        icon_color: string, // #color
+        web_icon_selector: string,
+        app_icon_selector: string,
+        gradient_color: string, // #color
+        current_progress: number, // 0-99
+        previous_level_name: string
+    }
+
+    type UserLevelUp = UserLevel & {
+        carats: number,
+        pro_bonus: number,
+        total_carats: number,
+        new_features: {
+            title: string,
+            description: string,
+            "icon-class": string,
+            "bg-class": string,
+        }[],
+        levelup_tip: XOR<{}, {
+            tip: string,
+            iconClasses: Record<string, string>,
+        }>,
+    }
+
     namespace Unmerged {
         type Container<Data extends object> = {
             deferreds: {},
             payload: Data,
-            // some of payload's filed are kept in the refs
+            // some of payload's fields are kept in the refs
             refs: Record<string, object>,
+        }
+
+        type FavoriteSetts = {
+            results: Pick<NM.Sett, "id"|"name"|"difficulty"|"favorite"|"links"|"sett_assets" > & {
+                creator: UserShort,
+            }[],
+            target: UserLong,
+            viewer: UserLong,
         }
 
         type Prints = {
@@ -543,23 +659,35 @@ declare namespace NM {
         }
 
         type Sett = {
-            creator: User,
+            creator: UserShort,
             discontinued: timestamp | null,
             id: number,
-            links: {
-                self: absoluteURL,
-                pieces: absoluteURL,
-                permalink: absoluteURL,
-                piece_names: absoluteURL,
-                "api-pack": absoluteURL
-            },
+            links: NM.Sett["links"],
             name: string,
             price: number | null,
             released: timestamp,
             sett_type: number
         }
 
-        type User = {
+        type UserLong = User & {
+            timezone_offset: number,
+            link: absoluteURL,
+            vacation_mode: boolean,
+            is_ambassador: boolean,
+            is_creator: boolean,
+            is_newbie: boolean,
+            is_active: boolean,
+            pro_status: 0 | 1,
+            is_staff: boolean,
+            twitter_username: null | string,
+            connected_accounts: {},
+            is_verified: boolean,
+            num_prints: number,
+            num_favorites: number,
+            tranche: string,
+        }
+
+        type UserShort = {
             id: number,
             link: string,
             name: string,
