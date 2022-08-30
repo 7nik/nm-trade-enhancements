@@ -1,11 +1,21 @@
-import type angular from "angular";
-
-import { MutationSummary } from "mutation-summary";
-
-export const debug = (...args: any[]) => console.debug("[NM trade enhancement]", ...args);
+/**
+ * Logs a signed debug message
+ * @param args - data to log
+ */
+export const debug = (...args: any[]) => { 
+    console.debug("[NM trade enhancement]", ...args); 
+};
 
 /**
- * Converts string to The Camel Case
+ * Logs a signed error message
+ * @param args - data to log
+ */
+export const error = (...args: any[]) => { 
+    console.error("[NM trade enhancement]", ...args); 
+};
+
+/**
+ * Converts string to The Pascal Case
  * @param  {string} str - String for converting
  * @return {string} String in the camel case
  */
@@ -14,56 +24,8 @@ export function toPascalCase (str: string):string {
         .trim()
         .replace(/\s+/g, " ")
         .split(" ")
-        .map((s) => s[0].toUpperCase().concat(s.slice(1).toLowerCase()))
+        .map((s) => s && s[0].toUpperCase().concat(s.slice(1).toLowerCase()))
         .join(" ");
-}
-
-/**
- * Returns a scope bound to the element
- * @param  {HTMLElement} element - Element
- * @return {Object} Bound scope
- */
-export function getScope<T> (element: HTMLElement): T {
-    // @ts-ignore
-    return angular.element(element).scope<T & angular.IScope>();
-}
-
-
-/**
- * Will call the callback for existing and added elements which match the selector
- * @param  {HTMLElement} rootNode - In whose subtree wait for the elements
- * @param  {string} selector - Selector of the target elements
- * @param  {function(HTMLElement): undefined} callback - Callback applied to the elements
- */
-export function forAllElements (rootNode: HTMLElement|Document, selector: string, callback: (elem: HTMLElement) => void) {
-    rootNode.querySelectorAll(selector).forEach((elem) => callback(elem as HTMLElement));
-    new MutationSummary({
-        rootNode,
-        queries: [{ element: selector }],
-        callback: (summaries) => summaries[0].added.forEach((elem) => callback(elem as HTMLElement)),
-    });
-}
-
-/**
- * Returns a promise which will be resolved when the element appears
- * @param  {HTMLElement} rootNode - In whose subtree wait for the element
- * @param  {string} selector - Selector of the target element
- * @return {Promise<HTMLElement>} The added element
- */
-export function waitForElement (rootNode: HTMLElement, selector: string): Promise<HTMLElement> {
-    const element = rootNode.querySelector(selector) as HTMLElement;
-    if (element) return Promise.resolve(element);
-
-    return new Promise((resolve) => {
-        const observer = new MutationSummary({
-            rootNode,
-            queries: [{ element: selector }],
-            callback: (summaries) => {
-                observer.disconnect();
-                resolve(summaries[0].added[0] as HTMLElement);
-            },
-        });
-    });
 }
 
 /**
@@ -74,4 +36,39 @@ export function waitForElement (rootNode: HTMLElement, selector: string): Promis
 export function getCookie (name: string) {
     const [, valueAndTrash] = `; ${document.cookie}`.split(`; ${name}=`);
     if (valueAndTrash) return valueAndTrash.split(";", 2)[0];
+}
+
+
+/**
+ * Converts numbers to text using SI prefixes
+ * @param val - a number to convert
+ * @returns a short text representation of the number
+ */
+export function num2text(val: number) {
+    // when val == 0, we get -Infinity * 0 = NaN
+    const power = Math.floor(Math.log10(Math.abs(val)) / 3) * Math.sign(val);
+    const v = Math.floor(val / 1000**power * 10) / 10;
+    switch (isNaN(power) || power) {
+        case -Infinity: return "-∞";
+        case -8: return `${v}y`;
+        case -7: return `${v}z`;
+        case -6: return `${v}a`;
+        case -5: return `${v}f`;
+        case -4: return `${v}p`;
+        case -3: return `${v}n`;
+        case -2: return `${v}μ`;
+        case -1: return `${v}m`;
+        case true: return "0";
+        case 0: return val.toString();
+        case 1: return `${v}k`;
+        case 2: return `${v}M`;
+        case 3: return `${v}G`;
+        case 4: return `${v}T`;
+        case 5: return `${v}P`;
+        case 6: return `${v}E`;
+        case 7: return `${v}Z`;
+        case 8: return `${v}Y`;
+        case Infinity: return "∞";
+        default: return (v * 1000**power).toExponential();
+    }
 }
