@@ -1,7 +1,7 @@
-import type NM from "./NMTypes";
+import type Angular from "angular";
 import type Services from "./NMServices";
 
-import { debug } from "./utils";
+import { debug, error } from "./utils";
 
 type TemplatePatch = {
     names: string[],
@@ -14,7 +14,7 @@ type TemplatePatch = {
     }[],
 }
 
-const patchers: (() => void)[] = [];
+const patchers: ((angular: Angular.IAngularStatic) => void)[] = [];
 const templatePatchList: TemplatePatch[] = [];
 
 /**
@@ -34,20 +34,25 @@ function patchTemplates ($templateCache: angular.ITemplateCacheService) {
             fromCache = false;
         }
         if (!template) {
-            console.error(`Couldn't get template ${name}`);
+            error(`Couldn't get template ${name}`);
             return;
         }
         // eslint-disable-next-line object-curly-newline
         patches.forEach(({ target, prepend, replace, append }) => {
-            // TODO: notify about unapplied patches
-            if (replace != null) {
-                // @ts-ignore
-                template = template.replaceAll(target, replace);
-            } else if (prepend != null) {
-                template = template.replaceAll(target, prepend.concat(target.toString()));
-            } else if (append != null) {
-                template = template.replaceAll(target, target.toString().concat(append));
+            let newTemplate = "";
+            if (typeof replace === "string") {
+                newTemplate = template.replaceAll(target, replace);
+            } else if (replace) { // is function
+                newTemplate = template.replaceAll(target, replace);
+            } else if (prepend) {
+                newTemplate = template.replaceAll(target, prepend.concat(target.toString()));
+            } else if (append) {
+                newTemplate = template.replaceAll(target, target.toString().concat(append));
             }
+            if (newTemplate === template) {
+                error("Useless template patch found!", { name, target, prepend, replace, append })
+            }
+            template = newTemplate;
         });
         if (fromCache) {
             $templateCache.put(name, template);
@@ -56,94 +61,6 @@ function patchTemplates ($templateCache: angular.ITemplateCacheService) {
         }
     }));
     debug("templates patched");
-}
-
-/**
- * Patch the nmTrades service
- * @param  {Service} nmTrades - service to patch
- * @param  {Service} userCollections - service to get user's collections
- * @param  {Service} artSubscriptionService - service to broadcast messages
- */
-function patchNMTrades (nmTrades: Services.NMTrade, userCollections: Services.UserCollections, artSubscriptionService: Services.ArtSubscriptionService) {
-    const replaceArray = <T>(target:T[], source:T[]) => {
-        target.splice(0, target.length, ...source);
-    };
-    // make setting the trading cards easier
-    nmTrades.setOfferData = (offerType, prints) => {
-        replaceArray(nmTrades.getOfferData(offerType).prints, prints);
-        replaceArray(nmTrades.getPrintIds(offerType), prints.map((print) => print.print_id));
-    };
-    // replace method `nmTrades.startCounter` with one that doesn't resets variable `_tradeId`
-    nmTrades.startCounter = () => {
-        nmTrades.startModify(); // to set `_parentId`
-
-        // swap offers without overwriting arrays
-        const bidOffer = nmTrades.getOfferData("bidder_offer").prints.slice();
-        const respOffer = nmTrades.getOfferData("responder_offer").prints.slice();
-
-        nmTrades.setOfferData("bidder_offer", respOffer);
-        nmTrades.setOfferData("responder_offer", bidOffer);
-
-        // swap bidder and responder without overwriting objects themselves
-        const bidder = nmTrades.getBidder();
-        const responder = nmTrades.getResponder();
-
-        Object.getOwnPropertyNames(bidder).forEach((prop) => {
-            // @ts-ignore
-            [bidder[prop], responder[prop]] = [responder[prop], bidder[prop]];
-        });
-
-        nmTrades.setWindowState("counter");
-    };
-    // load user collections when trade is loading and notify about added/removed cards
-    const origSetWindowState = nmTrades.setWindowState;
-    nmTrades.setWindowState = (state) => {
-        if (state === "create" || state === "view") {
-            // preload collections
-            userCollections.getCollections(nmTrades.getResponder());
-            userCollections.getCollections(nmTrades.getBidder());
-            // sort cards by rarity
-            const comp = (a:NM.PrintInTrade, b:NM.PrintInTrade) => b.rarity.rarity - a.rarity.rarity;
-            nmTrades.setOfferData(
-                "bidder_offer",
-                nmTrades.getOfferData("bidder_offer").prints.sort(comp),
-            );
-            nmTrades.setOfferData(
-                "responder_offer",
-                nmTrades.getOfferData("responder_offer").prints.sort(comp),
-            );
-        }
-        origSetWindowState(state);
-    };
-    const origClearTradeQuery = nmTrades.clearTradeQuery;
-    nmTrades.clearTradeQuery = () => {
-        userCollections.dropCollection(nmTrades.getTradingPartner()!);
-        origClearTradeQuery();
-    };
-    // broadcast a message when the trade get changed
-    const origAddItem = nmTrades.addItem;
-    nmTrades.addItem = (offerType, itemType, print) => {
-        origAddItem(offerType, itemType, print);
-        artSubscriptionService.broadcast(
-            "trade-change",
-            { offerType, action: "added", print },
-        );
-    };
-    const origRemoveItem = nmTrades.removeItem;
-    nmTrades.removeItem = (offerType, itemType, index) => {
-        const print = nmTrades.getOfferData(offerType).prints[index];
-        origRemoveItem(offerType, itemType, index);
-        artSubscriptionService.broadcast(
-            "trade-change",
-            { offerType, action: "removed", print },
-        );
-    };
-
-    // check if a card is added to trade
-    nmTrades.hasCard = (offerType, card) => !!nmTrades
-        .getOfferData(offerType).prints.find(({ id }) => id === card.id);
-
-    debug("nmTrades patched");
 }
 
 /**
@@ -171,54 +88,46 @@ function patchArtResource (artResource: Services.ArtResource) {
 }
 
 /**
- * Apply patches with two ways
+ * Apply the patches
  */
 function applyPatches () {
     let applied = false;
     const patcher = [
         "$templateCache",
-        "nmTrades",
-        "userCollections",
-        "artSubscriptionService",
         "artResource",
         (
             $templateCache: angular.ITemplateCacheService,
-            nmTrades: Services.NMTrade,
-            userCollections: Services.UserCollections,
-            artSubscriptionService: Services.ArtSubscriptionService,
             artResource: Services.ArtResource,
         ) => {
             patchTemplates($templateCache);
-            patchNMTrades(nmTrades, userCollections, artSubscriptionService);
             patchArtResource(artResource);
             applied = true;
         },
     ];
-
+    
+    patchers.forEach(patch => patch(angular));
     angular.module("nmApp").run(patcher);
-    patchers.forEach(patch => patch());
 
+    // sometimes, when userscript is loaded via a proxy script,
+    // it gets executed too late, so reload the page once
     window.addEventListener("load", () => {
         if (applied) return;
-        debug("late patching");
-        const getService = angular.element(document.body).injector().get;
-        const func = patcher.pop() as Function;
-        try {
-            const services = (patcher as string[]).map(name => getService(name));
-            func(...services);
-        } catch (ex: any) {
-            // sometimes, when userscript is loaded via a proxy script,
-            // it gets executed too late, so reload the page once
-            if (location.hash === "#reloaded") throw ex;
-            location.hash = "#reloaded";
-            location.reload();
-        }
+        if (location.hash === "#reloaded") return;
+        location.hash = "#reloaded";
+        location.reload();
     });
 }
 
-export default function addPatches(patcher: (()=>void) | null, ...templatePatches: TemplatePatch[]) {
+export default function addPatches(patcher: ((angular: Angular.IAngularStatic)=>void) | null, ...templatePatches: TemplatePatch[]) {
     if (patcher) patchers.push(patcher);
     templatePatchList.push(...templatePatches);
 }
 
-document.addEventListener("DOMContentLoaded", applyPatches);
+if (document.readyState === "complete") {
+    if (location.hash !== "#reloaded") {
+        location.hash = "#reloaded";
+        location.reload();
+    }
+} else {
+    document.addEventListener("readystatechange", applyPatches, { once: true });
+}
