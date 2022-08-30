@@ -126,6 +126,9 @@ addPatches(() => {
             $scope.filters.duplicate = duplicate;
             $scope.applyFilters();
 
+            // if nothing to wishlist
+            if (cards.length === 0) return;
+
             // create object that will link card and it's card on the screen
             const stars = cards.map((card) => {
                 const x0 = ev.clientX / window.innerWidth * 100;
@@ -159,8 +162,12 @@ addPatches(() => {
                 star.elem.className = wishlistMode ? "icon-liked" : "icon-like";
             }
 
-            div.remove();
-            $scope.applyFilters();
+            // to show the wishlisting of the last star
+            setTimeout(() => {
+                $scope.applyFilters();
+                div.remove();
+            }, 1000);
+
         };
     }]);
 }, {
