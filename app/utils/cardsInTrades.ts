@@ -1,23 +1,28 @@
 import type NM from "./NMTypes";
+import type { Readable, Writable } from "svelte/store";
 
-import NMAPI from "./NMApi";
+import NMApi from "./NMApi";
+import { writable } from "svelte/store";
+import currentUser from "../services/currentUser";
 
-const cards : {
-    lastUpdate: number,
-    receive: Record<number, Record<number, number[]>>,
-    give: Record<number, Record<number, number[]>>,
-    ready: boolean,
-} = {
-    lastUpdate: -1,
-    // (receive|give) > cardId > printId > tradeIds
-    receive: {},
-    give: {},
-    ready: false
+type GetTrades = {
+    find: typeof getTradesFn
 }
 
+const cards : {
+    // (receive|give) > cardId > printId > tradeIds
+    receive: Record<number, Record<number, number[]>>,
+    give: Record<number, Record<number, number[]>>,
+} = {
+    receive: {},
+    give: {},
+}
+let ready = false;
+const getTrades: Readable<GetTrades> = writable({ find: getTradesFn });
+
 let setReady: () => void;
-const loading = new Promise<void>((resolve) => setReady = () => {
-    cards.ready = true;
+new Promise<void>((resolve) => setReady = () => {
+    ready = true;
     resolve();
 });
 
@@ -28,8 +33,8 @@ const loading = new Promise<void>((resolve) => setReady = () => {
  * @param  {("print"|"card")} level - look for a certain print or all prints
  * @return {Promise<number[]>} - list of trade IDs
  */
-export async function getTrades (print: NM.PrintInTrade, dir: ("give" | "receive" | "both") = "both", level: ("print" | "card") = "print"): Promise<number[]> {
-    if (!cards.ready) await loading;
+function getTradesFn (print: NM.PrintInTrade, dir: ("give" | "receive" | "both") = "both", level: ("print" | "card") = "print"): number[] {
+    if (!ready) return [];
 
     const tradeIds:number[] = [];
     if (!print) return tradeIds;
@@ -76,7 +81,6 @@ function updatePrint (tradeId: number, side: ("give" | "receive"), cid: number, 
         cards[side][cid][pid] = cards[side][cid][pid]
             .filter((id) => id !== tradeId);
     }
-    cards.lastUpdate = Date.now();
 }
 
 /**
@@ -85,8 +89,8 @@ function updatePrint (tradeId: number, side: ("give" | "receive"), cid: number, 
  * @param change - add or remove the cards
  */
 async function updateTrade (tradeId: number, change: -1|1) {
-    const trade = await NMAPI.trade.get(tradeId);
-    const youAreBidder = trade.bidder.id === NM.you.attributes.id;
+    const trade = await NMApi.trade.get(tradeId);
+    const youAreBidder = trade.bidder.id === currentUser.id;
     trade[youAreBidder ? "bidder_offer" : "responder_offer"].prints
         .forEach(({ id: cid, print_id: pid }) => {
             updatePrint(tradeId, "give", cid, pid, change);
@@ -95,14 +99,17 @@ async function updateTrade (tradeId: number, change: -1|1) {
         .forEach(({ id: cid, print_id: pid }) => {
             updatePrint(tradeId, "receive", cid, pid, change);
         });
+    (getTrades as Writable<GetTrades>).set({ find: getTradesFn });
 };
 
-NMAPI.trade.onTradesAdded((trades) => {
+NMApi.trade.onTradesAdded((trades) => {
     trades.forEach(trade => updateTrade(trade.object.id, +1));
-    if (!cards.ready) setReady();
+    if (!ready) setReady();
 });
-NMAPI.trade.onTradeRemoved((trade) => {
+NMApi.trade.onTradeRemoved((trade) => {
     updateTrade(trade.object.id, -1);
 });
 
-export default cards;
+export { cards, ready, getTrades };
+
+export type { GetTrades };
