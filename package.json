@@ -47,7 +47,6 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
-    "mutation-summary": "^1.0.0",
     "tippy.js": "^6.3.7"
   }
 }
