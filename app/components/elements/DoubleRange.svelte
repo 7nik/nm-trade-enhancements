@@ -3,7 +3,7 @@
  -->
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
-	import { num2text } from "../../utils/utils";
+	import { error, num2text } from "../../utils/utils";
 
     /**
      * List of sorted values
@@ -83,7 +83,7 @@
 		let left = 0.5 - titleWidth/2, right = 0.5 + titleWidth/2;
 		if (start < left && right < end || end < left || right < start) {
 			titlePos = 0.5;
-		} else if (end - start > titleWidth) {
+		} else if (start < 0.5 && 0.5 < end && end - start > titleWidth) {
 			if (end - 0.5 < 0.5 - start) {
 				titlePos = end - titleWidth/2;
 			} else {
@@ -105,17 +105,20 @@
 			// assume that labels are 30px or less
 			const width = (elemWidth + 30) / totalWidth;
 			// when inside of an element with display:none, widths are 0 -> (0+30)/0 -> Infinity
-			if (!Number.isFinite(width)) return false;
+			if (!Number.isFinite(width)) {
+				error(`bad width ${width}`);
+				return false;
+			}
 			titleWidth = width;
 			return true;
 		}
 		if (!calculateWidth()) {
 			// recalculate width when the elements became "visible" and measurable
-			new IntersectionObserver((entries, observer) => {
+			new IntersectionObserver(async (entries, observer) => {
 				if (entries[0].intersectionRatio > 0 && calculateWidth()) {
 					observer.disconnect();
 				}
-			});
+			}).observe(elem);
 		}
 	}
 </script>
@@ -133,8 +136,8 @@
 				<div class="label">{num2text(value[1])}</div>
 			</div>
 		{/if}
+		<div class="title" style:--title-pos="{titlePos*100}%" use:getWidth={title}>{title}</div>
 	</div>
-	<div class="title" style:--title-pos="{titlePos*100}%" use:getWidth={title}>{title}</div>
 </span>
 
 <style>
@@ -182,7 +185,7 @@
 		text-align: center;
 	}
 	.title {
-		top: calc(-10px - 1em);
-		left: var(--title-pos, 50%);
+		top: calc(-8px - 1em);
+		left: calc(var(--title-pos, 50%) + 7.5px);
 	}
 </style>
