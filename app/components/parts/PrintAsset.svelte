@@ -180,6 +180,11 @@
         elem.addEventListener("mouseup", () => {
             grayOut = true;
         });
+        return {
+            destroy() {
+                elem._tippy?.destroy();
+            }
+        };
     }
 </script>
 

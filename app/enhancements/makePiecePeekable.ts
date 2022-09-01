@@ -44,7 +44,7 @@ addPatches(() => {
                     error("showLoading option is on");
                 }
 
-                new PrintAsset({
+                const comp = new PrintAsset({
                     target: $elem[0],
                     props: {
                         print: $scope.piece,
@@ -56,6 +56,7 @@ addPatches(() => {
                         setSize: $scope.fluid !== true,
                     },
                 });
+                $scope.$on("$destroy", () => comp.$destroy());
             },
         ],
     }));
