@@ -42,10 +42,10 @@
     $: canAddItems = offer.length < 5;
 
     // when `canEdit` changes
-    $: canEdit && resetState();
-    function resetState () {
+    $: resetState(canEdit);
+    function resetState (updateSett: boolean) {
         state = "offer";
-        if (!sett && offer.length > 0) {
+        if (!sett && offer.length > 0 && updateSett) {
             // if all cards in the offer are from the same sett
             const settIds = offer.map(p => p.sett_id);
             if (settIds.every(id => id === settIds[0])) {
