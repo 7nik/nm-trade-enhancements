@@ -3,7 +3,7 @@
  -->
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
-	import { error, num2text } from "../../utils/utils";
+	import { num2text } from "../../utils/utils";
 
     /**
      * List of sorted values
@@ -106,7 +106,6 @@
 			const width = (elemWidth + 30) / totalWidth;
 			// when inside of an element with display:none, widths are 0 -> (0+30)/0 -> Infinity
 			if (!Number.isFinite(width)) {
-				error(`bad width ${width}`);
 				return false;
 			}
 			titleWidth = width;
