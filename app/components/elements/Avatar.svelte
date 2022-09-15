@@ -6,7 +6,7 @@
     
     import config from "../../services/config";
 
-    export let user: NM.User;
+    export let user: Pick<NM.User, "avatar"|"username">;
     /**
      * The size of avatar to display
      */
