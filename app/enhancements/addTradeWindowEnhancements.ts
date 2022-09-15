@@ -214,10 +214,11 @@ addPatches(() => {
                             history.pushState(null, "", location.pathname);
                             // show the search list of trades
                             if (backOrTrade === true) {
+                                const overlay = backButtonText === "seekers" ? "show-needers" : "show-owners";
                                 // to help angular faster catch the changes
                                 $scope.$apply(() => {
                                     artNotificationCenter.hide();
-                                    artOverlay.show("show-" + backButtonText, pieceData, true, 'theme-light');
+                                    artOverlay.show(overlay, {...pieceData}, true, 'theme-light');
                                 });
                             } else if (typeof backOrTrade === "object") {
                                 updateUserData(backOrTrade);
