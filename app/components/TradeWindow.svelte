@@ -238,9 +238,9 @@
      * Decline this trade
      */
     async function declineTrade() {
-        action = actors!.youAreBidder ? "withdraw" : "decline";
-        if (!await confirm(`Confirm you want to ${action} this trade?`)) return;
-        [action, mode] = ACTIONS[action];
+        const verb = actors!.youAreBidder ? "withdraw" : "decline";
+        if (!await confirm(`Confirm you want to ${verb} this trade?`)) return;
+        [action, mode] = ACTIONS[verb];
         try {
             result = await NMApi.trade.decline(trade!.id);
             [action, mode] = ACTIONS[action];
