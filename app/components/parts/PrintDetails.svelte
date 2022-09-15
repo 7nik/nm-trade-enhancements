@@ -61,14 +61,7 @@
      */
     export let tradeId: number | null = null;
     
-    $: total = print.num_prints_total === "unlimited" ? "∞" 
-        : print.num_prints_total < 1000 ? print.num_prints_total
-        : Math.round(print.num_prints_total / 100) / 10 + "k";
-    
-    if (!print.own_counts) {
-        if (!loading[actors.you.id]) preloadUserInfo(actors.you.id);
-        if (!loading[actors.partner.id]) preloadUserInfo(actors.partner.id);
-    }
+    $: total = print.num_prints_total === "unlimited" ? "∞" : num2text(print.num_prints_total);
 
     let printChooserState: "off" | "view" | "loading" | "select" = showPrintNumber === "list" ? "view" : "off";
     let prints: Record<number, NM.PrintInTrade & {trading?:boolean}> = {
