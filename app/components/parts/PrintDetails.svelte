@@ -38,7 +38,7 @@
     import CollectionProgress from "./CollectionProgress.svelte";
     import NMApi from "../../utils/NMApi";
     import { getTrades as trades } from "../../utils/cardsInTrades";
-    import addTradePreview from "../../enhancements/addTradePreview";
+    import { tradePreview } from "../tradePreviews";
 
     /**
      * The involved users
@@ -188,7 +188,7 @@
     </dl>
 
     {#if tradeIds.length > 0}
-        <i class="icon-card-trading" use:addTradePreview={{ tradeIds }}></i>
+        <i class="icon-card-trading" use:tradePreview={{ tradeIds }}></i>
     {/if}
 
     {#if $$slots.default}
