@@ -72,3 +72,21 @@ export function num2text(val: number) {
         default: return (v * 1000**power).toExponential();
     }
 }
+
+/**
+ * Splits a string into text and links
+ * @param text - the text with links
+ * @returns array [text, link, text, link, text,...]
+ */
+export function linky(text: string) {
+    const regexp = /(ftp|https?):\/\/\S*[^\s.;,(){}<>"]/g;
+    const parts: string[] = [];
+    let match: RegExpExecArray | null
+    let start = 0;
+    while (match = regexp.exec(text)) {
+        parts.push(text.slice(start, match.index), match[0]);
+        start = regexp.lastIndex;
+    }
+    parts.push(text.slice(start));
+    return parts;
+}

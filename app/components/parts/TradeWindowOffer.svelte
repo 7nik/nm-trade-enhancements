@@ -10,6 +10,7 @@
     import PrintDetails from './PrintDetails.svelte';
     import TradeGrade from "../elements/TradeGrade.svelte";
     import TradeWindowEditOffer from "./TradeWindowEditOffer.svelte";
+    import { linky } from "../../utils/utils";
 
     /**
      * Users involved in the trade
@@ -64,24 +65,6 @@
     function removePrint(print: NM.PrintInTrade) {
         offer = offer.filter((pr) => pr !== print);
     }
-
-    /**
-     * Splits a string into text and links
-     * @param text - the text with links
-     * @returns array [text, link, text, link, text,...]
-     */
-    function linky(text: string) {
-        const regexp = /(ftp|https?):\/\/\S*[^\s.;,(){}<>"]/g;
-        const parts: string[] = [];
-        let match: RegExpExecArray | null
-        let start = 0;
-        while (match = regexp.exec(text)) {
-            parts.push(text.slice(start, match.index), match[0]);
-            start = regexp.lastIndex;
-        }
-        parts.push(text.slice(start));
-        return parts;
-    }
 </script>
 
 {#if state === "offer" || state === "bio"}
@@ -113,7 +96,6 @@
     {/if}
 {/if}
 {#if state === "offer"}
-    <div nm-trades-item-list=partnerOfferType nm-trade-partner=partner show-remove=false></div>
     <div class=trade--side--item-list>
         {#if offer.length === 0}
             <div class=trade--side--empty>
