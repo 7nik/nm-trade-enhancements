@@ -8,10 +8,15 @@
     import currentUser from "../services/currentUser";
     import PrintPreview from "./parts/PrintPreview.svelte";
 
+    type Trade = Pick<NM.Trade, "id"|"bidder_offer"|"responder_offer"> & {
+        bidder: NM.UserMinimal,
+        responder: NM.UserMinimal,
+    }
+
     /**
      * The trades for making a preview
      */
-    export let trades: NM.Trade[];
+    export let trades: Trade[];
     /**
      * The card ID to highlight in the trade previews
      */
@@ -32,8 +37,8 @@
 
     $: youAreBidder = trades[pos].bidder.id === currentUser.id;
     $: partnerName = trades[pos][youAreBidder ? "responder" : "bidder"].name;
-    $: yourOffer = youAreBidder ? trades[pos].bidder_offer.prints : trades[pos].responder_offer.prints;
-    $: partnerOffer = youAreBidder ? trades[pos].responder_offer.prints : trades[pos].bidder_offer.prints;
+    $: yourOffer = trades[pos][youAreBidder ? "bidder_offer" : "responder_offer"].prints;
+    $: partnerOffer = trades[pos][youAreBidder ? "responder_offer" : "bidder_offer"].prints;
 </script>
 
 {#if trades.length > 1}
