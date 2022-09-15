@@ -2,9 +2,9 @@
     Renders a small trade preview
  -->
 <script lang="ts">
-    
     import type NM from "../utils/NMTypes";
     
+    import { firstName } from "../services/user";
     import currentUser from "../services/currentUser";
     import PrintPreview from "./parts/PrintPreview.svelte";
 
@@ -36,7 +36,7 @@
     };
 
     $: youAreBidder = trades[pos].bidder.id === currentUser.id;
-    $: partnerName = trades[pos][youAreBidder ? "responder" : "bidder"].name;
+    $: partnerName = firstName(trades[pos][youAreBidder ? "responder" : "bidder"]);
     $: yourOffer = trades[pos][youAreBidder ? "bidder_offer" : "responder_offer"].prints;
     $: partnerOffer = trades[pos][youAreBidder ? "responder_offer" : "bidder_offer"].prints;
 </script>
