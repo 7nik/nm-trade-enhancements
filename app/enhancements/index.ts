@@ -9,6 +9,7 @@ import "./addTradeWindowEnhancements";
 import "./addWishlistButton";
 import "./fixAutoWithdrawnTrade";
 import "./makePiecePeekable";
+import "./patchPieceService";
 import "./skipPromoPage";
 import "./sortCardsInTradePreview";
 
