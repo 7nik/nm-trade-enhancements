@@ -153,7 +153,15 @@
             filters: {...filters},
         };
         // no need to save these data
-        if (!filterSet.includeSett) filterSet.filters.sett = null;
+        if (!filterSet.includeSett) {
+            filterSet.filters.sett = null;
+        } else if (filterSet.filters.sett) {
+            // rid of the extra info
+            filterSet.filters.sett = {
+                id: filterSet.filters.sett.id,
+                name: filterSet.filters.sett.name,
+            };
+        }
         filterSet.filters.hiddenSetts.forEach(sett => {
             sett.tip = "";
         });
