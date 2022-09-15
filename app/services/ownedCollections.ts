@@ -1,10 +1,11 @@
 import type NM from "../utils/NMTypes";
 
 import NMApi from "../utils/NMApi";
+import { debug, LazyMap } from "../utils/utils";
+import currentUser from "./currentUser";
 
-const data: Record<number, Record<number,NM.SettMetrics>> = {};
-const loading: Record<number, Promise<NM.SettMetrics[]>> = {};
-const removing: Record<number, NodeJS.Timeout> = {};
+const data = new LazyMap<number, Record<number,NM.SettMetrics>>(300_000);
+const loading = new Map<number, Promise<NM.SettMetrics[]>>();
 
 /**
  * Fetches the info about collections that the user owns
@@ -12,57 +13,39 @@ const removing: Record<number, NodeJS.Timeout> = {};
  * @returns promise when the data get loaded
  */
 async function loadOwnership (userId: number) {
-    if (userId in data) {
+    if (data.has(userId)) {
         // cancel removing
-        if (userId in removing) {
-            clearTimeout(removing[userId]);
-        }
+        data.get(userId);
         return;
     }
-    if (userId in loading) {
-        await loading[userId];
+    if (loading.has(userId)) {
+        await loading.get(userId);
         return;
     }
-    loading[userId] = NMApi.user.ownedSettsMetrics(userId);
+    const promise = NMApi.user.ownedSettsMetrics(userId);
+    loading.set(userId, promise);
     try {
-        const setts = await loading[userId];
-        data[userId] = {};
+        const setts = await loading.get(userId)!;
+        const map = {} as Record<number,NM.SettMetrics>;
         for (const sett of setts) {
-            data[userId][sett.id] = sett;
+            map[sett.id] = sett;
         }
+        data.set(userId, map);
     } finally {
-        delete loading[userId];
+        loading.delete(userId);
     }
 }
 /**
  * Frees the user's info
  * @param userId - the user ID
  */
-async function removeOwnership (userId: number) {
-    if (userId in loading) await loading[userId];
-    if (userId in removing) {
-        clearTimeout(removing[userId]);
-    }
-    removing[userId] = setTimeout(() => {
-        delete data[userId];
-        delete removing[userId];
-    }, 300_000);
+ async function removeOwnership (userId: number) {
+    if (userId === currentUser.id) return;
+    if (loading.has(userId)) await loading.get(userId);
+    data.delete(userId);
+    debug(userId, "'s collections unloaded")
 }
 
-// type Progress = {
-//     name: string,
-//     permalink: string,
-//     coreCount: number,
-//     chaseCount: number,
-//     variantCount: number,
-//     legendaryCount: number,
-//     totalCount: number,
-//     coreOwned: number,
-//     chaseOwned: number,
-//     variantOwned: number,
-//     legendaryOwned: number,
-//     totalOwned: number,
-// }
 type Progress = {
     name: string,
     permalink: string,
@@ -89,19 +72,23 @@ type Progress = {
 }
 
 class UserCollections {
-    private collections;
-    constructor (collections: Record<number, NM.SettMetrics>) {
-        this.collections = collections;
+    #collections;
+    
+    constructor (userId: number) {
+        this.#collections = data.get(userId) ?? {};
     }
+    /**
+     * Get the user's collection as a list
+     */
     getCollections () {
-        return Object.values(this.collections);
+        return Object.values(this.#collections);
     }
     /**
      * Get info about collection progress
      * @param settId - series ID of the collection
      */
     getProgress (settId: number): Progress | null {
-        if (!this.collections[settId]) return null;
+        if (!this.#collections[settId]) return null;
         const {
             name,
             links: { permalink },
@@ -115,7 +102,7 @@ class UserCollections {
                 owned_variant_piece_count: variantOwned,
                 owned_legendary_piece_count: legendaryOwned,
             },
-        } = this.collections[settId];
+        } = this.#collections[settId];
         return {
             name,
             permalink,
@@ -144,9 +131,9 @@ class UserCollections {
 }
 
 export default async function (userId: number) {
-    if (!(userId in data)) await loadOwnership(userId);
+    if (!data.has(userId)) await loadOwnership(userId);
     return {
-        userCollections: new UserCollections(data[userId]),
+        userCollections: new UserCollections(userId),
         freeData: removeOwnership.bind(null, userId),
     };
 }

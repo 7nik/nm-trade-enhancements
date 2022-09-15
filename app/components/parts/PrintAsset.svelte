@@ -1,7 +1,6 @@
 <script context="module" lang="ts">
-    import { writable } from "svelte/store";
     import { loadValue } from "../../utils/storage";
-    import ownedCards from "../../services/ownedCards";
+    import OwnedCards from "../../services/ownedCards";
     import currentUser from "../../services/currentUser";
 
     type SIZES = "small" | "medium" | "large" | "large-promo" | "xlarge" | "original";
@@ -90,14 +89,7 @@
         observer.observe(video);
     }
 
-    /**
-     * A store of a function that check whether the current user owns any copy of the card
-     */
-    let hasPrint = writable((cardId: number) => cardId === -1);
-    currentUser.ready.then(async () => {
-        const { userCards } = await ownedCards(currentUser.id);
-        hasPrint.set(userCards.hasPrint.bind(userCards));
-    });
+    const ownedCards = new OwnedCards(currentUser.id);
 
     const muted = loadValue("muteVideo", true);
 </script>
@@ -140,16 +132,15 @@
     export let setSize = true;
     // export let showLoading = false;
 
-    let ownsPrint = $hasPrint(print.id);
-    let grayOut = !isPublic && !ownsPrint;
-    $: grayOut = !isPublic && !(ownsPrint = $hasPrint(print.id));
+    let ownsPrint = ownedCards.hasPrint(print.id, true);
+    $: grayOut = !isPublic && !$ownsPrint;
 
     // show max quality of the video if user owns the print
     // if the original is gif, it, of course, isn't played as video, but
     // image["original"] is still a gif (seems just a copy of the original)
     // so the original gets played as a video poster
     if (print.asset_type === "video" && size === "xlarge") {
-        if (!isPublic && ownsPrint) {
+        if (!isPublic && $ownsPrint) {
             size = "original";
         } else {
             size = "large";

@@ -1,30 +1,33 @@
 <script context="module" lang="ts">
     import type { UserCollections, Progress } from "../../services/ownedCollections";
 
-    import { writable } from "svelte/store";
     import getInfo from "../../services/ownedCollections";
 
-    const collections: Record<number, UserCollections> = {};
-    const dataChanges = writable(0);
-    const loading: Record<number, ReturnType<typeof getInfo>> = {};
+    const collections = new Map<number, UserCollections>();
+    const loading = new Map<number, ReturnType<typeof getInfo>>();
+    const collectionUsage: Record<number, number> = {};
 
-    async function preloadCollectionInfo (userId: number) {
-        loading[userId] = getInfo(userId);
-        collections[userId] = (await loading[userId]).userCollections;
-        dataChanges.update(n => n + 1);
+    function getCollectionInfo (userId: number) {
+        if (collections.has(userId)) return collections.get(userId)!;
+        if (loading.has(userId)) {
+            return loading.get(userId)!.then((data) => data.userCollections);
+        }
+        const promise = getInfo(userId);
+        loading.set(userId, promise);
+        return promise.then((data) => data.userCollections);
     }
     async function unloadCollectionInfo (userId: number) {
-        (await loading[userId])?.freeData();
-        delete loading[userId];
-        delete collections[userId];
+        if (!loading.has(userId)) return;
+        (await loading.get(userId))?.freeData();
+        loading.delete(userId);
+        collections.delete(userId);
     }
     function getProgress (userId: number, settId: number) {
-        if (collections[userId]) {
-            return collections[userId].getProgress(settId);
+        const collection = getCollectionInfo(userId);
+        if (collection instanceof Promise) {
+            return collection.then((data) => data.getProgress(settId));
         }
-        if (!loading[userId]) preloadCollectionInfo(userId);
-        return loading[userId]
-            .then(() => collections[userId]?.getProgress(settId));
+        return collection.getProgress(settId);
     }
     function makeLongTip (progress: Progress) {
         const types = ["core", "chase", "variant", "legendary"] as ("core"|"chase"|"variant"|"legendary")[];
@@ -45,8 +48,6 @@
     }
 
     export { 
-        preloadCollectionInfo, 
-        unloadCollectionInfo, 
         getProgress,
         makeShortTip,
         makeLongTip, 
@@ -61,6 +62,7 @@
     import type NM from "../../utils/NMTypes";
     
     import tippy from "tippy.js";
+    import { onDestroy } from "svelte";
 
     export let user: NM.User;
     /**
@@ -89,7 +91,15 @@
         progress.then(setTips);
     } else {
         setTips(progress);
-    }
+    }    
+    
+    collectionUsage[user.id] = 1 + (collectionUsage[user.id] ?? 0);
+    onDestroy(() => {
+        collectionUsage[user.id] -= 1;
+        if (collectionUsage[user.id] === 0) {
+            unloadCollectionInfo(user.id);
+        }
+    });
 </script>
 
 <svelte:options immutable />

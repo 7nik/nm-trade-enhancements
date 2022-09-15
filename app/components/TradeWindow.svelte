@@ -26,12 +26,10 @@
     You must provide at least either `tradeId` or `actors`.
  -->
  <script lang="ts">
-    import { onDestroy } from "svelte";
     import Button from "./elements/Button.svelte";
     import TradeWindowList from "./parts/TradeWindowOffer.svelte";
     import NMApi from "../utils/NMApi";
     import { alert, confirm } from "./dialogs/modals";
-    import { preloadUserInfo, unloadUserInfo } from "./parts/PrintDetails.svelte";
     import currentUser from "../services/currentUser";
 
     /**
@@ -124,8 +122,6 @@
 
             mode = "view";
             action = trade.state;
-            preloadUserInfo(actors.you.id);
-            preloadUserInfo(actors.partner.id);
         });
     // load the initial data
     } else {
@@ -177,13 +173,7 @@
 
         mode = "edit";
         action = "create";
-        preloadUserInfo(actors.you.id);
-        preloadUserInfo(actors.partner.id);
     }
-
-    onDestroy(() => {
-        if (actors) unloadUserInfo(actors.partner.id);
-    });
 
     /**
      * Start a new trade

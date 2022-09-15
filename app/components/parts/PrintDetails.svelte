@@ -1,31 +1,20 @@
 <script context="module" lang="ts">
-    import type { OwnedCards } from "../../services/ownedCards";
+    import OwnedCards from "../../services/ownedCards";
+    import { derived } from "svelte/store";
 
-    import { writable } from "svelte/store";
-    import getInfo from "../../services/ownedCards";
-    import { preloadCollectionInfo, unloadCollectionInfo } from "./CollectionProgress.svelte";
+    const cardInfo = new Map<number, OwnedCards>();
+    const cardInfoUsage: Record<number, number> = {};
 
-    const cardInfo: Record<number, OwnedCards> = {};
-    const loading: Record<number, ReturnType<typeof getInfo>> = {};
-    const getPrintCount = writable(
-        (userId: number, cardId: number) => cardInfo[userId]?.getPrintCount(cardId)
-    );
-
-    async function preloadUserInfo (userId: number) {
-        preloadCollectionInfo(userId);
-        loading[userId] = getInfo(userId);
-        cardInfo[userId] = (await loading[userId]).userCards;
-        // to change the reference
-        getPrintCount.update(() => (userId, cardId) => cardInfo[userId]?.getPrintCount(cardId));
+    function getPrintCount(userId: number, cardId: number, defCount: number | null = null) {
+        if (!cardInfo.has(userId)) {
+            cardInfo.set(userId, new OwnedCards(userId));
+        }
+        const ownedCards = cardInfo.get(userId)!;
+        return derived(
+            [ownedCards.getPrintCount(cardId, true), ownedCards.loading],
+            ([count, loading]) => (loading ? defCount : count),
+        );
     }
-    async function unloadUserInfo (userId: number) {
-        if (!userId) return;
-        unloadCollectionInfo(userId);
-        (await loading[userId])?.freeData();
-        delete loading[userId];
-        delete cardInfo[userId];
-    }
-    export { preloadUserInfo, unloadUserInfo };
 </script>
 <!-- @component
     Renders a print in the trade window, may change the print number
@@ -39,6 +28,8 @@
     import NMApi from "../../utils/NMApi";
     import { getTrades as trades } from "../../utils/cardsInTrades";
     import { tradePreview } from "../tradePreviews";
+    import { onDestroy } from "svelte";
+    import { num2text } from "../../utils/utils";
 
     /**
      * The involved users
@@ -100,21 +91,32 @@
             }
         }
     }
-    // the number of copies, init with data from the trade, if available
-    let youOwn: number | null = print.own_counts 
-        ? actors.youAreBidder 
-            ? print.own_counts.bidder 
-            : print.own_counts.responder
-        : null;
-    let partnerOwns: number | null = print.own_counts 
-        ? actors.youAreBidder 
-            ? print.own_counts.responder
-            : print.own_counts.bidder 
-        : null;
-    // data in the trade can be outdated because it is cached
-    // so, load the actual data
-    $: youOwn = $getPrintCount(actors.you.id, print.id) ?? youOwn;
-    $: partnerOwns = $getPrintCount(actors.partner.id, print.id) ?? partnerOwns;
+    // the number of copies, init with data from the trade, if available,
+    // but the data in the trade can be outdated because it's cached 
+    // so, anyway load the actual data
+    const youOwn = getPrintCount(
+        actors.you.id,
+        print.id,
+        actors.youAreBidder 
+            ? (print.own_counts?.bidder ?? null) 
+            : (print.own_counts?.responder ?? null),
+    );
+    const partnerOwns = getPrintCount(
+        actors.partner.id,
+        print.id,
+        actors.youAreBidder 
+            ? (print.own_counts?.responder ?? null)
+            : (print.own_counts?.bidder ?? null), 
+    );
+
+    cardInfoUsage[actors.partner.id] = 1 + (cardInfoUsage[actors.partner.id] ?? 0);
+    onDestroy(() => {
+        cardInfoUsage[actors.partner.id] -= 1;
+        if (cardInfoUsage[actors.partner.id] === 0) {
+            cardInfo.get(actors.partner.id)?.stop();
+            cardInfo.delete(actors.partner.id);
+        }
+    });
 </script>
 
 <svelte:options immutable/>
@@ -178,11 +180,11 @@
 
         <dt class=small-caps>Own</dt>
         <dd>
-            <span class=you-own class:text-warning={youOwn === 0}>
-                You own {youOwn ?? "?"}.
+            <span class=you-own class:text-warning={$youOwn === 0}>
+                You own {$youOwn ?? "?"}.
             </span> 
-            <span class=partner-owns class:text-warning={partnerOwns === 0}>
-                {actors.partner.first_name} owns {partnerOwns ?? "?"}.
+            <span class=partner-owns class:text-warning={$partnerOwns === 0}>
+                {actors.partner.first_name} owns {$partnerOwns ?? "?"}.
             </span>
         </dd>
     </dl>

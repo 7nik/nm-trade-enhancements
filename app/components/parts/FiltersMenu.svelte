@@ -199,18 +199,17 @@
     import type { rarityCss } from "../../utils/NMTypes";
     import type { Actors } from "../TradeWindow.svelte";
     import type { Writable } from "svelte/store";
-    import type { OwnedCards } from "../../services/ownedCards";
     import type { UserCollections } from "../../services/ownedCollections";
 
     import { writable } from "svelte/store";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onDestroy } from "svelte";
     import ownedCollections from "../../services/ownedCollections";
     import { getProgress, makeShortTip } from "./CollectionProgress.svelte";
     import DoubleRange from "../elements/DoubleRange.svelte";
     import Toggle from "../elements/Toggle.svelte";
     import Dropdown from "../elements/Dropdown.svelte";
     import { getTrades } from "../../utils/cardsInTrades";
-    import userCards from "../../services/ownedCards";
+    import OwnedCards from "../../services/ownedCards";
     import { error, num2text } from "../../utils/utils";
 
     /**
@@ -660,8 +659,12 @@
     function inRange(value: number, [start, end]: [number, number]) {
         return start <= value && value <= end;
     }
-    let holdersCards: OwnedCards | null = null;
-    let oppositesCards: OwnedCards | null = null;
+    const holdersCards = new OwnedCards(cardOwner.id);
+    const oppositesCards = new OwnedCards(oppositeOwnerId);
+    onDestroy(() => {
+        holdersCards.stop();
+        oppositesCards.stop();
+    });
     /**
      * Apply the filters to the prints
      * @param prints - the prints to filters
@@ -683,21 +686,15 @@
         }
         // card hiding based on card owner's number of owned copies
         if (isFilterActive.holderOwns) {
-            if (!holdersCards) {
-                holdersCards = (await userCards(cardOwner.id)).userCards;
-            }
             prints = prints.filter((print) => {
-                const count = holdersCards!.getPrintCount(print.id);
+                const count = holdersCards.getPrintCount(print.id);
                 return inRange(count, filters.holderOwns);
             })
         }
         // card hiding based on opposite user's number of owned copies
         if (isFilterActive.oppositeOwns) {
-            if (!oppositesCards) {
-                oppositesCards = (await userCards(oppositeOwnerId)).userCards;
-            }
             prints = prints.filter((print) => {
-                const count = oppositesCards!.getPrintCount(print.id);
+                const count = oppositesCards.getPrintCount(print.id);
                 return inRange(count, filters.oppositeOwns);
             })
         }

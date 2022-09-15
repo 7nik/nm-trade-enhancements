@@ -1,85 +1,119 @@
-import type NM from "../utils/NMTypes";
+import type { Readable, Writable } from "svelte/store";
 
+import { derived } from "svelte/store";
 import NMApi from "../utils/NMApi";
-import addPatches from "../utils/patchAngular";
-import type Services from "../utils/NMServices";
 import currentUser from "./currentUser";
-import { alert } from "../components/dialogs/modals";
-import { error } from "../utils/utils";
+import { debug, LazyMap } from "../utils/utils";
+import { writable } from "svelte/store";
 
-const data: Record<number, Record<number,number>> = {};
-const loading: Record<number, Promise<NM.PrintCount[]>> = {};
-const removing: Record<number, NodeJS.Timeout> = {};
+const map = new LazyMap<number, Writable<Record<number,number>>>(300_000);
 
 /**
  * Fetches the number of copies the user owns
  * @param userId - the cards owner ID
- * @returns promise when the data get loaded
+ * @returns a store with cards owned by the user
  */
-async function loadOwnership (userId: number) {
-    if (userId in data) {
-        // cancel removing
-        if (userId in removing) {
-            clearTimeout(removing[userId]);
-            delete removing[userId];
+function getPrintCounts (userId: number) {
+    if (map.has(userId)) return map.get(userId)!;
+    let loaded = false;
+    const store = writable({}, (set) => {
+        if (!loaded) {
+            NMApi.user.printCounts(userId).then((printCounts) => {
+                loaded = true;
+                set(Object.fromEntries(printCounts));
+            });
         }
-        return;
+        return () => {
+            // do not delete the current user
+            if (userId !== currentUser.id) {
+                map.delete(userId);
+                debug(userId, "' owned cards removing")
     }
-    if (userId in loading) {
-        await loading[userId];
-        return;
     }
-    if (userId < 0) {
-        data[userId] = {};
-        return;
+    });
+    map.set(userId, store);
+    return store;
     }
-    loading[userId] = NMApi.user.printCounts(userId);
-    try {
-        data[userId] = Object.fromEntries(await loading[userId]);
-    } finally {
-        delete loading[userId];
-    }
-}
-/**
- * Frees the user's info
- * @param userId - the user ID
- */
-async function removeOwnership (userId: number) {
-    if (userId in loading) await loading[userId];
-    if (userId in removing) {
-        clearTimeout(removing[userId]);
-    }
-    // schedule removing in 5 min
-    removing[userId] = setTimeout(() => {
-        delete data[userId];
-        delete removing[userId];
-    }, 300_000);
-}
 
 class OwnedCards {
-    private cardCounts;
-    constructor (cardCounts: Record<number, number>) {
-        this.cardCounts = cardCounts;
-    }
+    #cardCounts: Record<number, number> = {};
+    #store;
+    #unsubscribe;
+    #loading;
+
+    constructor (userId: number) {
+        this.#store = getPrintCounts(userId);
+        this.#loading = derived(
+            this.#store, 
+            (cardCounts) => Object.keys(cardCounts).length === 0,
+        );
+        this.#unsubscribe = this.#store.subscribe((cardCounts) => {
+            this.#cardCounts = cardCounts;
+        });
+}
+/**
+     * Update the #store
+ */
+    #update() {
+        this.#store.set(this.#cardCounts);
+}
+
     /**
-     * Get the number of copies of a card the user owns
-     * @param cardId - the card ID
+     * Whether the data is still loading
      */
-    getPrintCount (cardId: number) {
-        return this.cardCounts[cardId] ?? 0;
+    get loading() {
+        return this.#loading;
     }
+
     /**
      * Add one copy to the list of owned prints
      * @param cardIds - the card ID
      */
     addPrints (cardIds: number[]) {
         cardIds.forEach((cardId) => {
-            if (cardId in this.cardCounts) {
-                this.cardCounts[cardId] += 1;
+            if (cardId in this.#cardCounts) {
+                this.#cardCounts[cardId] += 1;
             } else {
-                this.cardCounts[cardId] = 1;
+                this.#cardCounts[cardId] = 1;
             }
         });
+        this.#update();
+    }
+    /**
+     * Get the number of copies of a card the user owns
+     * @param cardId - the card ID
+     * @param asStore - return result as a store, default - no
+     */
+    getPrintCount (cardId: number): number;
+    getPrintCount (cardId: number, asStore: true): Readable<number>;
+    getPrintCount (cardId: number, asStore = false) {
+        return asStore
+            ? derived(this.#store, (cardCounts) => cardCounts[cardId] ?? 0)
+            : this.#cardCounts[cardId] ?? 0;
+    }
+    /**
+     * Whether the user owns any copy of the card
+     * @param cardId - the card ID
+     * @param asStore - return result as a store, default - no
+     */
+    hasPrint (cardId: number): boolean;
+    hasPrint (cardId: number, asStore: true): Readable<boolean>;
+    hasPrint (cardId: number, asStore = false) {
+        return asStore
+            ? derived(this.#store, (cardCounts) => cardCounts[cardId] > 0)
+            : this.#cardCounts[cardId] > 0;
+    }
+    /**
+     * Remove the given number copies from the list of owned prints
+     * @param cards - array of the card ID and number of copies to remove
+     */
+    removeMultiplePrints (cards: [number, number][]) {
+        cards.forEach(([cardId, count]) => {
+            if (this.#cardCounts[cardId] > 0) {
+                this.#cardCounts[cardId] = Math.max(0, this.#cardCounts[cardId] - count);
+            }
+        });
+        this.#update();
     }
     /**
      * Remove one copy from the list of owned prints
@@ -87,37 +121,23 @@ class OwnedCards {
      */
     removePrints (cardIds: number[]) {
         cardIds.forEach((cardId) => {
-            if (this.cardCounts[cardId] > 0) {
-                this.cardCounts[cardId] -= 1;
+            if (this.#cardCounts[cardId] > 0) {
+                this.#cardCounts[cardId] -= 1;
             }
         });
+        this.#update();
     }
     /**
-     * Whether the user owns any copy of the card
-     * @param cardId - the card ID
+     * Stop to listen for changes of owned cards
      */
-    hasPrint (cardId: number) {
-        return this.cardCounts[cardId] > 0;
+    stop() {
+        this.#unsubscribe();
     }
 }
-/**
- * Get object about number of copies of each card the used owns
- * @param userId - the user ID
- * @returns the object itself and method to free up the data from cache
- */
-export default async function (userId: number) {
-    if (!(userId in data)) await loadOwnership(userId);
-    return {
-        userCards: new OwnedCards(data[userId]),
-        freeData: removeOwnership.bind(null, userId),
-    };
-};
-export type { OwnedCards }
 
-currentUser.ready.then(() => {
-    loadOwnership(currentUser.id);
-});
+export default OwnedCards;
 
+if (currentUser.isAuthenticated) getPrintCounts(currentUser.id);
 // update owned cards new a trade get accepted
 NMApi.trade.onTradeRemoved(async (tradeEvent) => {
     if (tradeEvent.verb_phrase !== "accepted") return;
