@@ -177,7 +177,7 @@
                     {/key}
                 {/each}
             {:else}
-                <span class="active-filter">
+                <span class="active-filter all-cards">
                     All cards
                 </span>
             {/if}
@@ -281,6 +281,9 @@
         border: 1px solid #d6d6d6;
         font-size: 12px;
         border-radius: 5px;
+    }
+    .active-filter.all-cards {
+        padding: 2px 5px;
     }
     .active-filter .active-filter--prefix {
         padding: 2px 5px;
