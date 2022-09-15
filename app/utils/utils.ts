@@ -42,12 +42,13 @@ export function getCookie (name: string) {
 /**
  * Converts numbers to text using SI prefixes
  * @param val - a number to convert
+ * @param precision - number of digits after the point, default - 1
  * @returns a short text representation of the number
  */
-export function num2text(val: number) {
+export function num2text(val: number, precision = 1) {
     // when val == 0, we get -Infinity * 0 = NaN
     const power = Math.floor(Math.log10(Math.abs(val)) / 3) * Math.sign(val);
-    const v = Math.floor(val / 1000**power * 10) / 10;
+    const v = Math.floor(val / 1000**power * 10**precision) / 10**precision;
     switch (isNaN(power) || power) {
         case -Infinity: return "-∞";
         case -8: return `${v}y`;
