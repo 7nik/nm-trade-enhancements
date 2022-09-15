@@ -3,12 +3,12 @@ import type { Manager } from "socket.io-client";
 
 import { debug, getCookie } from "./utils";
 import Collection from "./Collection";
-import { login } from "../components/dialogs/modals";
+import config from "../services/config";
+import { getInitValue } from "../services/init";
 
-const MAIN_SERVER = location.host;
-const NAPI_SERVER = location.host.startsWith("staging") ? "napi-staging.neonmob.com" : "napi.neonmob.com"
+const MAIN_SERVER = location.origin;
+const NAPI_SERVER = config["node-api-endpoint"];
 
-let logging: Promise<void> | null = null;
 let lastRequest: Promise<any> = Promise.resolve();
 /**
  * API call to server
@@ -20,8 +20,8 @@ let lastRequest: Promise<any> = Promise.resolve();
 function api<T> (type: ("api" | "napi" | "full"), url: string, body?: RequestInit): Promise<T> {
     let fullUrl: string;
     switch (type) {
-        case "api":  fullUrl = `https://${MAIN_SERVER}/api${url}`; break;
-        case "napi": fullUrl = `https://${NAPI_SERVER}${url}`;     break;
+        case "api":  fullUrl = `${MAIN_SERVER}/api${url}`; break;
+        case "napi": fullUrl = `${NAPI_SERVER}${url}`;     break;
         case "full": fullUrl = url;
     }
     // TODO: allow parallel
@@ -35,11 +35,8 @@ function api<T> (type: ("api" | "napi" | "full"), url: string, body?: RequestIni
             const data = await res.json();
             if (res.status === 401) {
                 // await when user sign in and re-try the request
-                if (!logging) {
-                    logging = login();
-                }
-                await logging;
-                logging = null;
+                const auth = await getInitValue<Function>("auth");
+                await auth();
                 return fetch(fullUrl, body).then(res => res.json());
             }
             if (data.detail) {
@@ -159,8 +156,8 @@ function merge<Data extends object>(data: NM.Unmerged.Container<Data>): Data {
 
 type Paginated<T> = {
     count: number,
-    next: string | null,
-    previous: string | null,
+    next: fullURL | null,
+    previous: fullURL | null,
     results: T[],
 }
 type Paginator<T> = {

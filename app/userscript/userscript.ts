@@ -1,4 +1,5 @@
-import "../enhancements/index";
+import "./initServices";
+import "../enhancements/index.ts";
 
 import css from "../enhancements/index.css";
 
