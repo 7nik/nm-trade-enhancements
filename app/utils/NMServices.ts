@@ -1,3 +1,4 @@
+import type { Socket } from "socket.io-client";
 import type { CurrentUser } from "./NMTypes";
 import type NM from "./NMTypes";
 
@@ -192,6 +193,12 @@ declare namespace Services {
         BONUS_PACK_FREQUENCY: 0.14;
     }
 
+    type ArtContentTypes = {
+        "social_network.conversation": number,
+        "submissions.settconcept": number,
+        "art.sett": number,
+    }
+
     type ArtMessage = {
         ALERT_ICON_CLASS: "icon-warning",
         CONFIRM_ICON_CLASS: "icon-checkmark",
@@ -216,21 +223,21 @@ declare namespace Services {
     }
 
     type ArtNotificationCenter = {
-        show: (notifType: string, options: object) => void,
+        show: (notifType: string, options?: object) => void,
         hide: () => void,
         getState: () => any,
-        getSuggestion: (notifType: string) => NM.Event<any, any, any>[],
-        getTradeOffer: () => NM.TradeEvent[],
-        getNotificationsByType: (notifType: string) => NM.Event<any, any, any>[],
+        getSuggestion: (notifType: string) => NM.Notification<any, any, any>[],
+        getTradeOffer: () => NM.TradeNotification[],
+        getNotificationsByType: (notifType: string) => NM.Notification<any, any, any>[],
         getUnreadNotificationCountByType: (notifType: string) => number,
         getTotalUnreadNotificationCount: () => number,
         markNotificationsAsRead: (notifIds: number[], notifType: string) => void,
         dismissTradeOffers: (notifId: number, notifType: string) => void,
-        getMilestoneSuggestions: (type: string) => null | NM.Event<any, any, any>[],
-        getTradeExpirationTime: (trade: NM.TradeEvent) => Date,
+        getMilestoneSuggestions: (type: string) => null | NM.Notification<any, any, any>[],
+        getTradeExpirationTime: (trade: NM.TradeNotification) => Date,
         getSuggestionsWhenNavClick: () => void,
-        getTradeOffers: (type: string) => NM.TradeEvent[],
-        fetchTradeOffers: () => NM.TradeEvent[],
+        getTradeOffers: (type: string) => NM.TradeNotification[],
+        fetchTradeOffers: () => NM.TradeNotification[],
     }
 
     type ArtOverlay = {
@@ -354,6 +361,27 @@ declare namespace Services {
         updateCredits: (balance: number) => void,
     }
     
+    type ArtWebSocket = {
+        connect: (namespace: string) => Socket,
+        connectSortedList: (namespace: string, options: {
+            id?: number | null,
+            sort?: (a:object, b:object)=>number,
+            onLoadInitial?: (data:{results:object[],count?:number}) => void,
+            onLoad?: (data: object[]) => void,
+            onAddItem?: (data: object) => void,
+            onRemoveItem?: (data: object) => void,
+        }) => {
+            socket: Socket,
+            list: object[],
+            loading: boolean,
+            totalCount: number,
+            leave(): void
+            addItem(item:object): void,
+            removeItem(item:object): void,
+            fetchMore(): void,
+        },
+    }
+
     type ImageService = {
         preload: (url: string) => Promise<HTMLImageElement>,
         preloadAll: (urls: string[]) => Promise<HTMLImageElement[]>,

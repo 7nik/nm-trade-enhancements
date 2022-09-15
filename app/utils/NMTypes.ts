@@ -1,11 +1,9 @@
-import type IO from "socket.io-client";
-
 type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
 type XOR<T, U> = (T | U) extends object ? (Without<T, U> & U) | (Without<U, T> & T) : T | U;
 
-export type fullURL = string
-export type absoluteURL = string
-export type queryURL = string // starting with "?"
+export type fullURL = `https://${string}`
+export type absoluteURL = `/${string}`
+export type queryURL = `?${string}`
 export type timestamp = string
 
 export type CurrentUser = Omit<NM.User, "name"|"first_name"|"last_name"> & {
@@ -70,8 +68,6 @@ declare global {
             uid: string,
         }
     }
-    // NM uses io@1.3.5 but the minimal typed one is v3
-    var io: IO.Manager;
 }
 
 declare namespace NM {
@@ -127,6 +123,10 @@ declare namespace NM {
         carats_multiplier: number
     }
 
+    type BadgeNotification = Notification<{
+        type: "badge-obtained",
+    }, "badge", "hit">
+
     type Card = {
         id: number,
         name: string,
@@ -160,28 +160,18 @@ declare namespace NM {
         favorite: boolean,
     }
 
-    type Event<Data extends object, Verb extends string, Phrase extends string> = {
-        id: string, // event id
-        read: boolean,
-        verb: Verb,
-        verb_phrase: Phrase,
-        actor: {
-            action_data?: string|null,
-            avatar: { small: Image, large: Image },
-            first_name: string,
-            id: number,
-            name: string,
-            time: timestamp,
-            username: string,
-        },
-        object: Data & {
-            notification_type: string|null,
-            noun: string,
-            type: string,
-            images: fullURL[],
-            url?: absoluteURL,
-        }
-    }
+    type ComingSoonNotification = Notification<{
+        noun: "Series-remainder",
+        type: "Series-remainder",
+        name_slug: string,
+    }, "coming-soon", "coming-soon">
+
+    type ConversationInfo = MessageNotification["object"];
+
+    type FriendNotification = Notification<{
+        noun: "friend",
+        type: "friend",
+    }, "friend", "added"/* more verbs? */>
 
     type Error = {
         detail: string,
@@ -191,6 +181,73 @@ declare namespace NM {
         width: number,
         height: number,
         url: fullURL
+    }
+
+    /**
+     * A message in a conversation
+     */
+    type Message = {
+        id: number, // msg id
+        user_id: number,
+        comment: string,
+        created: timestamp,
+        modified: timestamp,
+        attachment?: Pick<Trade, "id"|"bidder_offer"|"responder_offer"|"state"> & {
+            type: "trade",
+            active: boolean,
+            bidder_id: number,
+            responder_id: number,
+            url: queryURL,
+        },
+    }
+
+    /**
+     * A conversation preview (the last message)
+     */
+    type MessageNotification = Notification<{
+        // the message is in `actor.actor_action`
+        notification_type: "messages",
+        noun: "Conversation",
+        type: "conversation",
+        users: UserCollocutor[],
+    }, "comment", "commented on">
+
+    type Milestone = {
+        name: string,
+        sett: Pick<Sett, "id"|"name"|"creator"|"difficulty"|"public_url"|"sett_assets">,
+        reward: number,
+        css_class: rarityCss,
+        image: fullURL,
+        owned: number,
+        total: number,
+        discontinue_date?: timestamp, 
+        completed_date?: timestamp,
+    };
+
+    type Notification<Data extends object, Verb extends string, Phrase extends string> = {
+        id: string, // event id
+        read: boolean,
+        verb: Verb,
+        verb_phrase: Phrase,
+        actor: {
+            action_data?: string|null,
+            avatar: { small: fullURL, large: fullURL },
+            first_name: string,
+            id: number,
+            name: string,
+            time: timestamp,
+            username: string,
+        },
+        object: Omit<{
+            id: number,
+            notification_type: string|null,
+            noun: string,
+            type: string,
+            images: fullURL[],
+            images_class?: string | null,
+            url?: absoluteURL,
+            users: UserMinimal[],
+        }, keyof Data> & Data,
     }
 
     type Pack = {
@@ -377,18 +434,9 @@ declare namespace NM {
         parent: null,
     }
 
-    type TradeEvent = Event<{
+    type TradeNotification = Notification<{
         type: "trade-event",
         noun: "trade",
-        users: [
-            {
-                username: string,
-                first_name: string,
-                id: number,
-                name: string
-            }
-        ],
-        id: number, // trade id
         expires_on: timestamp,
         completed: timestamp | null,
         url: queryURL,
@@ -398,20 +446,7 @@ declare namespace NM {
         id: number,
         name: string,
         name_slug: string,
-        creator: {
-            id: number,
-            username: string,
-            name: string,
-            first_name: string,
-            avatar: {
-                small: fullURL,
-                large: fullURL
-            },
-            link: absoluteURL,
-            twitter_username: null | string,
-            pro_status: 0|1,
-            pro_badge: null | string
-        },
+        creator: Omit<UserFriend, "url">,
         description: string,
         percent_sold_out: number,
         free_packs_claimed_percent: number,
@@ -560,6 +595,24 @@ declare namespace NM {
         bio: string,
         trader_score: number
     }
+
+    type UserCollocutor = Omit<NM.User, "last_name"> & { 
+        pro_badge: string|null,
+        pro_status: 0|1,
+    }
+
+    type UserFriend = Pick<User, "id"|"username"|"name"|"first_name"|"avatar" > & {
+        link: absoluteURL,
+        twitter_username: null | string,
+        pro_status: 0|1,
+        pro_badge: null | string,
+        /**
+         * api endpoint
+         */
+        url: absoluteURL,
+    }
+
+    type UserMinimal = Pick<User, "id"|"name"|"first_name"|"username">
 
     type UserLevel = {
         name: string,
