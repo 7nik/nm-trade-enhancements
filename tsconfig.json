@@ -2,6 +2,7 @@
   "extends": "@tsconfig/svelte/tsconfig.json",
   "compilerOptions": {
     "target": "ESNext",
+    "module": "ESNext",
     "sourceMap": false,
     "inlineSources": false,
     "strict": true,

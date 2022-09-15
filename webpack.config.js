@@ -93,4 +93,7 @@ module.exports = {
         })],
     },
     devtool: false,
+    experiments: {
+        topLevelAwait: true,
+    },
 };
