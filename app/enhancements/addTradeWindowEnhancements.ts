@@ -8,6 +8,8 @@ import TradeWindow from "../components/TradeWindow.svelte";
 import addPatches from "../utils/patchAngular";
 import NMApi from "../utils/NMApi";
 import currentUser from "../services/currentUser";
+import { debug } from "../utils/utils";
+import config from "../services/config";
 
 addPatches(() => {
     angular.module("nm.trades").run([
@@ -50,6 +52,12 @@ addPatches(() => {
              * @param trade - completed trade
              */
             async function updateUserData (trade: NM.Trade) {
+                if (artNotificationCenter.getNotificationsByType(config.TRADES_KEY).length > 0) {
+                    artNotificationCenter.show(config.MESSAGES_KEY);
+                } else {
+                    artNotificationCenter.hide();
+                }
+
                 // _showBadges
                 if (trade.badges && trade.badges.length > 0) {
                     for (let badge of trade.badges) {
@@ -219,6 +227,8 @@ addPatches(() => {
                 });
                 artOverlay.show("trade-modal");
             };
+
+            debug("new trade window injected");
     }]);
 }, {
     // there will be Svelte component so remove everything
