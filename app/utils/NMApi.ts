@@ -65,7 +65,6 @@ function api<T> (type: ("api" | "napi" | "full"), url: string, body?: RequestIni
  */
 function post<T> (type: ("api" | "napi" | "full"), url: string, body?: BodyInit | object): Promise<T> {
     const headers: HeadersInit = {
-        // "Content-Type": "application/json",
         "X-CSRFToken": (getCookie("csrftoken") || ""),
     };
     // if it is a plain object
@@ -79,56 +78,26 @@ function post<T> (type: ("api" | "napi" | "full"), url: string, body?: BodyInit 
         headers,
     });
 }
+/**
+ * Does a DELETE request with CSRF token
+ * @param  {("api"|"napi"|"full")} type - Which API scheme use
+ * @param  {string} url - Relative URL to API
+ * @return {Promise<any>} Parsed JSON response
+ */
+function del<T> (type: ("api" | "napi" | "full"), url: string): Promise<T> {
+    return api<T>(type, url, {
+        method: "DELETE",
+        headers: {
+            "X-CSRFToken": (getCookie("csrftoken") || ""),
+        },
+    });
+}
 
 const cache: {
     trades: Collection<NM.Trade>,
 } = {
     trades: new Collection<NM.Trade>("cache:trades", 100),
 }
-
-
-type ListenerAddTrades = (trades: NM.TradeEvent[]) => void;
-type ListenerRemoveTrade = (trade: NM.TradeEvent) => void;
-
-const listeners: {
-    addTrades: ListenerAddTrades[],
-    removeTrade: ListenerRemoveTrade[],
-} = {
-    addTrades: [],
-    removeTrade: [],
-};
-const ioListeners = {
-    tradesLoaded({ results }: { results: NM.TradeEvent[] }) {
-        listeners.addTrades.forEach(fn => fn(results));
-    },
-    tradeAdded(result: NM.TradeEvent) {
-        listeners.addTrades.forEach(fn => fn([result]));
-    },
-    tradeRemoved(result: NM.TradeEvent) {
-        listeners.removeTrade.forEach(fn => fn(result));
-    },
-}
-
-let socketTrades: Manager | null = null;
-// set the connection when the NM's io will be available
-setTimeout(function fn() {
-    if (typeof io !== "undefined") {
-        socketTrades = io.connect(
-            "https://napi.neonmob.com/trades",
-            // @ts-ignore - io version doesn't match
-            { transports: ["websocket"] }, 
-        );
-        if (listeners.addTrades.length > 0) {
-            socketTrades.on("loadInitial", ioListeners.tradesLoaded);
-            socketTrades.on("addItem", ioListeners.tradeAdded);
-        }
-        if (listeners.removeTrade.length > 0) {
-            socketTrades.on("removeItem", ioListeners.tradeRemoved);
-        }
-    } else {
-        setTimeout(fn, 100);
-    }
-}, 0);
 
 /**
  * Merge objects into one which are returned by some endpoints
@@ -389,20 +358,107 @@ const API = {
         },
         /**
          * Get series favorited by a user
-         * @param id - the User ID
+         * @param id - the user ID
          * @returns array of favorited series
          */
         async favoriteSetts (id: number) {
             const data = await api<NM.Unmerged.Container<NM.Unmerged.FavoriteSetts>>("api", `/users/${id}/favorites/setts/`);
             return merge(data).results;
-        }
+        },
+        /**
+         * Get the current user's friends
+         * @returns paginated array of friends
+         */
+        async getFriends () {
+            return paginator(await api<Paginated<NM.UserFriend>>("api", "/friend/"));  
+        },
+        /**
+         * Check whether the user is in the current user's friend list
+         * @param userId - the user ID to check
+         * @returns is the user in the friend list
+         */
+        async isFriend (userId: number) {
+            return (await api<{is_friend:boolean}>("api", `/friend/${userId}/`)).is_friend;
+        },
+        /**
+         * Add the user to the friend list
+         * @param userId - user to add
+         */
+        addFriend(userId: number) {
+            return post<NM.UserFriend>("api", "/friend/", { id: userId });
+        },
+        /**
+         * Remove the user from the friend list
+         * @param userId - user to remove
+         */
+        removeFriend(userId: number) {
+            return del<void>("api", `/friend/${userId}/`);
+        },
+        /**
+         * Get users blocked by the current user
+         * @returns array of blocked users
+         */
+        getBlockedUsers () {
+            return api<NM.UserFriend[]>("api", "/block_user/");  
+        },
+        /**
+         * Check whether the user is blocked by the current user 
+         * or the user has blocked the current user
+         * @param userId - the user ID to check
+         * @returns whether blocked and who has blocked
+         */
+        isBlockedUser (userId: number) {
+            return api<{
+                is_blocked: boolean,
+                user_initiated: boolean,
+            }>("api", `/block_user/${userId}/`);  
+        },
+        /**
+         * Add the user to the blocked list
+         * @param userId - user to add
+         */
+        blockUser(userId: number) {
+            return post<NM.UserFriend>("api", "/block_user/", { id: userId });
+        },
+        /**
+         * Remove the user from the blocked list
+         * @param userId - user to remove
+         */
+        unblockUser(userId: number) {
+            return del<void>("api", `/block_user/${userId}/`);
+        },
+        /**
+         * Search for people over all the site
+         * @param query - the search query
+         * @returns paginated array of matched results
+         */
+        async searchPeople (query: string) {
+            const data = await post<Paginated<NM.UserFriend>>("api", "/friend/search/", { search: query });
+            return data.results;
+        },
+        /**
+         * Marks the notifications as read
+         * @param ids - notifications' IDs
+         * @param type - notifications type
+         */
+        markNotificationsRead (ids: string[], type: string) {
+            return post<unknown>("api", "/notifications/", {
+                ids, notification_type: type,
+            });
+        },
+        /**
+         * Get info about conversation with a user
+         * @param userId - the user to conversate
+         */
+        getConversationInfo (userId: number) {
+            return post<NM.ConversationInfo>("api", "/conversations/", { recipient: userId });
+        },
+
         // get: `/api/users/${id}`
         // displayCase: `/user/${id}/display-case`
         // secondsUntilFreebieReady: `/seconds-until-freebie-ready`
         // numFreebieLeft: POST '/num-freebie-left`
-        // friends: `/api/friend`
         // isFriend: `/api/friend/${id}`
-        // blockedUsers: `/api/block_user`
         // isUserBlocked: /api/block_user/${id}`
         // collection: /api/users/[USER_ID]/collections/[SET_ID]
     },
@@ -413,25 +469,25 @@ const API = {
  */
 liveListProvider("trades")
     .on("remove", (tradeEvent) => {
-    const trade = cache.trades.find(tradeEvent.object.id);
-    if (!trade) return;
-    trade.completed = tradeEvent.object.completed;
-    trade.completed_on = tradeEvent.object.completed;
-    trade.state = tradeEvent.verb_phrase;
-    trade.bidder_offer.prints.forEach((print) => {
-        if (print.own_counts) {
-            print.own_counts.bidder -= 1;
-            print.own_counts.responder += 1;
-        }
+        const trade = cache.trades.find(tradeEvent.object.id);
+        if (!trade) return;
+        trade.completed = tradeEvent.object.completed;
+        trade.completed_on = tradeEvent.object.completed;
+        trade.state = tradeEvent.verb_phrase;
+        trade.bidder_offer.prints.forEach((print) => {
+            if (print.own_counts) {
+                print.own_counts.bidder -= 1;
+                print.own_counts.responder += 1;
+            }
+        });
+        trade.responder_offer.prints.forEach((print) => {
+            if (print.own_counts) {
+                print.own_counts.bidder += 1;
+                print.own_counts.responder -= 1;
+            }
+        });
+        cache.trades.save();
     });
-    trade.responder_offer.prints.forEach((print) => {
-        if (print.own_counts) {
-            print.own_counts.bidder += 1;
-            print.own_counts.responder -= 1;
-        }
-    });
-    cache.trades.save();
-});
 
 export default API;
 export type { Paginator };

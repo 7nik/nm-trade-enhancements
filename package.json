@@ -1,6 +1,6 @@
 {
   "name": "neonmob-trade-enhancements",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "private": true,
   "description": "Adds enhancements to improve trading and usage experience",
   "scripts": {
@@ -18,7 +18,10 @@
     "supportURL": "https://github.com/7nik/nm-trade-enhancements/issues",
     "updateURL": "https://github.com/7nik/nm-trade-enhancements/releases/latest/download/userscript.meta.js",
     "downloadURL": "https://github.com/7nik/nm-trade-enhancements/releases/latest/download/userscript.user.js",
-    "match": "https://www.neonmob.com/*",
+    "match": [
+      "https://www.neonmob.com/*",
+      "https://staging.neonmob.com/*"
+    ],
     "exclude": [
       "https://www.neonmob.com/login*",
       "https://www.neonmob.com/"
@@ -47,6 +50,7 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "moment": "^2.29.4",
     "tippy.js": "^6.3.7"
   }
 }
