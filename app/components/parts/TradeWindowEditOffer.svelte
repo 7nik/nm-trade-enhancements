@@ -66,6 +66,7 @@
         // replacing stores with new ones after component destruction causes
         // calling the `unsubscribe` method for the second time and this throws errors
         loadPrintsKey = "";
+        loadMorePrintsKey = null;
     });
 
     $: if (filtersMenu) loadPrints();
