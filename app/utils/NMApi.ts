@@ -1,8 +1,9 @@
 import type NM from "./NMTypes";
-import type { Manager } from "socket.io-client";
+import type { fullURL } from "./NMTypes";
 
 import { debug, getCookie } from "./utils";
 import Collection from "./Collection";
+import { liveListProvider } from "./NMLiveApi";
 import config from "../services/config";
 import { getInitValue } from "../services/init";
 
@@ -319,27 +320,6 @@ const API = {
 
             return paginator(await api<Paginated<NM.PrintInTrade>>("api", `/search/prints/?${query}`));
         },
-        /**
-         * Listen for current and new trades
-         * @param callback - when trades are added
-         */
-        onTradesAdded (callback: ListenerAddTrades) {
-            listeners.addTrades.push(callback);
-            if (listeners.addTrades.length === 1) {
-                socketTrades?.on("loadInitial", ioListeners.tradesLoaded);
-                socketTrades?.on("addItem", ioListeners.tradeAdded);
-            }
-        },
-        /**
-         * Listen for completion of trades
-         * @param callback - when a trade get completed
-         */
-        onTradeRemoved (callback: ListenerRemoveTrade) {
-            listeners.removeTrade.push(callback);
-            if (listeners.removeTrade.length === 1) {
-                socketTrades?.on("removeItem", ioListeners.tradeRemoved);
-            }
-        },
         // completedTradeInfo: napi /activityfeed/story/trade/[TRADE_ID]
     },
     sett: {
@@ -431,7 +411,8 @@ const API = {
 /**
  * When a trade gets completed, updated the cached trade object if available
  */
-API.trade.onTradeRemoved((tradeEvent) => {
+liveListProvider("trades")
+    .on("remove", (tradeEvent) => {
     const trade = cache.trades.find(tradeEvent.object.id);
     if (!trade) return;
     trade.completed = tradeEvent.object.completed;

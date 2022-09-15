@@ -2,92 +2,72 @@ import type NM from "../utils/NMTypes";
 
 import Collection from "../utils/Collection";
 import NMApi from "../utils/NMApi";
+import { liveListProvider } from "../utils/NMLiveApi";
 
-/**
- * Add notifications of auto-withdrawn trades
- */
- function fixAutoWithdrawnTrade () {
-    if (typeof io === "undefined") {
-        setTimeout(fixAutoWithdrawnTrade, 100);
-        return;
-    }
+// current active trades
+let pendingTrades = new Collection<NM.TradeNotification>("pendingTrades");
+// the auto-withdrawn trades
+const hiddenTrades = new Collection<NM.TradeNotification>("hiddenTrades");
 
-    // current active trades
-    let pendingTrades = new Collection<NM.TradeEvent>("pendingTrades");
-    // the auto-withdrawn trades
-    const hiddenTrades = new Collection<NM.TradeEvent>("hiddenTrades");
-    const socketNotif = io.connect(
-        "https://napi.neonmob.com/notifications",
-        // @ts-ignore - io version doesn't match
-        { transports: ["websocket"] },
-    );
-
-    /**
-     * Show trade in notification if it was auto-withdrawn
-     * @param {object} trade - Trade info
-     */
-    function addAutoWithdrawnNotification (trade: NM.TradeEvent) {
-        if (trade.verb_phrase !== "auto-withdrew") return;
-        trade.read = false;
-        hiddenTrades.add(trade);
-        // add the trade to notifications
-        socketNotif.listeners("addItem")[0]?.(trade);
-    }
-
-    socketNotif.on("loadInitial", ({ results: notifications } : { results: NM.Event<{},string,string>[] }) => {
-        const minTime = new Date(notifications[notifications.length - 1].actor.time).getTime();
+const notifications = liveListProvider("notifications")
+    .on("init", (items) => {
+        const minTime = items.length
+            ? new Date(items[items.length - 1].actor.time).getTime()
+            : 0;
         // remove trades that go after the last notification
         hiddenTrades.remove((trade) => new Date(trade.actor.time).getTime() < minTime);
         if (hiddenTrades.count > 0) {
             // add the trade to notifications
-            const [addItem] = socketNotif.listeners("addItem");
-            if (addItem) {
-                hiddenTrades.forEach((trade) => addItem(trade));
-            } else {
-                notifications.push(...hiddenTrades);
-            }
+            hiddenTrades.forEach((trade) => notifications.forceAddItem(trade));
         }
     });
 
-    let firstTime = true;
-    NMApi.trade.onTradesAdded((trades) => {
-        if (firstTime) {
-            pendingTrades.remove(trades);
-            pendingTrades.forEach(async (trade) => {
-                trade.verb_phrase = (await NMApi.trade.get(trade.object.id, false)).state;
-                addAutoWithdrawnNotification(trade);
-            });
-            pendingTrades = new Collection("pendingTrades", trades);
-            firstTime = false;
-        } else {
-            pendingTrades.add(trades);
+/**
+ * Show trade in notification if it was auto-withdrawn
+ * @param {object} trade - Trade info
+ */
+function addAutoWithdrawnNotification (trade: NM.TradeNotification) {
+    if (trade.verb_phrase !== "auto-withdrew") return;
+    trade.read = false;
+    hiddenTrades.add(trade);
+    // add the trade to notifications
+    notifications.forceAddItem(trade);
+}
+
+// synchronize added notification status when they get read
+window.addEventListener("click", ({ target }) => {
+    if (!target) return;
+    // when clicked the notification
+    const notifElem = (target as Element).closest("li.nm-notifications-feed--item");
+    if (notifElem?.querySelector("[ng-bind-html='getVerbPhrase()']")?.textContent?.startsWith("auto-withdrew")) {
+        const id = notifElem.firstElementChild!.id.replace("notification-","");
+        const notification = hiddenTrades.find(id);
+        if (notification && !notification.read) {
+            // replace trade with read copy to avoid side-effect and save
+            hiddenTrades.add({ ...notification, read: true });
         }
-    });
-    NMApi.trade.onTradeRemoved(trade => {
+    // when clicked "Mark all read"
+    } else if ((target as Element).matches("a.text-link")) {
+        // replace trades with read copies to avoid side-effect and save
+        hiddenTrades.forEach((trade) => {
+            if (!trade.read) hiddenTrades.add({ ...trade, read: true });
+        });
+    }
+}, true);
+
+liveListProvider("trades")
+    .on("init", (trades) => {
+        pendingTrades.remove(trades);
+        pendingTrades.forEach(async (trade) => {
+            trade.verb_phrase = (await NMApi.trade.get(trade.object.id, false)).state;
+            addAutoWithdrawnNotification(trade);
+        });
+        pendingTrades = new Collection("pendingTrades", trades);
+    })
+    .on("add", (trade) => {
+        pendingTrades.add(trade);
+    })
+    .on("remove", (trade) => {
         pendingTrades.remove(trade);
         addAutoWithdrawnNotification(trade);
     });
-
-    // synchronize added notification status when they get read
-    window.addEventListener("click", ({ target }) => {
-        if (!target) return;
-        // when clicked the notification
-        const notifElem = (target as Element).closest("li.nm-notifications-feed--item");
-        if (notifElem?.querySelector("[ng-bind-html='getVerbPhrase()']")?.textContent?.startsWith("auto-withdrew")) {
-            const id = notifElem.firstElementChild!.id;
-            const notification = hiddenTrades.find(id);
-            if (notification && !notification.read) {
-                // replace trade with read copy to avoid side-effect and save
-                hiddenTrades.add({ ...notification, read: true });
-            }
-        // when clicked "Mark all read"
-        } else if ((target as Element).matches("a.text-link")) {
-            // replace trades with read copies to avoid side-effect and save
-            hiddenTrades.forEach((trade) => {
-                if (!trade.read) hiddenTrades.add({ ...trade, read: true });
-            });
-        }
-    }, true);
-}
-
-fixAutoWithdrawnTrade();

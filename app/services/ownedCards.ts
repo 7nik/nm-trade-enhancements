@@ -4,6 +4,7 @@ import { derived } from "svelte/store";
 import NMApi from "../utils/NMApi";
 import currentUser from "./currentUser";
 import { debug, LazyMap } from "../utils/utils";
+import { liveListProvider } from "../utils/NMLiveApi";
 import { writable } from "svelte/store";
 
 const map = new LazyMap<number, Writable<Record<number,number>>>(300_000);
@@ -28,12 +29,12 @@ function getPrintCounts (userId: number) {
             if (userId !== currentUser.id) {
                 map.delete(userId);
                 debug(userId, "' owned cards removing")
-    }
-    }
+            }
+        }
     });
     map.set(userId, store);
     return store;
-    }
+}
 
 class OwnedCards {
     #cardCounts: Record<number, number> = {};
@@ -50,13 +51,13 @@ class OwnedCards {
         this.#unsubscribe = this.#store.subscribe((cardCounts) => {
             this.#cardCounts = cardCounts;
         });
-}
-/**
+    }
+    /**
      * Update the #store
- */
+     */
     #update() {
         this.#store.set(this.#cardCounts);
-}
+    }
 
     /**
      * Whether the data is still loading
@@ -139,21 +140,22 @@ export default OwnedCards;
 
 if (currentUser.isAuthenticated) getPrintCounts(currentUser.id);
 // update owned cards new a trade get accepted
-NMApi.trade.onTradeRemoved(async (tradeEvent) => {
-    if (tradeEvent.verb_phrase !== "accepted") return;
-    debugger;
-    const trade = await NMApi.trade.get(tradeEvent.object.id);
-    let givenPrints = trade.bidder.id === currentUser.id ? trade.bidder_offer.prints : trade.responder_offer.prints;
-    let receivedPrints = trade.bidder.id === currentUser.id ? trade.responder_offer.prints : trade.bidder_offer.prints;
-    let ownedCards = new OwnedCards(data[currentUser.id]);
-    ownedCards.removePrints(givenPrints.map(p => p.id));
-    ownedCards.addPrints(receivedPrints.map(p => p.id));
+liveListProvider("trades")
+    .on("remove", async (tradeEvent) => {
+        if (tradeEvent.verb_phrase !== "accepted") return;
+        
+        const trade = await NMApi.trade.get(tradeEvent.object.id);
+        let givenPrints = trade.bidder.id === currentUser.id ? trade.bidder_offer.prints : trade.responder_offer.prints;
+        let receivedPrints = trade.bidder.id === currentUser.id ? trade.responder_offer.prints : trade.bidder_offer.prints;
+        let ownedCards = new OwnedCards(currentUser.id);
+        ownedCards.removePrints(givenPrints.map(p => p.id));
+        ownedCards.addPrints(receivedPrints.map(p => p.id));
 
-    const partnerId = trade.bidder.id === currentUser.id ? trade.responder.id : trade.bidder.id;
-    if (!(partnerId in data)) return;
-    givenPrints = trade.bidder.id === partnerId ? trade.bidder_offer.prints : trade.responder_offer.prints;
-    receivedPrints = trade.bidder.id === partnerId ? trade.responder_offer.prints : trade.bidder_offer.prints;
-    ownedCards = new OwnedCards(data[partnerId]);
-    ownedCards.removePrints(givenPrints.map(p => p.id));
-    ownedCards.addPrints(receivedPrints.map(p => p.id));
-});
+        const partnerId = trade.bidder.id === currentUser.id ? trade.responder.id : trade.bidder.id;
+        if (!map.has(partnerId)) return;
+        givenPrints = trade.bidder.id === partnerId ? trade.bidder_offer.prints : trade.responder_offer.prints;
+        receivedPrints = trade.bidder.id === partnerId ? trade.responder_offer.prints : trade.bidder_offer.prints;
+        ownedCards = new OwnedCards(partnerId);
+        ownedCards.removePrints(givenPrints.map(p => p.id));
+        ownedCards.addPrints(receivedPrints.map(p => p.id));
+    });

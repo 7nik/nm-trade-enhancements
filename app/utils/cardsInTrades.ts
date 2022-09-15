@@ -4,6 +4,7 @@ import type { Readable, Writable } from "svelte/store";
 import NMApi from "./NMApi";
 import { writable } from "svelte/store";
 import currentUser from "../services/currentUser";
+import { liveListProvider } from "./NMLiveApi";
 
 type GetTrades = {
     find: typeof getTradesFn
@@ -102,14 +103,18 @@ async function updateTrade (tradeId: number, change: -1|1) {
     (getTrades as Writable<GetTrades>).set({ find: getTradesFn });
 };
 
-NMApi.trade.onTradesAdded((trades) => {
-    trades.forEach(trade => updateTrade(trade.object.id, +1));
-    if (!ready) setReady();
-});
-NMApi.trade.onTradeRemoved((trade) => {
-    updateTrade(trade.object.id, -1);
-});
+liveListProvider("trades")
+    .on("init", async (trades) => {
+        await Promise.all(trades.map(trade => updateTrade(trade.object.id, +1)));
+        setReady();
+    })
+    .on("add", (trade) => {
+        updateTrade(trade.object.id, +1);
+    })
+    .on("remove", (trade) => {
+        updateTrade(trade.object.id, -1);
+    });
 
-export { cards, ready, getTrades };
+export { cards, getTrades };
 
 export type { GetTrades };

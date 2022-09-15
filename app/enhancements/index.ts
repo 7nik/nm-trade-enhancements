@@ -10,6 +10,7 @@ import "./addWishlistButton";
 import "./fixAutoWithdrawnTrade";
 import "./makePiecePeekable";
 import "./patchPieceService";
+import "./patchWebSockets";
 import "./skipPromoPage";
 import "./sortCardsInTradePreview";
 
