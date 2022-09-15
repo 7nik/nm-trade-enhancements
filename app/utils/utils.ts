@@ -3,15 +3,15 @@
  * @param args - data to log
  */
 export const debug = (...args: any[]) => { 
-    console.debug("[NM trade enhancement]", ...args); 
+    console.debug("[NMTE]", ...args); 
 };
 
 /**
  * Logs a signed error message
  * @param args - data to log
  */
-export const error = (...args: any[]) => { 
-    console.error("[NM trade enhancement]", ...args); 
+export const error = (msg: string, ...args: any[]) => { 
+    console.error("[NMTE]", new Error(msg), ...args); 
 };
 
 /**
