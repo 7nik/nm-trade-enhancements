@@ -22,5 +22,5 @@
     position: initial;
 }
 #messages .comments--field:not(:only-child) {
-    position: initial;
+    position: relative;
 }
