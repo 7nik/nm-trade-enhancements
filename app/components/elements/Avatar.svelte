@@ -12,12 +12,18 @@
      */
     export let size: "small" | "large" = "small";
 
+    let className = "";
+    /**
+     * Extra CSS classes
+     */
+    export {className as class};
+
     const dim = size === "small" ? 40 : 100;
 </script>
 
 <svelte:options immutable/>
 
-<span class="avatar {size}">
+<span class="avatar {size} {className}">
     <img src={user.avatar[size] || config.defaultAvatarUrl}
         alt={user.username}
         style="width: {dim}px; height: {dim}px;"
