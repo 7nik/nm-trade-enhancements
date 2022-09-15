@@ -31,7 +31,7 @@ function api<T> (type: ("api" | "napi" | "full"), url: string, body?: RequestIni
         .then(() => fetch(fullUrl, body), () => fetch(fullUrl, body))
         .then(async (res) => {
             if (res.ok) {
-                return res.json();
+                return res.status === 204 ? null : res.json();
             }
             const data = await res.json();
             if (res.status === 401) {
