@@ -248,7 +248,7 @@
      * Decline this trade
      */
     async function declineTrade() {
-        action = actors!.youAreBidder ? "decline" : "withdraw";
+        action = actors!.youAreBidder ? "withdraw" : "decline";
         if (!await confirm(`Confirm you want to ${action} this trade?`)) return;
         [action, mode] = ACTIONS[action];
         try {
