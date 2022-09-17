@@ -1,7 +1,7 @@
 # NeonMob Trade Enhancements changelog
 
 ## 3.1.1
-* Implement the sidebar, not include in the US as it provides nothing new
+* Implemented the sidebar, but not include in the US as it provides nothing new
 * Various fixes
 * Code improvements
 
@@ -16,3 +16,6 @@ It's a code of https://github.com/7nik/userscripts/blob/4b217c874b0703502126eb1e
 which was moved to TS, split into modules and the project was set up to 
 compile as both userscript and webextension.
 Now it seem to successfully compile with the same behavior as the original
+
+## before 3.0.0
+Changelog of changes in the previous versions is in [the NeonMob Forum](https://forum.neonmob.com/t/userscript-trade-enhancements/4535/2).
