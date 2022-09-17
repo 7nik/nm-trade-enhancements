@@ -289,8 +289,11 @@
         padding: 2px 5px;
         background: #d6d6d6;
     }
-    .active-filter * {
+    .active-filter > * {
         padding: 0 5px;
+    }
+    .active-filter > :global([class*="icon"] + [class*="icon"]) {
+        margin-left: -5px;
     }
     .active-filter :global(.i.rarity) {
         width: 14px;
