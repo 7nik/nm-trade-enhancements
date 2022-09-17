@@ -3,7 +3,7 @@
  -->
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { fly } from "svelte/transition";
+    import { fly, fade } from "svelte/transition";
     import { cubicIn } from "svelte/easing";
     import Button from "../elements/Button.svelte";
 
@@ -48,10 +48,13 @@
     <div id="message" class="nm-alert nm-alert-strict show {styleClass}"
         class:nm-alert-blur={blurry}
         on:click|self={() => { if (cancelable) close(null); }}
-        in:fly={{ y: -1000, duration: 200 }}
-        out:fly={{ y: -1000, duration: 200, easing: cubicIn }}
+        in:fade={{ duration: 100 }}
+        out:fade={{ delay: 150, duration: 100, easing: cubicIn }}
     >
-        <span class="nm-alert-message theme-dark theme-dark-background">
+        <span class="nm-alert-message theme-dark theme-dark-background"
+            in:fly={{ y: -1000, duration: 250 }}
+            out:fly={{ y: -1000, duration: 250, easing: cubicIn }}
+        >
             <slot/>
             <br>
             {#each buttons as button}            
