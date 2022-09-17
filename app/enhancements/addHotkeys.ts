@@ -17,9 +17,8 @@ function click (selector: string) {
  function addHotkeys (ev: KeyboardEvent) {
     // do not trigger hotkeys when user types a text
     const typing = ["TEXTAREA", "INPUT"].includes(document.activeElement?.tagName!);
-    if (typing) return;
 
-    if (["Enter", "NumpadEnter", "Space"].includes(ev.code)
+    if (!typing && ["Enter", "NumpadEnter", "Space"].includes(ev.code)
         && click("#message.show #confirm-btn, #message.show #ok-btn, #alert.show #alert-btn")
     ) {
         ev.preventDefault();
@@ -45,6 +44,6 @@ function click (selector: string) {
     }
 }
 
-document.addEventListener("keydown", addHotkeys, true);
+document.addEventListener("keyup", addHotkeys, true);
 
 export default null;
