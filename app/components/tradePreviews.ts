@@ -16,8 +16,12 @@ declare global {
  * @param tradeIds - the trade ids to preview
  * @param cardId - a card to highlight in the trades
  */
-async function attachTip (elem: HTMLElement, tradeIds: number[], cardId?: number) {
-    if (tradeIds.length === 0) return;
+async function attachTip (elem: HTMLElement, tradeIds: number[] | null, cardId?: number) {
+    // destroy previous tip if presented
+    // eslint-disable-next-line no-underscore-dangle
+    elem._tippy?.destroy();
+
+    if (!tradeIds || tradeIds.length === 0) return;
 
     const trades = await Promise.all(tradeIds.map((id) => NMApi.trade.get(id)));
 
@@ -30,9 +34,6 @@ async function attachTip (elem: HTMLElement, tradeIds: number[], cardId?: number
         },
     }).$on("click", () => elem._tippy?.hide());
 
-    // destroy previous tip if presented
-    // eslint-disable-next-line no-underscore-dangle
-    elem._tippy?.destroy();
     tippy(elem, {
         appendTo: document.body,
         delay: [350, 200],
@@ -48,7 +49,7 @@ async function attachTip (elem: HTMLElement, tradeIds: number[], cardId?: number
  * @param option.tradeIds - the IDs of the trades to preview
  * @param option.cardId - optional, the card ID to highlight
  */
-export function tradePreview (elem: HTMLElement, { tradeIds, cardId }: { tradeIds: number[], cardId?: number }) {
+export function tradePreview (elem: HTMLElement, { tradeIds, cardId }: { tradeIds: number[] | null, cardId?: number }) {
     attachTip(elem, tradeIds, cardId);
     return {
         update({ tradeIds, cardId }: { tradeIds: number[], cardId?: number }) {

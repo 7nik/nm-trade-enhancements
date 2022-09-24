@@ -208,7 +208,7 @@
     import DoubleRange from "../elements/DoubleRange.svelte";
     import Toggle from "../elements/Toggle.svelte";
     import Dropdown from "../elements/Dropdown.svelte";
-    import { getTrades } from "../../utils/cardsInTrades";
+    import { isTrading } from "../../utils/cardsInTrades";
     import OwnedCards from "../../services/ownedCards";
     import { error, num2text } from "../../utils/utils";
 
@@ -456,6 +456,7 @@
         if (!filterSet) return;
         if (await deleteFilterSet(filterSet)) {
             filterSet = null;
+            conformFilters();
         }
     }
 
@@ -681,7 +682,7 @@
         // hide cards involved in other trades
         if (isFilterActive.notInTrades) {
             prints = prints.filter((print) => {
-                return $getTrades.find(print, isItYou ? "give" : "receive", isItYou ? "print" : "card").length === 0;
+                return isTrading(print, isItYou ? "give" : "receive", isItYou ? "print" : "card");
             });
         }
         // card hiding based on card owner's number of owned copies

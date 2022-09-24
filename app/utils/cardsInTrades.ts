@@ -1,79 +1,93 @@
 import type NM from "./NMTypes";
-import type { Readable, Writable } from "svelte/store";
 
 import NMApi from "./NMApi";
-import { writable } from "svelte/store";
+import { writable, derived } from "svelte/store";
 import currentUser from "../services/currentUser";
 import { liveListProvider } from "./NMLiveApi";
 
-type GetTrades = {
-    find: typeof getTradesFn
-}
+type Side = "receive" | "give";
+type Direction = Side | "both";
+type Level = "card" | "print";
 
-const cards : {
-    // (receive|give) > cardId > printId > tradeIds
-    receive: Record<number, Record<number, number[]>>,
-    give: Record<number, Record<number, number[]>>,
-} = {
+// (receive|give) > cardId > printId > tradeId[]
+const cards: Record<Side, Record<number, Record<number, number[]>>> = {
     receive: {},
     give: {},
-}
-let ready = false;
-const getTrades: Readable<GetTrades> = writable({ find: getTradesFn });
-
-let setReady: () => void;
-new Promise<void>((resolve) => setReady = () => {
-    ready = true;
-    resolve();
-});
+};
+const cardStore = writable(cards);
 
 /**
  * Returns list of trades where the given card is involved
- * @param  {NM.PrintInTrade} print - the involved card
- * @param  {("give"|"receive"|"both")} dir - how the card should be involved in a trade
- * @param  {("print"|"card")} level - look for a certain print or all prints
- * @return {Promise<number[]>} - list of trade IDs
+ * @param print - the involved card
+ * @param dir - how the card should be involved in a trade
+ * @param level - look for a certain print or all prints
+ * @return list of trade IDs or `null`
  */
-function getTradesFn (print: NM.PrintInTrade, dir: ("give" | "receive" | "both") = "both", level: ("print" | "card") = "print"): number[] {
-    if (!ready) return [];
+function findTrades (print: NM.PrintInTrade, dir: Direction, level: Level) {
+    if (!print) return [];
 
-    const tradeIds:number[] = [];
-    if (!print) return tradeIds;
-
+    const tradeIds: (number[]|undefined)[] = [];
     if (level === "print") {
         if (dir === "give" || dir === "both") {
-            tradeIds.push(...cards.give[print.id]?.[print.print_id] ?? []);
+            tradeIds.push(cards.give[print.id]?.[print.print_id]);
         }
         if (dir === "receive" || dir === "both") {
-            tradeIds.push(...cards.receive[print.id]?.[print.print_id] ?? []);
+            tradeIds.push(cards.receive[print.id]?.[print.print_id]);
         }
     } else {
         if (cards.give[print.id] && (dir === "give" || dir === "both")) {
             // eslint-disable-next-line guard-for-in, no-restricted-syntax
             for (const pid in cards.give[print.id]) {
-                tradeIds.push(...cards.give[print.id][pid]);
+                tradeIds.push(cards.give[print.id][pid]);
             }
         }
         if (cards.receive[print.id] && (dir === "receive" || dir === "both")) {
             // eslint-disable-next-line guard-for-in, no-restricted-syntax
             for (const pid in cards.receive[print.id]) {
-                tradeIds.push(...cards.receive[print.id][pid]);
+                tradeIds.push(cards.receive[print.id][pid]);
             }
         }
     }
 
-    return tradeIds;
+    return tradeIds.flatMap((arr) => arr ?? []) as number[];
 }
 
 /**
- * Updates usage in trades for the given print
- * @param  {number} tradeId - the trade ID with the print
- * @param  {("give"|"receive")} side - how the print is involved in the trade
- * @param  {number} cid - card ID
- * @param  {number} pid - print ID
- * @param  {(-1|1)} change - remove or add the print
+ * Returns a store with trades where the given card is involved
+ * @param print - the involved card
+ * @param dir - how the card should be involved in a trade
+ * @param level - look for a certain print or all prints
+ * @return list of trade IDs or `null`
  */
-function updatePrint (tradeId: number, side: ("give" | "receive"), cid: number, pid: number, change: -1|1) {
+function getTrades (print: NM.PrintInTrade, dir: Direction, level: Level) {
+    return derived(cardStore, () => {
+        const trades = findTrades(print, dir, level);
+        // return null instead of the empty array to avoid triggering of 
+        // all the subscribers by replacing empty array with another empty array
+        return trades.length > 0 ? trades : null;
+    });
+ }
+
+ /**
+  * Whether the card is used in any active trade
+  * @param print - the involved card
+  * @param dir - how the card should be involved in a trade
+  * @param level - look for a certain print or all prints
+  * @return list of trade IDs or `null`
+  */
+  function isTrading (print: NM.PrintInTrade, dir: Direction, level: Level) {
+     return findTrades(print, dir, level).length > 0;
+  }
+
+/**
+ * Updates usage in trades for the given print
+ * @param tradeId - the trade ID with the print
+ * @param side - how the print is involved in the trade
+ * @param cid - card ID
+ * @param pid - print ID
+ * @param change - remove or add the print
+ */
+function updatePrint (tradeId: number, side: Side, cid: number, pid: number, change: -1|1) {
     if (!(cid in cards[side])) cards[side][cid] = {};
     if (!(pid in cards[side][cid])) cards[side][cid][pid] = [];
     if (change > 0) {
@@ -100,13 +114,13 @@ async function updateTrade (tradeId: number, change: -1|1) {
         .forEach(({ id: cid, print_id: pid }) => {
             updatePrint(tradeId, "receive", cid, pid, change);
         });
-    (getTrades as Writable<GetTrades>).set({ find: getTradesFn });
+    cardStore.set(cards);
 };
 
+// get and watch for trades and their cards
 liveListProvider("trades")
-    .on("init", async (trades) => {
-        await Promise.all(trades.map(trade => updateTrade(trade.object.id, +1)));
-        setReady();
+    .on("init", (trades) => {
+        trades.map(trade => updateTrade(trade.object.id, +1));
     })
     .on("add", (trade) => {
         updateTrade(trade.object.id, +1);
@@ -115,6 +129,4 @@ liveListProvider("trades")
         updateTrade(trade.object.id, -1);
     });
 
-export { cards, getTrades };
-
-export type { GetTrades };
+export { getTrades, isTrading };

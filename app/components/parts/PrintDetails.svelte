@@ -26,7 +26,7 @@
     import PrintAsset from "./PrintAsset.svelte";
     import CollectionProgress from "./CollectionProgress.svelte";
     import NMApi from "../../utils/NMApi";
-    import { getTrades as trades } from "../../utils/cardsInTrades";
+    import { getTrades, isTrading } from "../../utils/cardsInTrades";
     import { tradePreview } from "../tradePreviews";
     import { onDestroy } from "svelte";
     import { num2text } from "../../utils/utils";
@@ -73,13 +73,14 @@
         printChooserState = "select";
     }
 
-    $: tradeIds = $trades.find(print, direction, direction === "give" ? "print" : "card")
-        .filter((id) => id !== tradeId);
+    $: trades = derived(
+        getTrades(print, direction, direction === "give" ? "print" : "card"), 
+        (tradeIds) => tradeIds?.filter((id) => id !== tradeId),
+    );
     // update the list when trades changes
     $: if (printChooserState === "select") {
         for (let num in prints) {
-            let trading = $trades.find(prints[num], direction, direction === "give" ? "print" : "card")
-                .length > 0;
+            let trading = isTrading(prints[num], direction, direction === "give" ? "print" : "card");
             if (prints[num].trading !== trading) {
                 prints[num] = {
                     ...prints[num],
@@ -189,8 +190,8 @@
         </dd>
     </dl>
 
-    {#if tradeIds.length > 0}
-        <i class="icon-card-trading" use:tradePreview={{ tradeIds }}></i>
+    {#if $trades && $trades.length > 0 }
+        <i class="icon-card-trading" use:tradePreview={{ tradeIds: $trades }}></i>
     {/if}
 
     {#if $$slots.default}

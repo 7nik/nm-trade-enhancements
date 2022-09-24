@@ -1,12 +1,12 @@
 import type NM from "../utils/NMTypes";
 
-import { getTrades, type GetTrades } from "../utils/cardsInTrades";
+import { getTrades } from "../utils/cardsInTrades";
 import addPatches from "../utils/patchAngular";
 import { tradePreview, sharedTradePreview } from "../components/tradePreviews";
 
 type CardScope = angular.IScope & {
     piece: NM.PrintInTrade,
-    trades: number[],
+    trading: boolean,
 }
 
 type NotificationScope = angular.IScope & {
@@ -22,21 +22,19 @@ addPatches(() => {
         "$scope",
         "$element",
         ($scope: CardScope, $elem) => {
-            $scope.trades = [];
+            $scope.trading = false;
 
             let initialized = false;
-            function loadTrades (trades: GetTrades) {
-                let tradeIds = trades.find($scope.piece, "both", "card");
+            const unsubscribe = getTrades($scope.piece, "both", "card").subscribe((tradeIds) => {
                 tradePreview($elem[0], { tradeIds, cardId: $scope.piece.id });
                 if (initialized) {
                     // to notify angular about changes
-                    $scope.$apply(() => { $scope.trades = tradeIds; });
+                    $scope.$apply(() => { $scope.trading = !!tradeIds; });
                 } else {
                     // cannot and need to use $apply during controller initialization
-                    $scope.trades = tradeIds;
+                    $scope.trading = !!tradeIds;
                 }
-            }
-            const unsubscribe = getTrades.subscribe(loadTrades);
+            });
             $scope.$on("$destroy", unsubscribe);
             initialized = true;
         },
@@ -57,7 +55,7 @@ addPatches(() => {
         target: `title="Limited Edition"></span>`,
         append: `<span
             data-ng-controller="nmUsageInTrades"
-            data-length="{{trades.length}}"
+            trading="{{trading}}"
             class="card-trading-icon"></span>`,
     }],
 }, {
@@ -67,7 +65,7 @@ addPatches(() => {
         target: `</li>`,
         prepend: `<span
             data-ng-controller="nmUsageInTrades"
-            data-length="{{trades.length}}"
+            trading="{{trading}}"
             class="card-trading-icon"></span>`,
     }],
 }, {

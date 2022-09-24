@@ -14,7 +14,7 @@
 }
 
 /* define the trading icon preview */
-.card-trading-icon:not([data-length="0"])::before {
+.card-trading-icon[trading="true"]::before {
     display: inline-block;
     font-family: 'glyphter nm icon font';
     content: '\0053';
@@ -26,7 +26,7 @@
     left: 3%;
     top: 3%;
 }
-.collection--prints .card-trading-icon:not([data-length="0"]) {
+.collection--prints .card-trading-icon[trading="true"] {
     cursor: pointer;
     z-index: 4;
     color: white;
@@ -39,7 +39,7 @@
     transform: rotate(45deg);
     line-height: 1;
 }
-.collection--prints .card-trading-icon:not([data-length="0"])::before {
+.collection--prints .card-trading-icon[trading="true"]::before {
     vertical-align: top;
     transform: rotate(-45deg);
 }
@@ -48,7 +48,7 @@
 }
 
 /* series page */
-.set-checklist .card-trading-icon:not([data-length="0"])::before {
+.set-checklist .card-trading-icon[trading="true"]::before {
     vertical-align: text-top;
     font-size: 12px;
     color: #857a90;
