@@ -43,66 +43,63 @@
     let filtersMenu: FiltersMenu;
     $: ({ hiddenSetts, isSettSelected, activeFilters } = filtersMenu ?? {});
 
-    let prints: Writable<NM.PrintInTrade[]> = writable([]);
+    let prints: Paginator<NM.PrintInTrade>;
     let filteredPrints: Writable<NM.PrintInTrade[]> = writable([]);
     let loading = false;
-    let getNextPrints: Paginator<NM.PrintInTrade>["next"] = null;
     // cache of search results
-    let cache = {} as Record<string, {
-        prints: Writable<NM.PrintInTrade[]>,
-        getNextPrints: Paginator<NM.PrintInTrade>["next"],
-    }>;
+    let cache = {} as Record<string, Paginator<NM.PrintInTrade>>;
 
     // refilter prints when the offer get changed
     $: offer, refilterPrints();
     function refilterPrints() {
-        filtersMenu?.applyFilters($prints, offer, filteredPrints = writable([]));
+        filtersMenu?.applyFilters(prints.list, offer, filteredPrints = writable([]));
     }
 
     // keys to ensure that the function result is still actual
-    let loadPrintsKey: string;
-    let loadMorePrintsKey: Promise<any> | null;
+    let cacheKey: string;
+    let loadPrintsKey = 0;
+    let loadMorePrintsKey = 0;
     onDestroy(() => {
         // replacing stores with new ones after component destruction causes
         // calling the `unsubscribe` method for the second time and this throws errors
-        loadPrintsKey = "";
-        loadMorePrintsKey = null;
+        loadPrintsKey = -1;
+        loadMorePrintsKey = -1;
     });
 
     $: if (filtersMenu) loadPrints();
     async function loadPrints() {
         loading = true;
         filteredPrints = writable([]);
+        // stop loadMorePrints() and prevent next runs
+        loadMorePrintsKey = -loadMorePrintsKey;
 
         const query = filtersMenu.getQueryFilters();
-        const queryStr = JSON.stringify(query);
-        if (queryStr in cache) {
-            ({ prints, getNextPrints } = cache[queryStr]);
-            filtersMenu.applyFilters($prints, offer, filteredPrints);
-            loadMorePrintsKey = null;
-            loadMorePrints();
-            return;
+        cacheKey = JSON.stringify(query);
+        if (cacheKey in cache) {
+            prints = cache[cacheKey];
+        } else {
+            prints = NMApi.trade.findPrints(cardOwner.id, query);
+            cache[cacheKey] = prints;
         }
 
-        loadPrintsKey = queryStr;
-        const data = await NMApi.trade.findPrints(cardOwner.id, query);
-        // if request is outdated, the data racing happened
-        if (loadPrintsKey !== queryStr) return;
-        loadMorePrintsKey = null;
-        prints = writable(data.results);
-        getNextPrints = data.next;
-        cache[loadPrintsKey] = { prints, getNextPrints };
-        
-        filteredPrints = writable([]);
-        await filtersMenu.applyFilters(data.results, offer, filteredPrints);
-        
+        loadPrintsKey += 1;
+        const localKey = loadPrintsKey;
+        await prints.waitLoading();
+
+        if (loadPrintsKey !== localKey) return;
+        await filtersMenu.applyFilters(prints.list, offer, filteredPrints);
+
+        if (loadPrintsKey !== localKey) return;
+        loadMorePrintsKey = -loadMorePrintsKey + 1; // "enable" loadMorePrints()
         loadMorePrints();
     }
 
     let viewport: HTMLElement;
     async function loadMorePrints() {
-        if (loadMorePrintsKey) return;
-        if (!getNextPrints || !viewport) {
+        // if disabled
+        if (loadMorePrintsKey < 0) return;
+        if (prints?.isLoading) return;
+        if (!prints?.hasMore || !viewport) {
             loading = false;
             return;
         }
@@ -113,22 +110,15 @@
         }
 
         loading = true;
-        const promise = getNextPrints();
-        loadMorePrintsKey = promise;
-        const data = await promise;
-        // if another instance of loadMorePrints was run
-        if (loadMorePrintsKey !== promise) return;
-
-        prints.update(arr => arr.concat(data.results));
-        getNextPrints = data.next;
-        cache[loadPrintsKey].getNextPrints = getNextPrints;
+        loadMorePrintsKey += 1;
+        const localKey = loadMorePrintsKey;
+        const newPrints = await prints.loadMore();
+        // if canceled or another instance of loadMorePrints was run
+        if (loadMorePrintsKey !== localKey) return;
+        await filtersMenu.applyFilters(newPrints, offer, filteredPrints);
         
-        await filtersMenu.applyFilters(data.results, offer, filteredPrints);
-        if (loadMorePrintsKey === promise) {
-            loading = false;
-            loadMorePrintsKey = null;
-            loadMorePrints();
-        }
+        if (loadMorePrintsKey !== localKey) return;
+        loadMorePrints();
     }
     
     function addPrint(print: NM.PrintInTrade) {

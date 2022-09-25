@@ -3,6 +3,7 @@ import type NM from "../utils/NMTypes";
 import NMApi from "../utils/NMApi";
 import { debug, LazyMap } from "../utils/utils";
 import currentUser from "./currentUser";
+import type { fullURL } from "../utils/NMTypes";
 
 const data = new LazyMap<number, Record<number,NM.SettMetrics>>(300_000);
 const loading = new Map<number, Promise<NM.SettMetrics[]>>();
@@ -48,7 +49,7 @@ async function loadOwnership (userId: number) {
 
 type Progress = {
     name: string,
-    permalink: string,
+    permalink: fullURL,
     core: {
         count: number,
         owned: number,

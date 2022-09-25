@@ -32,12 +32,7 @@ export const friendList = {
      * Live list of user's friends
      */
     list: writable<NM.UserFriend[]>([], (set) => {
-        let list: NM.UserFriend[] = [];
-        NMApi.user.getFriends().then(function addData({ results, next }) {
-            list = list.concat(results);
-            set(list);
-            if (next) next().then(addData);
-        });
+        NMApi.user.getFriends().loadAll().then(set);
     }),
     /**
      * Whether the user is in the friend list
@@ -67,15 +62,19 @@ export const friendList = {
             function countOnline(statuses: boolean[]) {
                 return statuses.reduce((num, online) => num + (online ? 1 : 0), 0);
             }
-            let unsubscribe: Unsubscriber;
-            return friendList.list.subscribe((list) => {
+            let unsubscribe1: Unsubscriber;
+            const unsubscribe2 = friendList.list.subscribe((list) => {
                 // first subscribe to new values and then unsubscribe from the old ones
                 // to avoid status stores with temporary 0 subscribers
                 const stop = derived(list.map(({ id }) => getUserStatus(id)), countOnline)
                     .subscribe(setNumber);
-                unsubscribe?.();
-                unsubscribe = stop;
+                unsubscribe1?.();
+                unsubscribe1 = stop;
             });
+            return () => {
+                unsubscribe1();
+                unsubscribe2();
+            }
         });
     },
 };

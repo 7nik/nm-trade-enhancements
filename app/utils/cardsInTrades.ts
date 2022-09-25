@@ -119,8 +119,10 @@ async function updateTrade (tradeId: number, change: -1|1) {
 
 // get and watch for trades and their cards
 liveListProvider("trades")
-    .on("init", (trades) => {
-        trades.map(trade => updateTrade(trade.object.id, +1));
+    .on("init", async (trades) => {
+        for (const trade of trades) {
+            await updateTrade(trade.object.id, +1);
+        }
     })
     .on("add", (trade) => {
         updateTrade(trade.object.id, +1);
