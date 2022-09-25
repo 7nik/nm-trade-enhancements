@@ -129,7 +129,7 @@ addPatches(() => {
             // if nothing to wishlist
             if (cards.length === 0) return;
 
-            // create object that will link card and it's card on the screen
+            // create object that will link card and its star on the screen
             const stars = cards.map((card) => {
                 const x0 = ev.clientX / window.innerWidth * 100;
                 const y0 = ev.clientY / window.innerHeight * 100;
@@ -140,10 +140,13 @@ addPatches(() => {
                 elem.className = wishlistMode ? "icon-like" : "icon-liked";
                 elem.style.setProperty("--endX",  `${x}%`);
                 elem.style.setProperty("--endY", `${y}%`);
-                elem.style.setProperty("--time", `${1 + Math.random() * cards.length * 0.4}s`);
+                elem.style.setProperty("--time", `${0.5 + Math.random() * cards.length * 0.07}s`);
                 return { card, elem, d };
             });
+            // wishlist from farthest to closest to the button 
             stars.sort((a, b) => b.d - a.d);
+            // unwishlist from closest to farthest from the button
+            if (!wishlistMode) stars.reverse();
 
             // create container with stars that display the wishlist status of the cards
             const div = document.createElement("div");
@@ -153,21 +156,20 @@ addPatches(() => {
             div.append(...stars.map(({ elem }) => elem));
             document.body.prepend(div);
 
-            // sequentially favorite the cards
-            // eslint-disable-next-line no-restricted-syntax
-            for (const star of stars) {
-                // eslint-disable-next-line no-await-in-loop
+            // toggle favorites in five threads
+            await Promise.all(Array(5).fill(0).map(async function toggle(): Promise<any> {
+                const star = stars.shift();
+                if (!star) return;
                 star.card.favorite = await NMApi.card.toggleFavorite(star.card.id);
-                // star.card.favorite = !star.card.favorite;
                 star.elem.className = wishlistMode ? "icon-liked" : "icon-like";
-            }
+                return toggle();
+            }));
 
             // to show the wishlisting of the last star
             setTimeout(() => {
                 $scope.applyFilters();
                 div.remove();
-            }, 1000);
-
+            }, 500);
         };
     }]);
 }, {
