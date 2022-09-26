@@ -56,7 +56,6 @@
     }
 
     // keys to ensure that the function result is still actual
-    let cacheKey: string;
     let loadPrintsKey = 0;
     let loadMorePrintsKey = 0;
     onDestroy(() => {
@@ -71,10 +70,10 @@
         loading = true;
         filteredPrints = writable([]);
         // stop loadMorePrints() and prevent next runs
-        loadMorePrintsKey = -loadMorePrintsKey;
+        loadMorePrintsKey = -Math.abs(loadMorePrintsKey);
 
         const query = filtersMenu.getQueryFilters();
-        cacheKey = JSON.stringify(query);
+        const cacheKey = JSON.stringify(query);
         if (cacheKey in cache) {
             prints = cache[cacheKey];
         } else {
@@ -90,7 +89,7 @@
         await filtersMenu.applyFilters(prints.list, offer, filteredPrints);
 
         if (loadPrintsKey !== localKey) return;
-        loadMorePrintsKey = -loadMorePrintsKey + 1; // "enable" loadMorePrints()
+        loadMorePrintsKey = Math.abs(loadMorePrintsKey) + 1; // "enable" loadMorePrints()
         loadMorePrints();
     }
 
