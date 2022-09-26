@@ -844,9 +844,10 @@
     <h1 class="small-caps">Cards</h1>
     <span class="filter-row">
         <Toggle bind:value={filters.wishlisted} icon={filters.wishlisted ? "icon-im-wishlisted" : "icon-im-wishlist"} hint={getHint("wishlisted")}/>
-        <Toggle bind:value={filters.shared} icon="icon-im-common-series" hint={getHint("shared")}/>
+        <!-- <Toggle bind:value={filters.shared} icon="icon-im-common-series" hint={getHint("shared")}/> -->
         <Toggle bind:value={filters.notInTrades} icon="icon-nmte-not-traded" hint={getHint("notInTrades")}/>
         <input type=search class="search small search-card" placeholder="Search by card name" bind:value={filters.cardName}>
+        <i class="icon-nmte-reset" on:click={() => filters.cardName = ""}/>
     </span>
     <span class="filter-row filter-group">
         {#each RARITIES as rarity}
@@ -914,7 +915,7 @@
     .filter-row :global(.container),
     .filter-row select,
     .filter-row input[type=search] {
-        flex-grow: 100;
+        flex-grow: 500;
     }
     .filter-row select {
         border: 1px solid #ccc;

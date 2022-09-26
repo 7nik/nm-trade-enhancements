@@ -21,3 +21,13 @@
     {#if $$slots.default}<span class="text-icon"><slot/></span>{/if}
     <input type=checkbox class=btn-filter--input bind:checked={value} on:change>
 </span> 
+
+<style>
+    .btn.small {
+        min-width: 40px;
+    }
+    .btn.small i, .text-icon {
+        min-width: 12px;
+        margin: 0;
+    }
+</style>
