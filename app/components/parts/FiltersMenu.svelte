@@ -881,7 +881,6 @@
         box-shadow: 0 0 20px #0002;
         min-width: 300px;
         width: 350px;
-        z-index: 1;
         font-size: 12px;
         line-height: 1em;
         color: #5f5668;

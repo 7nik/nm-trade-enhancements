@@ -133,20 +133,22 @@
 <div class="trade--add-items cards-mode active">
     <div class=trade--side--header>
         <Avatar user={cardOwner} size="small"/>
-        Add cards {isItYou ? "you" : cardOwner.first_name} will give
+        <span class="header-note">
+            Add cards {isItYou ? "you" : cardOwner.first_name} will give
+        </span>
+        <span class="trade--edit-filters">
+            <Button class="subdued">Edit filters</Button>
+        </span>
+        <div class="trade--edit-filters--container">
+            <FiltersMenu 
+                {actors}
+                {cardOwner}
+                {sett}
+                bind:this={filtersMenu}
+                on:filtersChange={loadPrints}
+            />
+        </div>
         <span class=trade--side--header--actions>
-            <span class="trade--edit-filters">
-                <Button class="subdued">Edit filters</Button>
-                <div class="trade--edit-filters--container">
-                    <FiltersMenu 
-                        {actors}
-                        {cardOwner}
-                        {sett}
-                        bind:this={filtersMenu}
-                        on:filtersChange={loadPrints}
-                    />
-                </div>
-            </span>
             <i class="close-x small" on:click={() => dispatch("close")}>×</i>
         </span>
     </div>
@@ -233,26 +235,26 @@
         position: initial;
     }
 
-    .trade--add-items .trade--side--header--actions {
-        display: inline-flex;
-        align-items: center;
-        gap: 2em;
+    .trade--side--header {
+        display: flex;
     }
     .trade--add-items .trade--edit-filters {
-        float: right;
-        position: relative;
+        position: absolute;
+        top: 10px;
+        right: 5em;
     }
 
     .trade--edit-filters--container {
         visibility: hidden;
         position: absolute;
-        top: 0;
-        right: 0;
+        top: 5px;
+        right: min(max(4.5em - 175px + 5px, 5px), 100% - 350px - 5px);
         transition-property: visibility;
         transition-delay: 0.25s;
+        z-index: 2;
     }
-    .trade--edit-filters > :global(.btn:hover ~ .trade--edit-filters--container),
-    .trade--edit-filters > :global(.btn:active ~ .trade--edit-filters--container),
+    .trade--edit-filters:hover + .trade--edit-filters--container,
+    .trade--edit-filters:active + .trade--edit-filters--container,
     .trade--edit-filters--container:hover {
         visibility: visible;
         transition-delay: 0s;
