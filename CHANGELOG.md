@@ -1,5 +1,10 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.1.2
+* Improved the card search performance in the trade window
+* Removed sequential processing of network requests
+* Speeded up mass wishlisting and unwishlisting
+
 ## 3.1.1
 * Implemented the sidebar, but not include in the US as it provides nothing new
 * Various fixes
