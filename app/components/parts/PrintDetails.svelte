@@ -57,7 +57,8 @@
 
     $: total = print.num_prints_total === "unlimited" ? "∞" : num2text(print.num_prints_total);
 
-    let printChooserState: "off" | "view" | "loading" | "select" = showPrintNumber === "list" ? "view" : "off";
+    let printChooserState: "off" | "view" | "loading" | "select";
+    $: printChooserState = showPrintNumber === "list" ? "view" : "off";
     let prints: Record<number|string, NM.PrintInTrade & {trading?:boolean}> = {
         [print.print_num]: print,
     };
