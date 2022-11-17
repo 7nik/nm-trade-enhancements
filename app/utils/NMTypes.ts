@@ -220,7 +220,7 @@ declare namespace NM {
         image: fullURL,
         owned: number,
         total: number,
-        discontinue_date?: timestamp, 
+        discontinue_date?: timestamp,
         completed_date?: timestamp,
     };
 
@@ -351,7 +351,7 @@ declare namespace NM {
 
     type PrintCount = [number /* card id */, number /* amount */]
 
-    type PrintInTrade = Omit<Print, 
+    type PrintInTrade = Omit<Print,
         "sett_name_slug"|"public_url"|"is_replica"|"version"|"prints_part_of_trade"
     > & {
         /**
@@ -523,14 +523,14 @@ declare namespace NM {
         difficulty: {
             id: number,// 1-9
             name: "Beginner"|"Piece of Cake"|"Very Easy"|"Easy"|"Moderate"|"Hard"|"Very Hard"|"Near Impossible"|"Quest!",
-            class_name: string,
+            class_name: `difficulty-${0|1|2|3|4|5|6|7|8}`,
             level: number // 0-8
         },
         replica_parent: null|number,
         notify: boolean
     }
 
-    type SettMetrics = Pick<Sett, 
+    type SettMetrics = Pick<Sett,
         "id"|"name"|"name_slug"|"version"|"preview_0"|"preview_1"|"replica_parent"
     >& {
         name_slug_regexed: string,
@@ -596,7 +596,7 @@ declare namespace NM {
         trader_score: number
     }
 
-    type UserCollocutor = Omit<NM.User, "last_name"> & { 
+    type UserCollocutor = Omit<NM.User, "last_name"> & {
         pro_badge: string|null,
         pro_status: 0|1,
     }
