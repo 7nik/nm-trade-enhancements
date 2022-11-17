@@ -281,7 +281,7 @@
 
     $: defaultFilters.sett = sett;
 
-    let filterSet = $filterSetList.find(({ name }) => name === "Default") ?? null;
+    let filterSet = $filterSetList.find(({ name }) => name.toLowerCase() === "default") ?? null;
     let filters: Filters = filterSet 
         ? {...defaultFilters, ...filterSet.filters, sett}
         : {...defaultFilters, sett};
