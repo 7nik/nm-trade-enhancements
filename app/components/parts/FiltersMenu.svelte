@@ -247,12 +247,22 @@
     const oppositeOwnerId = isItYou ? actors.partner.id : actors.you.id;
 
     const defaultFilters = {
-        cardName: "",
+        collection: [0, Infinity],
+
         shared: false,
         incompleteSetts: false,
-        wishlisted: false,
         sett: null,
-        duplicatesOnly: false,
+
+        oopSetts: false,
+        limCreditSetts: false,
+        limFreebieSetts: false,
+        unlimSetts: false,
+        rieSetts: false,
+
+        wishlisted: false,
+        notInTrades: false,
+        cardName: "",
+
         common: false,
         uncommon: false,
         rare: false,
@@ -262,17 +272,13 @@
         variant: false,
         legendary: false,
         
-        hiddenSetts: [],
-        notInTrades: false,
-        holderOwns: [1, Infinity],
         oppositeOwns: [0, Infinity],
+        holderOwns: [1, Infinity],
         cardCount: [1, Infinity],
-        collection: [0, Infinity],
-        oopSetts: false,
-        limCreditSetts: false,
-        limFreebieSetts: false,
-        unlimSetts: false,
-        rieSetts: false,
+
+        notOwned: false,
+        duplicatesOnly: false,
+        hiddenSetts: [],
     } as Filters;
     const holderOwnsNumbers = [1,2,3,4,5,10,20,50,100,Infinity];
     const oppositeOwnsNumbers = [0,...holderOwnsNumbers];
@@ -309,6 +315,32 @@
             return Reflect.ownKeys(defaultFilters).filter(key => this.get!(filters, key, filters));
         },
     }) as Record<keyof Filters, boolean>;
+
+    /**
+     * Merges active filters with the same prefix into one
+     * @param filters - the array with the filters
+     * @param prefix - which filters to merge
+     * @param newPrefix - the new prefix, by default used the old one
+     * @returns - the array with merged filters
+     */
+    function mergeActiveFilters (filters: ActiveFilter[], prefix: string, newPrefix = prefix) {
+        const afs = filters.filter((af) => af.prefix === prefix);
+        if (afs.length === 0) return filters;
+        if (afs.length === 1) {
+            afs[0].prefix = newPrefix;
+            return filters;
+        }
+        const pos = filters.indexOf(afs[0]);
+        filters = filters.filter((af) => !afs.includes(af));
+        const af: ActiveFilter = {
+            prefix: newPrefix,
+            icons: afs.flatMap(({ icons = [] }, i) => i > 0 ? ["pipe", ...icons] : icons),
+            text: afs.find((af) => af.text)?.text,
+            tip: afs.map(af => af.tip).join(", ").replaceAll(" cards,", ","),
+        };
+        filters.splice(pos, 0, af);
+        return filters;
+    }
 
     // re-filter the series list when these filters get changed
     let seriesListKey = [filters.shared, filters.collection].toString();
@@ -352,30 +384,15 @@
             newActiveFilters = Reflect.ownKeys(isFilterActive)
                 .map((name) => getFilterLabel(name as keyof Filters))
                 .filter((af): af is ActiveFilter => af !== null);
-            // join all rarities into one
-            const rarities = newActiveFilters.filter((af) => af.prefix === "CR");
-            if (rarities.length > 0) {
-                const af = {
-                    prefix: "C",
-                    icon: rarities.map(af => af.icon).join(",pipe,"),
-                    tip: rarities.map(af => af.tip).join(", ").replaceAll(" cards,", ","),
-                };
-                const index = newActiveFilters.indexOf(rarities[0]);
-                newActiveFilters.splice(index, rarities.length, af);
-                // newActiveFilters = newActiveFilters.filter(af => !rarities.includes(af));
-            }
+
+            // join shared, incompleteSetts, and sett name
+            newActiveFilters = mergeActiveFilters(newActiveFilters, "S");
             // join all series types into one
-            const settTypes = newActiveFilters.filter((af) => af.prefix === "ST");
-            if (settTypes.length > 0) {
-                const af = {
-                    prefix: "S",
-                    icon: settTypes.map(af => af.icon).join(",pipe,"),
-                    tip: settTypes.map(af => af.tip).join(", "),
-                };
-                const index = newActiveFilters.indexOf(settTypes[0]);
-                newActiveFilters.splice(index, settTypes.length, af);
-                // newActiveFilters = newActiveFilters.filter(af => !settTypes.includes(af));
-            }
+            newActiveFilters = mergeActiveFilters(newActiveFilters, "ST", "S");
+            // join wishlisted, notInTrades, and cardName
+            newActiveFilters = mergeActiveFilters(newActiveFilters, "C");
+            // join all rarities into one
+            newActiveFilters = mergeActiveFilters(newActiveFilters, "CR", "C");
         }
         $activeFilters = newActiveFilters;
         dispatch("filtersChange");
