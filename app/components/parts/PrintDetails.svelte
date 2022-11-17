@@ -1,4 +1,6 @@
 <script context="module" lang="ts">
+    import type { Readable } from "svelte/store";
+
     import OwnedCards from "../../services/ownedCards";
     import { derived } from "svelte/store";
 
@@ -28,16 +30,12 @@
     import NMApi from "../../utils/NMApi";
     import { getTrades, isTrading } from "../../utils/cardsInTrades";
     import { tradePreview } from "../tradePreviews";
-    import { onDestroy } from "svelte";
+    import { getContext, onDestroy } from "svelte";
     import { num2text } from "../../utils/utils";
     import Icon from "../elements/Icon.svelte";
     import tip from "../elements/tip";
     import RarityText from "../elements/RarityText.svelte";
 
-    /**
-     * The involved users
-     */
-    export let actors: Actors;
     /**
      * The print to display, can be replaced
      */
@@ -46,14 +44,11 @@
      * Whether show the print number and allow to change it
      */
     export let showPrintNumber: "yes" | "no" | "list" = "no";
-    /**
-     * The side of a trade
-     */
-    export let direction: "give" | "receive";
-    /**
-     * The current viewed trade
-     */
-    export let tradeId: number | null = null;
+
+    const actors = getContext<Actors>("actors");
+    const direction = getContext<boolean>("isItYou") ? "give" : "receive";
+    const tradeId = getContext<Readable<number|null>>("tradeId");
+
 
     $: total = print.num_prints_total === "unlimited" ? "∞" : num2text(print.num_prints_total);
 
@@ -79,7 +74,7 @@
 
     $: trades = derived(
         getTrades(print, direction, direction === "give" ? "print" : "card"),
-        (tradeIds) => tradeIds?.filter((id) => id !== tradeId),
+        (tradeIds) => tradeIds?.filter((id) => id !== $tradeId),
     );
     // update the list when trades changes
     $: if (printChooserState === "select") {

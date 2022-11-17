@@ -12,11 +12,8 @@
     import TradeWindowEditOffer from "./TradeWindowEditOffer.svelte";
     import { linky } from "../../utils/utils";
     import Icon from "../elements/Icon.svelte";
+    import { getContext, setContext } from "svelte";
 
-    /**
-     * Users involved in the trade
-     */
-    export let actors: Actors;
     /**
      * Whose side is it
      */
@@ -30,15 +27,16 @@
      */
     export let canEdit: boolean;
     /**
-     * ID of this trade, if available
-     */
-    export let tradeId: number | undefined;
-    /**
      * The initial sett to select
      */
     export let sett: { id: number, name: string } | null = null;
 
+    const actors = getContext<Actors>("actors");
     const isItYou = cardOwner.id === actors.you.id;
+
+    setContext("cardOwner", cardOwner);
+    setContext("isItYou", isItYou);
+
     // show the offer, show the bio, or adding prints
     let state: "offer" | "bio" | "search" = "offer";
     $: canAddItems = offer.length < 5;
@@ -65,6 +63,9 @@
 
     function removePrint(print: NM.PrintInTrade) {
         offer = offer.filter((pr) => pr !== print);
+    }
+    function addPrint(print: NM.PrintInTrade) {
+        offer = [...offer, print];
     }
 </script>
 
@@ -125,10 +126,7 @@
                     {#each offer as print (print.id)}
                         <PrintDetails
                             bind:print
-                            {actors}
                             showPrintNumber={isItYou && canEdit ? "list" : "yes"}
-                            direction={isItYou ? "give" : "receive"}
-                            {tradeId}
                         >
                             {#if canEdit}
                                 <Button type="danger" size="mini" icon="minus"
@@ -168,11 +166,10 @@
     <!-- just hide this block to not re-render the huge list -->
     <section class="searcher" class:show={state === "search"}>
         <TradeWindowEditOffer
-            {actors}
-            {cardOwner}
             {sett}
-            bind:offer
-            on:close={() => state = "offer"}
+            {offer}
+            on:close = {() => state = "offer"}
+            on:add = {(ev) => { addPrint(ev.detail); state = "offer"; }}
         />
     </section>
 {/if}

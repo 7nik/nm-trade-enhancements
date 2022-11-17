@@ -194,7 +194,7 @@
     import type { UserCollections } from "../../services/ownedCollections";
 
     import { writable } from "svelte/store";
-    import { createEventDispatcher, onDestroy } from "svelte";
+    import { createEventDispatcher, getContext, onDestroy } from "svelte";
     import ownedCollections from "../../services/ownedCollections";
     import { getProgress, makeShortTip } from "./CollectionProgress.svelte";
     import DoubleRange from "../elements/DoubleRange.svelte";
@@ -205,14 +205,6 @@
     import { error, num2text } from "../../utils/utils";
     import Icon from "../elements/Icon.svelte";
 
-    /**
-     * Users involved in the trade
-     */
-    export let actors: Actors;
-    /**
-     * Whose side is it
-     */
-    export let cardOwner: NM.User;
     /**
      * The initial sett to select
      */
@@ -230,11 +222,14 @@
      */
     export const activeFilters = writable<ActiveFilter[]>([]);
 
+    const actors = getContext<Actors>("actors");
+    const cardOwner = getContext<NM.User>("cardOwner");
+    const isItYou = getContext<boolean>("isItYou");
+
     const dispatch = createEventDispatcher();
 
     const RARITIES: rarityCss[] = ["common", "uncommon", "rare", "veryRare", "extraRare", "chase", "variant", "legendary"];
 
-    const isItYou = cardOwner.id === actors.you.id;
     // ID of the user in another list
     const oppositeOwnerId = isItYou ? actors.partner.id : actors.you.id;
 

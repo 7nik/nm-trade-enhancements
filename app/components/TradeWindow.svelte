@@ -1,4 +1,5 @@
 <script lang="ts" context="module">
+    import type { XOR } from "../utils/NMTypes";
     import type NM from "../utils/NMTypes";
 
     type Actors = {
@@ -9,21 +10,24 @@
         youAreBidder: boolean,
     }
 
-    type InitialData = {
+    type InitialData = XOR<{
+        tradeId: number;
+    }, XOR <{
+        actors: Actors,
+    }, {
+        actors: Actors,
         side: "bidder"|"responder",
         card: NM.Card | NM.Unmerged.Prints,
         sett: {
             id: number,
             name: string,
         },
-    }
+    }>>
 
     export type { Actors, InitialData };
 </script>
 <!-- @component
     A component for interacting with trades.
-
-    You must provide at least either `tradeId` or `actors`.
  -->
  <script lang="ts">
     import Button from "./elements/Button.svelte";
@@ -32,19 +36,13 @@
     import { alert, confirm } from "./dialogs/modals";
     import currentUser from "../services/currentUser";
     import Icon from "./elements/Icon.svelte";
+    import { setContext } from "svelte";
+    import { writable } from "svelte/store";
 
     /**
-     * The trade to load
+     * Object with either existing trade ID or initial trade data
      */
-    export let tradeId: number | null = null;
-    /**
-     * The users involved in the trade
-     */
-    export let actors: Actors | null = null;
-    /**
-     * To create a trade with an initial print
-     */
-    export let initialData: InitialData | null = null;
+    export let initialData: InitialData;
     /**
      * The label of the Back button
      */
@@ -77,6 +75,8 @@
         withdrawing: ["withdrew", "done"],
     };
 
+    let actors = initialData.actors;
+
     let trade: NM.Trade | null = null;
     let parentTradeId: number | null = null;
     let yourOffer: NM.PrintInTrade[] = [];
@@ -103,9 +103,9 @@
     $: if (actors) showConversation(actors.partner.id, !isMobileLarge);
 
     // load the trade data
-    if (tradeId) {
+    if (initialData.tradeId) {
         // this request should be cached = minimal delay
-        NMApi.trade.get(tradeId).then((t) => {
+        NMApi.trade.get(initialData.tradeId).then((t) => {
             trade = t;
 
             let youAreBidder = trade.bidder.id === currentUser.id;
@@ -125,16 +125,16 @@
             action = trade.state;
         });
     // load the initial data
-    } else {
+    } else if (initialData.actors) {
         if (!actors) {
             throw new Error("Actors aren't provided!");
         }
         // to simplify the child markup
         actors.you = {...actors.you, name: "You", first_name: "You"};
         actors[actors.youAreBidder ? "bidder" : "responder"] = actors.you;
-        if (initialData) {
-            // to speed up showing the window,
-            // at first show a print that lack some unused data
+        // to speed up showing the window,
+        // at first show a print that lack some unused data
+        if (initialData.card) {
             const fakePrint: NM.PrintInTrade = {
                 id: initialData.card.id,
                 name: initialData.card.name,
@@ -175,6 +175,11 @@
         mode = "edit";
         action = "create";
     }
+
+    const tradeId = writable<number|null>(null);
+    $: $tradeId = trade?.id ?? null;
+    setContext("tradeId", tradeId);
+    $: setContext("actors", actors);
 
     /**
      * Start a new trade
@@ -329,19 +334,15 @@
         <hr>
         <main>
             <TradeWindowList
-                {actors}
                 cardOwner={actors.partner}
                 bind:offer={partnersOffer}
                 canEdit={mode === "edit"}
-                tradeId={trade?.id}
                 sett={initialData?.sett ?? null}
             />
             <TradeWindowList
-                {actors}
                 cardOwner={actors.you}
                 bind:offer={yourOffer}
                 canEdit={mode === "edit"}
-                tradeId={trade?.id}
                 sett={initialData?.sett ?? null}
             />
         </main>

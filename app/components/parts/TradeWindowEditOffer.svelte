@@ -8,7 +8,7 @@
     import type NM from "../../utils/NMTypes";
 
     import NMApi from "../../utils/NMApi";
-    import { onDestroy, createEventDispatcher } from "svelte";
+    import { onDestroy, createEventDispatcher, getContext } from "svelte";
     import { writable } from "svelte/store";
     import Avatar from "../elements/Avatar.svelte";
     import Button from "../elements/Button.svelte";
@@ -18,14 +18,6 @@
     import tip from "../elements/tip";
 
     /**
-     * Users involved in the trade
-     */
-    export let actors: Actors;
-    /**
-     * Whose side is it
-     */
-    export let cardOwner: NM.User;
-    /**
      * Prints the card owner will give
      */
     export let offer: NM.PrintInTrade[];
@@ -34,9 +26,15 @@
      */
     export let sett: { id: number, name: string } | null = null;
 
-    const dispatch = createEventDispatcher();
+    const actors = getContext<Actors>("actors");
+    const cardOwner = getContext<NM.User>("cardOwner");
+    const isItYou = getContext<boolean>("isItYou");
 
-    const isItYou = cardOwner.id === actors.you.id;
+    const dispatch = createEventDispatcher<{
+        add: NM.PrintInTrade,
+        close: void,
+    }>();
+
 
     let filtersMenu: FiltersMenu;
     $: ({ hiddenSetts, isSettSelected, activeFilters } = filtersMenu ?? {});
@@ -120,12 +118,8 @@
     }
 
     function addPrint(print: NM.PrintInTrade) {
-        offer = [
-            ...offer.filter((p) => p.id !== print.id),
-            print,
-        ];
         $filteredPrints = $filteredPrints.filter(p => p !== print);
-        dispatch("close");
+        dispatch("add", print);
     }
 
     let filterMenuBtn: HTMLElement;
@@ -162,8 +156,6 @@
             <Button type="subdued-light" size="mini">Edit filters</Button>
             <div class="filters-menu">
                 <FiltersMenu
-                    {actors}
-                    {cardOwner}
                     {sett}
                     bind:this={filtersMenu}
                     on:filtersChange={loadPrints}
@@ -218,11 +210,7 @@
         {#if $filteredPrints.length > 0}
             <ul bind:this={viewport} on:scroll={loadMorePrints}>
                 {#each $filteredPrints as print (print.id)}
-                    <PrintDetails
-                        {print}
-                        {actors}
-                        direction={isItYou ? "give" : "receive"}
-                    >
+                    <PrintDetails {print} >
                         <Button size="mini" icon="add" on:click={() => addPrint(print)} hint="Add one"/>
                         <span slot="series" class="card-actions">
                             {#if !$isSettSelected}

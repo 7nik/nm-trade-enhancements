@@ -169,7 +169,7 @@ addPatches(() => {
                 tradeWindow = new TradeWindow({
                     target: div,
                     props: {
-                        tradeId: +id,
+                        initialData: { tradeId: +id },
                         showConversation,
                         closeTrade,
                     }
@@ -194,17 +194,13 @@ addPatches(() => {
                     partner: youAreBidder ? responder : bidder,
                 };
 
-                let initialData: {
-                    side: "bidder"|"responder",
-                    card: NM.Card | NM.Unmerged.Prints,
-                    sett: { id: number, name: string },
-                } | null = null;
-                if (initialCardData) {
-                    initialData = {
-                        side: initialCardData.offerType === "bidder_offer" ? "bidder" : "responder",
-                        card: pieceData.piece,
-                        sett: pieceData.piece && "set" in pieceData.piece ? pieceData.piece.set : pieceData.sett!,
-                    }
+                let initialData = initialCardData ? {
+                    actors,
+                    side: initialCardData.offerType === "bidder_offer" ? "bidder" : "responder",
+                    card: pieceData.piece,
+                    sett: pieceData.piece && "set" in pieceData.piece ? pieceData.piece.set : pieceData.sett!,
+                } : {
+                    actors
                 }
 
                 tradeWindow = new TradeWindow({
