@@ -2,31 +2,17 @@
  * Logs a signed debug message
  * @param args - data to log
  */
-export const debug = (...args: any[]) => { 
-    console.debug("[NMTE]", ...args); 
+export const debug = (...args: any[]) => {
+    console.debug("[NMTE]", ...args);
 };
 
 /**
  * Logs a signed error message
  * @param args - data to log
  */
-export const error = (msg: string, ...args: any[]) => { 
-    console.error("[NMTE]", new Error(msg), ...args); 
+export const error = (msg: string, ...args: any[]) => {
+    console.error("[NMTE]", new Error(msg), ...args);
 };
-
-/**
- * Converts string to The Pascal Case
- * @param  {string} str - String for converting
- * @return {string} String in the camel case
- */
-export function toPascalCase (str: string):string {
-    return str
-        .trim()
-        .replace(/\s+/g, " ")
-        .split(" ")
-        .map((s) => s && s[0].toUpperCase().concat(s.slice(1).toLowerCase()))
-        .join(" ");
-}
 
 /**
  * Get the named cookie
@@ -43,12 +29,15 @@ export function getCookie (name: string) {
  * Converts numbers to text using SI prefixes
  * @param val - a number to convert
  * @param precision - number of digits after the point, default - 1
+ * @param roundDown - round the number down, default - yes
  * @returns a short text representation of the number
  */
-export function num2text(val: number, precision = 1) {
+export function num2text(val: number, precision = 1, roundDown = true) {
     // when val == 0, we get -Infinity * 0 = NaN
     const power = Math.floor(Math.log10(Math.abs(val)) / 3) * Math.sign(val);
-    const v = Math.floor(val / 1000**power * 10**precision) / 10**precision;
+    let v = val / 1000**power * 10**precision;
+    v = Math[roundDown ? "floor" : "round"](v);
+    v = v / 10**precision;
     switch (isNaN(power) || power) {
         case -Infinity: return "-∞";
         case -8: return `${v}y`;
@@ -71,6 +60,36 @@ export function num2text(val: number, precision = 1) {
         case 8: return `${v}Y`;
         case Infinity: return "∞";
         default: return (v * 1000**power).toExponential();
+    }
+}
+
+/**
+ * Formats number with comma. E.g., 1234567 -> 1,234,567
+ * @param number - the number to format
+ * @returns the formatted number
+ */
+export function comma(number: number) {
+    const arr: (string|number)[] = [];
+    while (number >= 1000) {
+        arr.unshift((number%1000).toString().padStart(3, "0"));
+        number = Math.floor(number/1000);
+    }
+    arr.unshift(number);
+    return arr.join(",");
+}
+
+/**
+ * Adds ordinal suffix to the number
+ * @param number - the number to add the suffix
+ * @returns the number with the original suffix
+ */
+export function ordinal(number: number) {
+    if ([11,12,13].includes(number%100)) return number+"th";
+    switch (number%10) {
+        case 1: return number+"st";
+        case 2: return number+"nd";
+        case 3: return number+"rd";
+        default: return number+"th";
     }
 }
 
@@ -118,7 +137,7 @@ export class LazyMap<K = any, V = any> extends Map<K, V> {
     }
 
     /**
-     * Schedules deletion of the value 
+     * Schedules deletion of the value
      * @param key - the value's key
      * @param force - optional, if true, will be deleted without delay
      * @returns whether the values is/will be deleted
