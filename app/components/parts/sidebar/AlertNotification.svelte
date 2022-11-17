@@ -50,10 +50,22 @@
     }
 
     const openTrade = getContext<(id: number) => void>("openTrade");
-        markRead();
-        if (viewNotification(notification)) {
+    function notificationClick(ev: Event & {currentTarget:HTMLAnchorElement}) {
+        markRead(ev);
             ev.preventDefault();
-            ev.stopPropagation();
+
+        switch (notification.object.type) {
+            case "trade-event":
+                openTrade(notification.object.id);
+                break;
+            case "series-completed":
+                const data = notification.object as unknown as NM.Reward;
+                createDialog(CoreCompleted, { data });
+                break;
+            case "Series-remainder":
+            case "badge-obtained":
+                window.open(ev.currentTarget.href);
+                break;
         }
     }
 </script>
