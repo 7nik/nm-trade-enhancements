@@ -117,6 +117,7 @@ async function initCurrentUser() {
     // fallback
     document.addEventListener("DOMContentLoaded", () => {
         if (found) return;
+        if (location.pathname.startsWith("/redeem/")) return;
         error("couldn't load the user info");
         auth().then(() => { location.reload(); });
     });
