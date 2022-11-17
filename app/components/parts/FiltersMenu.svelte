@@ -713,6 +713,9 @@
         }
         // card hiding based on card owner's number of owned copies
         if (isFilterActive.holderOwns) {
+            if (holdersCards.isLoading) {
+                await holdersCards.waitLoading();
+            }
             prints = prints.filter((print) => {
                 const count = holdersCards.getPrintCount(print.id);
                 return inRange(count, filters.holderOwns);
@@ -720,6 +723,9 @@
         }
         // card hiding based on opposite user's number of owned copies
         if (isFilterActive.oppositeOwns) {
+            if (oppositesCards.isLoading) {
+                await oppositesCards.waitLoading();
+            }
             prints = prints.filter((print) => {
                 const count = oppositesCards.getPrintCount(print.id);
                 return inRange(count, filters.oppositeOwns);
