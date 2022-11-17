@@ -23,8 +23,8 @@
         data.responder_offer.prints.reverse().sort((a, b) => b.rarity.rarity - a.rarity.rarity);
         return {
             ...data,
-            bidder: youAreBidder ? currentUser.you : commenter,
-            responder: youAreBidder ? commenter : currentUser.you
+            bidder: youAreBidder ? currentUser.you : collocutor,
+            responder: youAreBidder ? collocutor : currentUser.you
         };
     }
 </script>
