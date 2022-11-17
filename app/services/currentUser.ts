@@ -33,9 +33,22 @@ const currentUser = {
      */
     isAuthenticated: user !== null,
     /**
+     * The user has Pro subscription
+     */
+    isProUser: !!user.pro_status,
+    /**
      * The user has verified his email
      */
     isVerified: user?.is_verified === true,
+    /**
+     * The user level's data
+     */
+    get level() {
+        return user.level;
+    },
+    set level(level: NM.UserLevel) {
+        user.level = level;
+    },
     /**
      * Whether the user able to use the named feature
      * @param feature - name of the feature
