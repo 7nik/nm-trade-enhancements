@@ -33,10 +33,16 @@
     let searchPeopleTimer: NodeJS.Timeout;
     function searchPeople(query: string) {
         clearTimeout(searchPeopleTimer);
-        setTimeout(async () => {
+        if (query.trim().length < 3) {
+            people = [];
+            searchLoading = false;
+            return;
+        }
+        searchPeopleTimer = setTimeout(async () => {
             searchLoading = true;
-            const data = await NMApi.user.searchPeople(query);
-            if (searchTerm === query) people = data;
+            const data = await NMApi.user.searchPeople(query.trim());
+            if (searchTerm !== query) return;
+            people = data;
             searchLoading = false;
         }, 500);
     }
