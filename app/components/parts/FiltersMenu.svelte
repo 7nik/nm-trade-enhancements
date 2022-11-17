@@ -708,7 +708,7 @@
         // hide cards involved in other trades
         if (isFilterActive.notInTrades) {
             prints = prints.filter((print) => {
-                return isTrading(print, isItYou ? "give" : "receive", isItYou ? "print" : "card");
+                return !isTrading(print, isItYou ? "give" : "receive", isItYou ? "print" : "card");
             });
         }
         // card hiding based on card owner's number of owned copies
