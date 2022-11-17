@@ -43,6 +43,10 @@ addPatches(() => {
                 if ($scope.showLoading) {
                     error("showLoading option is on");
                 }
+                if (!$scope.piece) {
+                    error("piece is undefined", $scope);
+                    return;
+                }
 
                 const comp = new PrintAsset({
                     target: $elem[0],
