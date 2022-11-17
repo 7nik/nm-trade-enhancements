@@ -1,31 +1,31 @@
 /**
- * Doing the various data initializing in a separate module because 
+ * Doing the various data initializing in a separate module because
  * stupid webpack moves all imports to the module's top and
- * this leads to the deadlock 
+ * this leads to the deadlock
  */
 
 import { initValue } from "../services/init";
-import { error } from "../utils/utils";
+import { debug, error } from "../utils/utils";
 
 /**
  * Waits for a specific child node appearance
  * @param container - the parent node
  * @param check - function that check if it is that node
  */
- export function waitForChild(container: Node, check: (node: Node) => boolean) {
-    return new Promise<Node>((resolve) => {
-        const node = [...container.childNodes].find(check);
+ export function waitForChild(container: Element, check: (node: Node) => boolean) {
+    return new Promise<Element>((resolve) => {
+        const node = [...container.children].find(check);
         if (node) {
             resolve(node);
             return;
         }
-        
+
         new MutationObserver((mutations, observer) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
                     if (check(node)) {
                         observer.disconnect();
-                        resolve(node);
+                        resolve(node as Element);
                         return;
                     }
                 });
@@ -78,7 +78,7 @@ if (typeof io === "undefined") {
 // the followings inits depends on data in <body>
 
 await waitForChild(document.documentElement, (node) => {
-    // for some reason multiple <body> appears here 
+    // for some reason multiple <body> appears here
     return node === document.body;
 });
 
@@ -86,10 +86,20 @@ await waitForChild(document.documentElement, (node) => {
  * Initialize configs
  */
 async function initConfigs() {
-    const script = await waitForChild(document.body, (node) => {
-        return node instanceof HTMLScriptElement && !!node.textContent?.includes("artModule.value");
-    });
+    let script: Element;
+    do {
+        script = await waitForChild(document.body, (node) => {
+            if (!(node instanceof HTMLScriptElement)) return false;
+            if (node.textContent?.includes("artModule.value")) return true;
+            // for some reason, sometimes the script can appear empty
+            return node.type === "text/javascript" && !node.src && !node.textContent;
+        });
+        // so add delay to get its content or try again to retrieve it
+        if (!script.textContent) await new Promise((res) => setTimeout(res));
+        if (!script.textContent) script.remove();
+    } while(!script.textContent?.includes("artModule.value"));
 
+    debug("config found");
     const config = {
         ...[...script.textContent!.matchAll(/artModule.value\("\w+",\s*(\{[^;]*\})\);/g)]
             // .map(([_, json]) => eval(json))
