@@ -2,29 +2,28 @@
     A dialog window to log in
  -->
 <script lang="ts">
-    import type { SvelteComponent } from "svelte";
-    
     type LoginError = {
         code: string,
         detail: string,
         field_errors?: Record<string, string>,
     }
-    
+
     import { debug, getCookie } from "../../utils/utils";
     import { alert } from "./modals";
     import DialogWindow from "./DialogWindow.svelte";
+    import Button from "../elements/Button.svelte";
+    import LabeledInput from "../elements/LabeledInput.svelte";
 
-    export let onclose: (x:string|null)=>any = ()=>{};
+    let close: (reason: null) => void;
 
-    let dialog: SvelteComponent;
     let username = "", password = "";
     let errors = {
         username: false,
         password: false
     };
-    let shake = false;
+    let shaking = false;
 
-    async function submit(firstTime = true) {
+    async function submit(firstTry = true) {
         const resp = await fetch("/api/signin/", {
             method: "POST",
             headers: {
@@ -34,109 +33,102 @@
             body: JSON.stringify({ username, password }),
         });
         if (resp.ok) {
-            dialog.close();
+            close(null);
             return;
         }
-        if (firstTime && resp.status === 403) {
+        if (firstTry && resp.status === 403) {
             // get the CSRF token
             await fetch("/login");
-            submit(false);   
+            submit(false);
         }
         const data = await resp.json() as LoginError;
         debug("login error", data);
         if (data.field_errors) {
             errors.username = true;
             errors.password = true;
-            shake = true;
-            setTimeout(() => shake = false, 1200);
+            shaking = true;
+            setTimeout(() => shaking = false, 1200);
         } else {
             alert(data.detail);
         }
     }
+    interface $$Events {
+        closed: CustomEvent<null>
+    }
 </script>
- 
-<DialogWindow bind:this={dialog} buttons={[]} blurry={true} cancelable={false} {onclose} styleClass={shake ? "shake" : ""}>
-    <p class="text-body-large text-prominent">
-        Oops, your session has expired. Please, log in back.
-    </p>
-    <form class="signin-page--form" on:submit|preventDefault={() => submit()}>
-        <label class="form--field--label"  class:error={errors.username}>
-            <input name="username" class="form--field--input" required bind:value={username} autocomplete="username">
-            <span>
-                {#if errors.username}Incorrect{/if} 
-                Email or username
-            </span>
-        </label>
-        <label class="form--field--label" class:error={errors.password}>
-            <input type="password" name="password" class="form--field--input" required bind:value={password} autocomplete="current-password">
-            <span>
-                {#if errors.password}"Incorrect"{/if} 
-                Password
-            </span>
-            <a class="signin--form--forgot text-small" href="/login/reset-password/" target="_blank">Forgot?</a>
-        </label>
-        <button class="btn full" type="submit">
-            <span>Log in</span>
-        </button>
-    </form>
+
+<DialogWindow bind:close blurry={"#FFFA"} closeable={false} on:closed>
+    <div class:shaking>
+        <header>
+            Oops, your session has expired. Please, log in back.
+        </header>
+        <form on:submit|preventDefault={() => submit()}>
+            <LabeledInput
+                bind:value={username}
+                name="username"
+                autocomplete="username"
+                error={errors.username}
+            >
+                {#if errors.username}
+                    Incorrect
+                {:else}
+                    Email or username
+                {/if}
+            </LabeledInput>
+            <LabeledInput
+                bind:value={password}
+                type="password"
+                name="password"
+                autocomplete="current-password"
+                error={errors.password}
+            >
+                {#if errors.password}
+                    Incorrect
+                {:else}
+                    Password
+                {/if}
+            </LabeledInput>
+            <Button size="max">Log in</Button>
+        </form>
+        <a href="/login/reset-password/" target="_blank">Forgot password?</a>
+    </div>
 </DialogWindow>
 
 <style>
+    div {
+        border-radius: 4px;
+        padding: 20px;
+        box-shadow: 0 0 0 5px #fff3, 0 0 2px 2px #0002;
+        background-color: #1a1417;
+        width: 340px;
+        box-sizing: border-box;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    header {
+        color: white;
+        font-size: 18px;
+        line-height: 1.2;
+    }
     form {
-        margin-top: 0.5em;
+        color: #0006;
         font-size: 18px;
         border-radius: 3px;
         overflow: hidden;
+        display: grid;
+        grid-template-rows: repeat(3, 60px);
     }
-    .form--field--label {
-        display: block;
-        position: relative;
-        background-color: white;
-        cursor: pointer;
-    }
-    .form--field--label:not(:first-child) {
-        border-top: 1px solid #0002;
-    }
-    .form--field--input {
-        border: none;
-        display: inline-block;
-        color: black;
-        width: 100%;
-        height: 60px;
-        font-size: 16px;
-        padding: 31px 22px 13px;
-    }
-    .form--field--label span {
-        position: absolute;
-        left: 0;
-        top: 0;
-        margin: 20px;
-        font-size: 16px;
-        transition: .1s all ease-in-out;
-        transition-property: margin-top, font-size;
-    }
-    .form--field--label input:valid + span,
-    .form--field--label input:-webkit-autofill + span,
-    .form--field--label input:focus + span {
+    a {
         font-size: 12px;
-        margin-top: 12px;
-    }
-    .form--field--label a {
-        position: absolute;
-        top: 12px;
-        right: 20px;
-        font-size: 12px;
-        float: right;
         color: #0d9ce6;
     }
-    button {
-        border-radius: 0;
-        padding: 22px;
+
+    .shaking {
+        animation: shaking .6s ease-in-out both;
     }
-    :global(.shake) {
-        animation: shake .6s ease-in-out both;
-    }
-    @keyframes shake {
+    @keyframes shaking {
         0%, 100% {
             transform: translateX(0);
         }

@@ -1,69 +1,61 @@
-import type { ComponentProps, ComponentType, SvelteComponent, SvelteComponentTyped } from "svelte";
+import type { SvelteComponent, SvelteComponentTyped } from "svelte";
 
-import Login from "./Login.svelte";
 import Message from "./Message.svelte";
+
+// FIXME: update Svelte to get ComponentEvents
+// type EventResult<Component extends SvelteComponent, EventName extends string> = ComponentEvents<Component>[EventName]["detail"];
+type AConstructorTypeOf<T, U extends any[] = any[]> = new (...args: U) => T;
 
 let dialog: SvelteComponent | null = null;
 
 /**
- * Creates a modal dialog, destroys the previous one 
+ * Creates a modal dialog, destroys the previous one
  * @param Comp - component constructor of the dialog
- * @param params - dialog params
+ * @param props - dialog params
  * @returns the name of the pressed button or `null`
  */
-function createDialog<T extends SvelteComponentTyped<{ onclose?:(b:string|null) => any }>> 
-    (Comp: ComponentType<T>, params: ComponentProps<T>) 
-{
-    return new Promise<string|null>((resolve) => {
+// export function createDialog<T extends SvelteComponentTyped<any, { closed: CustomEvent<any> }>>
+export function createDialog<T extends SvelteComponentTyped<any, { closed: CustomEvent<any> }>> (
+    Comp: AConstructorTypeOf<T>, props: T["$$prop_def"],
+): Promise<T["$$events_def"]["closed"]["detail"]> {
+    return new Promise((resolve) => {
         dialog?.$destroy();
         dialog = new Comp({
             target: document.body,
-            props: {
-                ...params,
-                onclose: (button: string|null) => {
-                    dialog!.$destroy();
-                    dialog = null;
-                    resolve(button);
-                },
-            }
+            props,
         });
+        dialog!.$on("closed", (ev: CustomEvent<any>) => {
+            dialog!.$destroy();
+            dialog = null;
+            resolve(ev.detail);
+        })
     });
 }
 
 /**
  * Show an alert message
- * @param message - the main message
- * @param subtext - an extra description
+ * @param title - the main message
+ * @param text - an extra description
  * @returns a promise of message get closed
  */
 // artMessage.showAlert
-export async function alert (message: string, subtext = "") {
-    await createDialog(Message, { 
-        message, subtext,
-        iconClass: "icon-warning", 
+export async function alert (title: string, text = "") {
+    await createDialog(Message, {
+        title, text,
     });
 }
 
 /**
  * Show a confirm dialog
- * @param message - the main message
- * @param subtext - an extra description
+ * @param title - the main message
+ * @param text - an extra description
  * @returns a promise whether the OK button was pressed
  */
 // artMessage.showAlertWithCancel + showConfirm
-export async function confirm (message: string, subtext = "") {
-    const button = await createDialog(Message, { 
-        message, subtext,
+export async function confirm (title: string, text = "") {
+    const button = await createDialog(Message, {
+        title, text,
         buttons: ["OK", "Cancel"],
-        iconClass: "icon-warning", 
     });
     return button === "OK";
-}
-
-/**
- * Show a form to log in
- * @returns a promise that the user successfully logged in
- */
-export async function login () {
-    await createDialog(Login, {});
 }

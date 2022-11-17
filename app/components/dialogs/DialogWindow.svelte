@@ -2,66 +2,102 @@
     A window to display a message with anything.
  -->
 <script lang="ts">
-    import { onMount, onDestroy } from "svelte";
-    import { fly, fade } from "svelte/transition";
-    import { cubicIn } from "svelte/easing";
-    import Button from "../elements/Button.svelte";
+    import { onMount, onDestroy, createEventDispatcher } from "svelte";
+
+    type Reason = $$Generic;
 
     /**
-     * Buttons labels
+     * Wether the window can be closed by clicking the background, default - yes
      */
-    export let buttons: string[] = [];
+    export let closeable = true;
     /**
-     * Wether the window can be closed by clicking the background
+     * Set BG blurry of the given color, default - no blur
      */
-    export let cancelable = true;
-    /**
-     * Extra CSS classes of the window
-     */
-    export let styleClass = "";
-    /**
-     * Dim the background
-     */
-    export let blurry = false;
-    /**
-     * The dialog was closed.
-     * @param button - name of the pressed button or `null`
-     */
-    export let onclose: (button: string|null) => any = (button) => {button};
-    
+    export let blurry: null | string = null;
+
+    const dispatch = createEventDispatcher<{
+        closed: Reason | null,
+    }>();
+
+    let dialog: HTMLDialogElement;
     // to show in and out transition
-    let show = false, closed = false;
+    let opened = false;
     onMount(() => {
-        show = true;
+        if (blurry) {
+            /**
+             * The backdrop do not inherit CSS variables
+             * thus have to use such a workaround
+             * https://github.com/whatwg/fullscreen/issues/124
+             */
+            const klass = Math.random().toString(36).slice(2);
+            const style = document.createElement("style");
+            style.textContent = `dialog.c-${klass}::backdrop{--bg:${blurry};}`;
+            dialog.append(style);
+            dialog.classList.add("c-"+klass);
+        }
+        opened = true;
+        dialog.showModal();
     });
     onDestroy(() => {
-        if (!closed) close(null);
+        if (opened) close(null);
     })
-    export function close(button: string|null) {
-        show = false;
-        closed = true;
-        setTimeout(onclose, 200, button);
+
+    /**
+     * Closes the dialog window
+     * @param reason
+     */
+    export const close = (reason: Reason | null) => {
+        if (!opened) return;
+        opened = false;
+        setTimeout(() => {
+            dialog?.close();
+            dispatch("closed", reason);
+        }, 200);
+    }
+
+    function backdropClick (ev: MouseEvent) {
+        if (!opened || !closeable) return;
+        const rect = dialog.getBoundingClientRect();
+        if (rect.left > ev.clientX
+            || rect.right < ev.clientX
+            || rect.top > ev.clientY
+            || rect.bottom < ev.clientY
+        ) {
+            close(null);
+        }
     }
 </script>
 
-{#if show}
-    <div id="message" class="nm-alert nm-alert-strict show {styleClass}"
-        class:nm-alert-blur={blurry}
-        on:click|self={() => { if (cancelable) close(null); }}
-        in:fade={{ duration: 100 }}
-        out:fade={{ delay: 150, duration: 100, easing: cubicIn }}
-    >
-        <span class="nm-alert-message theme-dark theme-dark-background"
-            in:fly={{ y: -1000, duration: 250 }}
-            out:fly={{ y: -1000, duration: 250, easing: cubicIn }}
-        >
-            <slot/>
-            <br>
-            {#each buttons as button}            
-                <Button class="nm-alert-ok subdued" on:click={() => close(button)}>
-                    <span id="{button.toLowerCase()}-btn">{button}</span>
-                </Button>    
-            {/each}
-        </span>
-    </div>
-{/if}
+<dialog bind:this={dialog} on:click|self={backdropClick}
+    class:opened class:blurry
+>
+    <slot/>
+</dialog>
+
+<style>
+    dialog {
+        margin: 0 auto;
+        padding: 0;
+        top: 50vh;
+        transform: translateY(-100vh) scale(0);
+        transition: transform 0.1s ease-in-out;
+        border: none;
+        background: transparent;
+        overflow: visible;
+    }
+    dialog.opened {
+        transform: translateY(-50%) scale(1);
+    }
+    dialog::backdrop {
+        opacity: 0;
+        transition: opacity 0.1s ease-in-out;
+        background: transparent;
+    }
+    dialog.blurry::backdrop {
+        background: var(--bg, transparent);
+        backdrop-filter: blur(3px);
+    }
+    dialog.opened::backdrop {
+        opacity: 1;
+    }
+</style>

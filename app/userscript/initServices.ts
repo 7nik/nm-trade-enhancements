@@ -37,10 +37,12 @@ import { error } from "../utils/utils";
 /**
  * Initialize authorizer
  */
-let authorizing: Promise<void> | null = null;
+import { createDialog } from "../components/dialogs/modals";
+import Login from "../components/dialogs/Login.svelte";
+let authorizing: Promise<null> | null = null;
 function auth() {
     if (authorizing) return authorizing;
-    const promise = login();
+    const promise = createDialog(Login, {});
     authorizing = promise;
     promise.finally(() => { authorizing = null; });
     return promise;
@@ -51,7 +53,6 @@ initValue("auth", auth);
  * Initialize sockets
  */
 import type { io as IO } from "socket.io-client";
-import { login } from "../components/dialogs/modals";
 declare global {
     // NM uses socket-io@1.3.5 but the minimal typed one is v3
     var io: typeof IO;
