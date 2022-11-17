@@ -86,10 +86,9 @@
                     ...prints[num],
                     trading,
                 }
-                if (prints[num].print_id === print.print_id) {
-                    print = prints[num];
                 }
-            }
+            print = Object.values(prints)
+                .find(({ print_id }) => print.print_id === print_id)!;
         }
     }
     // the number of copies, init with data from the trade, if available,
