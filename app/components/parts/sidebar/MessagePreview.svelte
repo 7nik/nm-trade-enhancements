@@ -6,9 +6,14 @@
     import Avatar from "../../elements/Avatar.svelte";
     import { timeAgo } from "../../../utils/date";
     import { liveListProvider } from "../../../utils/NMLiveApi";
+    import { getContext } from "svelte";
 
+    /**
+     * The message data
+     */
     export let message: NM.MessageNotification;
-    export let openConversation: (data: NM.ConversationInfo) => void;
+
+    const openConversation = getContext<(data: NM.ConversationInfo) => void>("openConversation");
 
     const recipient = message.object.users.find((user) => user.id !== currentUser.id)!;
 

@@ -6,9 +6,12 @@
     import Avatar from "../../elements/Avatar.svelte";
     import { liveListProvider } from "../../../utils/NMLiveApi";
     import { sharedTradePreview } from "../../tradePreviews";
+    import { getContext } from "svelte";
 
+    /**
+     * The notification to display
+     */
     export let notification: NM.Notification<object, string, string>;
-    export let viewNotification: (data: NM.Notification<object, string, string>) => boolean;
 
     let verbPhrase = notification.verb_phrase;
     // getVerbPhrase
@@ -46,7 +49,7 @@
         liveListProvider("notifications").markRead(notification.id);
     }
 
-    function notificationClick(ev: Event) {
+    const openTrade = getContext<(id: number) => void>("openTrade");
         markRead();
         if (viewNotification(notification)) {
             ev.preventDefault();

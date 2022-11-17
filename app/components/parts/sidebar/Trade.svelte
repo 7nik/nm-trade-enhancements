@@ -5,8 +5,14 @@
     import { timeTil } from "../../../utils/date";
     import Avatar from "../../elements/Avatar.svelte";
     import { sharedTradePreview } from "../../tradePreviews";
+    import { getContext } from "svelte";
 
+    /**
+     * The trade data
+     */
     export let trade: NM.TradeNotification;
+
+    const openTrade = getContext<(id: number) => void>("openTrade");
 </script>
 
 <svelte:options immutable />

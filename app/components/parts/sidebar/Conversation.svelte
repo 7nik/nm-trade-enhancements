@@ -8,19 +8,35 @@
     import Message from "./Message.svelte";
     import { getUserStatus, liveListProvider } from "../../../utils/NMLiveApi";
     import NMApi from "../../../utils/NMApi";
-    import { afterUpdate, onDestroy } from "svelte";
+    import { afterUpdate, getContext, onDestroy } from "svelte";
     import config from "../../../services/config";
     import { timestampNow } from "../../../utils/date";
 
     const MESSAGE_LINK_MAX_MS = 5*60_000;
     const MESSAGE_MAX_SIZE = 1000;
 
+    /**
+     * The conversation ID, it doesn't match the collocutor's ID
+     */
     export let conversationId: number;
+    /**
+     * The collocutor data
+     */
     export let collocutor: NM.UserCollocutor;
-    export let openTrade: (user: NM.User) => void;
+    /**
+     * Action on closing the conversation
+     */
     export let onClose: ((back: boolean) => void);
+    /**
+     * Show the button Back
+     */
     export let canBack: boolean;
+    /**
+     * Show the button Close
+     */
     export let canClose: boolean;
+
+    const openTrade = getContext<(user: NM.User) => void>("openTrade");
 
     $: isRecipientOnline = getUserStatus(collocutor.id);
     let lastActionAgo = "...";

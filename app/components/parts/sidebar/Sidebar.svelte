@@ -13,8 +13,12 @@
     import Notifications from "./Notifications.svelte";
     import TradeMessages from "./TradeMessages.svelte";
     import NMApi from "../../../utils/NMApi";
+    import { setContext } from "svelte";
 
-    export let openTrade: (data: NM.User) => void;
+    /**
+     * A method to open an existing trade or start a new one
+     */
+    export let openTrade: (data: NM.User | number) => void;
 
     let hidden = true;
     let state: "none"|"milestone"|"friends"|"messages"|"notifications"|"conversation" = "none";
@@ -43,7 +47,6 @@
         canClose: boolean,
         canBack: boolean,
         onClose: ((back: boolean) => void),
-        openTrade: typeof openTrade,
     };
     /**
      * Show a conversation tab
@@ -54,9 +57,16 @@
         canClose = true, 
         oldState: typeof state | null = state
     ) {
+        const canBack = oldState === "messages"
+            || oldState === "friends"
+            || oldState === null && window.innerWidth < 640;
+        const onClose = (back: boolean) => showTab(back ? oldState : "none");
         let conversation: NM.ConversationInfo;
         if (typeof data === "number") {
             if (data === collocutorId) {
+                conversationData.canClose = canClose;
+                conversationData.canBack = canBack;
+                conversationData.onClose = onClose
                 showTab("conversation");
                 return;
             }
@@ -67,10 +77,9 @@
         conversationData = {
             conversationId: conversation.id,
             collocutor: conversation.users.find(({ id }) => id !== currentUser.id)!,
-            canBack: oldState === "messages" || oldState === "friends" || oldState === null && window.innerWidth < 640,
+            canBack,
             canClose,
-            onClose: (back) => { showTab(back ? oldState : "none"); },
-            openTrade,
+            onClose,
         };
         collocutorId = conversationData.collocutor.id;
         showTab("conversation");
@@ -104,8 +113,11 @@
         component = comp;
         componentProps = props ?? {};
     }
-
     $: document.body.style.overflow = component ? "hidden" : "";
+
+    setContext("openTrade", openTrade);
+    setContext("openConversation", openConversation);
+    setContext("showOverlay", showOverlay);
 </script>
 
 <div class="nmte-overlay" hidden={hidden && !component}>

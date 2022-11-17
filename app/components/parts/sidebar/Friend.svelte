@@ -6,12 +6,16 @@
     import Avatar from "../../elements/Avatar.svelte";
     import { readable } from "svelte/store";
     import { getUserStatus } from "../../../utils/NMLiveApi";
+    import { getContext } from "svelte";
 
+    /**
+     * The person's data
+     */
     export let friend: NM.UserFriend;
     export let isSearching = false;
     export let startConversation: (userId: number) => void;
     
-    const isOnline = isSearching ? readable(false) : getUserStatus(friend.id);
+    const startConversation = getContext<(userId: number) => void>("openConversation");
     const isFriend = friendList.isFriend(friend.id);
 
     const isVerified = currentUser.isVerified;
