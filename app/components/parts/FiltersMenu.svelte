@@ -445,9 +445,11 @@
         if (!filterSet.includeSett) {
             filters.sett = oldSett;
         }
+        $hiddenSetts = filterSet.filters.hiddenSetts;
 
+        // update tips of the hidden setts
         if (filters.hiddenSetts.length > 0) {
-            let hiddenSetts = [] as typeof filters.hiddenSetts;
+            let hSetts = [] as typeof filters.hiddenSetts;
             for (const sett of filters.hiddenSetts) {
                 const [yourProgress, partnerProgress] = await Promise.all([
                     getProgress(actors.you.id, sett.id),
@@ -455,12 +457,13 @@
                 ]);
                 const yourTip = yourProgress ? makeShortTip(yourProgress) : "—";
                 const partnerTip = partnerProgress ? makeShortTip(partnerProgress) : "—";
-                hiddenSetts.push({
+                hSetts.push({
                     ...sett,
                     tip: `You: ${yourTip}, ${actors.partner.first_name}: ${partnerTip}`,
                 });
             }
-            filters.hiddenSetts = hiddenSetts;
+            filters.hiddenSetts = hSetts;
+            $hiddenSetts = hSetts;
         }
     }
     /**
