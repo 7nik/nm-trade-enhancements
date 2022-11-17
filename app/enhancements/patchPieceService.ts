@@ -24,7 +24,6 @@ addPatches(() => {
             function getCounts(user?: NM.User | Services.ArtUser) {
                 const id = getUserId(user);
                 if (map.has(id)) return map.get(id)!;
-                // return {};
             }
             function getPrintId(printOrId: NM.Print | number) {
                 return typeof printOrId === "number" ? printOrId : printOrId.id;
@@ -38,19 +37,14 @@ addPatches(() => {
                  * @param user - the owner
                  * @returns promise about loading the data
                  */
-                syncOwnership(user) {
+                async syncOwnership(user) {
                     const userId = getUserId(user);
-                    if (map.has(userId)) return Promise.resolve();
+                    if (map.has(userId)) return;
 
-                    map.set(userId, new OwnedCards(userId));
-                    return new Promise((resolve) => {
-                        const unsubscribe = map.get(userId)!.loading.subscribe((loading) => {
-                            if (loading) return;
-                            artSubscriptionService.broadcast("user-piece-ownership-refreshed");
-                            unsubscribe();
-                            resolve();
-                        });
-                    });
+                    const data = new OwnedCards(userId);
+                    map.set(userId, data);
+                    await data.waitLoading();
+                    artSubscriptionService.broadcast("user-piece-ownership-refreshed");
                 },
                 /**
                  * Add a print to owned ones

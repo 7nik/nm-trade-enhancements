@@ -11,8 +11,8 @@
         }
         const ownedCards = cardInfo.get(userId)!;
         return derived(
-            [ownedCards.getPrintCount(cardId, true), ownedCards.loading],
-            ([count, loading]) => (loading ? defCount : count),
+            ownedCards.getPrintCount(cardId, true),
+            (count) => (ownedCards.isLoading ? defCount : count),
         );
     }
 </script>

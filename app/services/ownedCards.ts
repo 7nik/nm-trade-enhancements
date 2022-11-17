@@ -1,11 +1,11 @@
-import type { Readable, Writable } from "svelte/store";
+import type { Readable, Unsubscriber, Writable } from "svelte/store";
 
 import { derived } from "svelte/store";
 import NMApi from "../utils/NMApi";
 import currentUser from "./currentUser";
 import { debug, LazyMap } from "../utils/utils";
 import { liveListProvider } from "../utils/NMLiveApi";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 
 const map = new LazyMap<number, Writable<Record<number,number>>>(300_000);
 
@@ -52,7 +52,7 @@ class OwnedCards {
     constructor (userId: number) {
         this.#store = getPrintCounts(userId);
         this.#loading = derived(
-            this.#store, 
+            this.#store,
             (cardCounts) => Object.keys(cardCounts).length === 0,
         );
         this.#unsubscribe = this.#store.subscribe((cardCounts) => {
@@ -69,8 +69,23 @@ class OwnedCards {
     /**
      * Whether the data is still loading
      */
-    get loading() {
-        return this.#loading;
+    get isLoading() {
+        return get(this.#loading);
+    }
+
+    /**
+     * Method to wait for finishing the loading
+     * @returns Promise of completing the data loading
+     */
+    waitLoading() {
+        return new Promise<void>((res) => {
+            let unsubscribe: Unsubscriber;
+            unsubscribe = this.#loading.subscribe((loading) => {
+                if (loading) return;
+                unsubscribe?.();
+                res();
+            });
+        });
     }
 
     /**
@@ -150,7 +165,7 @@ if (currentUser.isAuthenticated) getPrintCounts(currentUser.id);
 liveListProvider("trades")
     .on("remove", async (tradeEvent) => {
         if (tradeEvent.verb_phrase !== "accepted") return;
-        
+
         const trade = await NMApi.trade.get(tradeEvent.object.id);
         let givenPrints = trade.bidder.id === currentUser.id ? trade.bidder_offer.prints : trade.responder_offer.prints;
         let receivedPrints = trade.bidder.id === currentUser.id ? trade.responder_offer.prints : trade.bidder_offer.prints;
