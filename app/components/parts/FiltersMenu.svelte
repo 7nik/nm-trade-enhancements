@@ -62,6 +62,7 @@
         variant: boolean,
         legendary: boolean,
         // extra filters
+        incompleteSetts: boolean,
         hiddenSetts: hiddenSett[],
         notInTrades: boolean,
         holderOwns: [number, number], // the cardOwner
@@ -248,7 +249,7 @@
     const defaultFilters = {
         cardName: "",
         shared: false,
-        notOwned: false,
+        incompleteSetts: false,
         wishlisted: false,
         sett: null,
         duplicatesOnly: false,
@@ -320,6 +321,9 @@
         if (filters.notOwned !== (filters.oppositeOwns[1] === 0)) {
             filters.notOwned = filters.oppositeOwns[1] === 0
         }
+        if (filters.notOwned && !filters.incompleteSetts) {
+            filters.incompleteSetts = true;
+        }
 
         if ($isSettSelected != (filters.sett !== null)) {
             $isSettSelected = filters.sett !== null;
@@ -328,7 +332,7 @@
                 : [];
         }
         // re-filter the series list when these filters get changed
-        let newSeriesListKey = [filters.shared, filters.notOwned, filters.collection].toString();
+        let newSeriesListKey = [filters.shared, filters.incompleteSetts, filters.collection].toString();
         if (seriesListKey !== newSeriesListKey) {
             seriesListKey = newSeriesListKey;
             updateSeriesList();
@@ -397,7 +401,7 @@
             newCollections = newCollections
                 .filter(({ id }) => collections.find(coll => id === coll.id));
         }
-        if (filters.notOwned) {
+        if (filters.incompleteSetts) {
             newCollections = newCollections.filter((coll) => {
                 const progress = oppositeCollections.getProgress(coll.id);
                 return !progress || progress.total.owned < progress.total.count;
@@ -466,15 +470,12 @@
     function getHint (name: keyof Filters | "sharedS" | "uncompletedS") {
         switch (name) {
             case "shared": return isItYou
-                ? `Cards from same series you and ${actors.partner.first_name} are collecting`
-                : `Cards from same series ${actors.partner.first_name} and you are collecting`;
-            case "sharedS": return isItYou
                 ? `Series that both you and ${actors.partner.first_name} are collecting`
                 : `Series that both ${actors.partner.first_name} and you are collecting`;
             case "notOwned": return isItYou
                 ? `Cards ${actors.partner.first_name} doesn't own`
                 : "Cards you don't own";
-            case "uncompletedS": return isItYou
+            case "incompleteSetts": return isItYou
                 ? `Series that ${actors.partner.first_name} hasn't completed`
                 : "Series that you haven't completed";
             case "wishlisted": return isItYou
@@ -572,6 +573,11 @@
                 icon: "icon-nmte-not-traded",
                 tip,
             };
+            case "incompleteSetts": return {
+                prefix: "S",
+                icons: ["unownedCard"],
+                tip,
+            }
             case "oopSetts": return {
                 prefix: "ST",
                 icon: "icon-nmte-oop",
@@ -710,7 +716,9 @@
             })
         }
         // card hiding based on collection progress
-        if (isFilterActive.collection) {
+        if (isFilterActive.collection
+            || filters.incompleteSetts && !filters.notOwned
+        ) {
             prints = prints.filter((print) => {
                 const settId = print.sett_id;
                 // assume `collections` already contains filtered series
@@ -802,10 +810,15 @@
         <DoubleRange list={collectionNumbers} bind:value={filters.collection} title="{isItYou ? actors.partner.first_name : "You"} collected"/>
         <i class="icon-nmte-reset" on:click={() => filters.collection = defaultFilters.collection}/>
     </span>
-    <span class="filter-row">
-        <Toggle bind:value={filters.shared} icon="icon-im-common-series" hint={getHint("sharedS")}/>
-        <Toggle bind:value={filters.notOwned} icon="icon-im-unowned" hint={getHint("uncompletedS")}
-            on:change={() => filters.oppositeOwns = filters.notOwned ? defaultFilters.oppositeOwns : [0, 0]} 
+    <span class="row">
+        <PushSwitch bind:value={filters.shared} icon="commonSeries" hint={getHint("shared")}/>
+        <PushSwitch bind:value={filters.incompleteSetts} icon="unownedCard" hint={getHint("incompleteSetts")}
+            on:change={() => {
+                if (filters.incompleteSetts && filters.notOwned) {
+                    filters.oppositeOwns = defaultFilters.oppositeOwns;
+                    filters.incompleteSetts = false;
+                }
+            }}
         />
         <Dropdown list={collections} bind:value={filters.sett} let:item
             hint={collections.length ? "Choose a Series" : "Loading series..."}
