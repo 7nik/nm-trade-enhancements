@@ -19,10 +19,17 @@ function getPrintCounts (userId: number) {
     let loaded = false;
     const store = writable({}, (set) => {
         if (!loaded) {
-            NMApi.user.printCounts(userId).then((printCounts) => {
-                loaded = true;
-                set(Object.fromEntries(printCounts));
-            });
+            function load() {
+                NMApi.user.printCounts(userId).then((printCounts) => {
+                    loaded = true;
+                    set(Object.fromEntries(printCounts));
+                }, () => {
+                    // if no need to try to load the data anymore
+                    if (!map.has(userId)) return;
+                    setTimeout(load, 1000);
+                });
+            }
+            load();
         }
         return () => {
             // do not delete the current user
