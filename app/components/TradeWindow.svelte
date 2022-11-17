@@ -22,7 +22,7 @@
 </script>
 <!-- @component
     A component for interacting with trades.
-    
+
     You must provide at least either `tradeId` or `actors`.
  -->
  <script lang="ts">
@@ -31,6 +31,7 @@
     import NMApi from "../utils/NMApi";
     import { alert, confirm } from "./dialogs/modals";
     import currentUser from "../services/currentUser";
+    import Icon from "./elements/Icon.svelte";
 
     /**
      * The trade to load
@@ -60,7 +61,7 @@
      */
     export let showConversation: (userId: number, show: boolean) => void;
 
-    // the next `action` and `mode` for some `action`s 
+    // the next `action` and `mode` for some `action`s
     const ACTIONS: Record<string, [string, "loading" | "done"]> = {
         create: ["proposing", "loading"],
         proposing: ["proposed", "done"],
@@ -100,13 +101,13 @@
     let pageWidth: number; // bound to the browser window width
     $: isMobileLarge = pageWidth < 640;
     $: if (actors) showConversation(actors.partner.id, !isMobileLarge);
-    
+
     // load the trade data
     if (tradeId) {
         // this request should be cached = minimal delay
         NMApi.trade.get(tradeId).then((t) => {
             trade = t;
-            
+
             let youAreBidder = trade.bidder.id === currentUser.id;
             actors = {
                 youAreBidder,
@@ -132,7 +133,7 @@
         actors.you = {...actors.you, name: "You", first_name: "You"};
         actors[actors.youAreBidder ? "bidder" : "responder"] = actors.you;
         if (initialData) {
-            // to speed up showing the window, 
+            // to speed up showing the window,
             // at first show a print that lack some unused data
             const fakePrint: NM.PrintInTrade = {
                 id: initialData.card.id,
@@ -198,7 +199,7 @@
         [action, mode] = ACTIONS[action];
         try {
             await NMApi.trade.create(
-                actors!.you.id, 
+                actors!.you.id,
                 yourOffer.map((p) => p.print_id),
                 actors!.partner.id,
                 partnersOffer.map((p) => p.print_id),
@@ -293,9 +294,10 @@
      * @param back - whether the Back button was pressed
      */
     async function cancelTrade(back = false) {
-        if ((yourOffer.length || partnersOffer.length) && !await confirm(`
-            Are you sure you want to close this trade?
-            If you leave, you'll lose your trade in progress.`)) return;
+        if ((yourOffer.length || partnersOffer.length) && !await confirm(
+            "Are you sure you want to close this trade?",
+            "If you leave, you'll lose your trade in progress.")
+        ) return;
         closeTrade(back);
     }
 </script>
@@ -303,120 +305,226 @@
 <svelte:window bind:innerWidth={pageWidth} />
 
 {#if actors && (mode === "view" || mode === "edit")}
-    <div class="nm-modal trade theme-light">
-        <div class=nm-modal--content>
-            <div class=nm-modal--header>
-                {#if backButtonText}
-                    <div class=nm-modal--titlebar--left on:click={() => cancelTrade(true)}>
-                        <span class=nm-modal--back-btn>
-                            <span class=icon-back>&lsaquo;</span>
-                            <span class=text-body>Back to {backButtonText}</span>
+    <article class="trade-window">
+        <header>
+            {#if backButtonText}
+                <span>
+                    <Button type="borderless" on:click={() => cancelTrade(true)}>
+                        <span class="back-btn">
+                            <span>‹</span>
+                            Back to {backButtonText}
                         </span>
-                    </div>
+                    </Button>
+                </span>
+            {/if}
+            <h2>{windowTitle}</h2>
+            {#if isMobileLarge}
+                <span>
+                    <Button size="nano" type="danger" icon="chat"
+                        on:click={() => actors && showConversation(actors.partner.id, true)}
+                    />
+                </span>
+            {/if}
+        </header>
+        <hr>
+        <main>
+            <TradeWindowList
+                {actors}
+                cardOwner={actors.partner}
+                bind:offer={partnersOffer}
+                canEdit={mode === "edit"}
+                tradeId={trade?.id}
+                sett={initialData?.sett ?? null}
+            />
+            <TradeWindowList
+                {actors}
+                cardOwner={actors.you}
+                bind:offer={yourOffer}
+                canEdit={mode === "edit"}
+                tradeId={trade?.id}
+                sett={initialData?.sett ?? null}
+            />
+        </main>
+        <footer>
+            <section>
+                {#if mode === "edit"}
+                    <Button type="subdued-light" on:click={() => cancelTrade()}>
+                        Exit
+                    </Button>
+                {:else}
+                    <Button type="subdued-light" on:click={() => closeTrade(false)}>
+                        Close
+                    </Button>
                 {/if}
-                {#if isMobileLarge}
-                    <div class=nm-modal--titlebar--right>
-                        <Button class="subdued" icon="chat" on:click={() => actors && showConversation(actors.partner.id, true)} />
-                    </div>
-                {/if}
-                <div class=nm-modal--titlebar>
-                    <div id=trade-title class=nm-modal--titlebar--title>
-                        <h2>{windowTitle}</h2>
-                    </div>
-                </div>
-            </div>
-            <div class=trade--content>
-                <div class="trade--side trade--partner">
-                    <TradeWindowList {actors} cardOwner={actors.partner} bind:offer={partnersOffer} canEdit={mode === "edit"} tradeId={trade?.id} sett={initialData?.sett ?? null} />
-                </div>
-                <div class="trade--side trade--you">
-                    <TradeWindowList {actors} cardOwner={actors.you} bind:offer={yourOffer} canEdit={mode === "edit"} tradeId={trade?.id} sett={initialData?.sett ?? null} />
-                </div>
-            </div>
-            <div class=nm-modal--footer>
-                <div class=nm-modal--actionbar>
-                    <span class="nm-modal--actionbar--left">
-                        {#if mode === "edit"}
-                            <Button class="subdued" on:click={() => cancelTrade()}>
-                                Exit
-                            </Button>
+            </section>
+            <section>
+                {#if mode === "edit"}
+                    {#if action === "counter" || action === "modify"}
+                        <Button type="subdued-light" on:click={cancelChanges}>
+                            Back
+                        </Button>
+                    {/if}
+                    <Button type="primary" disabled={!isValidTrade} on:click={postTrade}>
+                        {#if action === "counter"}
+                            Offer Countered Trade
+                        {:else if action === "modify"}
+                            Offer Modified Trade
                         {:else}
-                            <Button class="subdued" on:click={() => closeTrade(false)}>
-                                Close
-                            </Button>
+                            Offer Trade
                         {/if}
-                    </span>
-                    <span class=nm-modal--actionbar--right>
-                        {#if mode === "edit"}
-                            {#if action === "counter" || action === "modify"}
-                                <Button class="subdued" on:click={cancelChanges}>
-                                    Back
-                                </Button>
-                            {/if}
-                            <Button class="primary" disabled={!isValidTrade} on:click={postTrade}>
-                                {#if action === "counter"}
-                                    Offer Countered Trade
-                                {:else if action === "modify"}
-                                    Offer Modified Trade
-                                {:else if action === "create"}
-                                    Offer Trade
-                                {/if}
-                            </Button>
-                        {:else if mode === "view" && action === "proposed"}
-                            {#if actors.youAreBidder}
-                                <Button class="subdued" on:click={startModify}>
-                                    Modify
-                                </Button> 
-                                <Button class="primary" on:click={declineTrade}>
-                                    Withdraw
-                                </Button>
-                            {:else}
-                                <Button class="subdued" on:click={startCounter}>
-                                    Counter
-                                </Button> 
-                                <Button class="subdued" on:click={declineTrade}>
-                                    Decline
-                                </Button> 
-                                <Button class="primary" on:click={acceptTrade}>
-                                    Accept
-                                </Button>
-                            {/if}
-                        {:else if mode === "view" && action !== "proposed"}
-                            <Button class="primary" on:click={newTrade}>
-                                New Trade with {actors.partner.first_name}
-                            </Button>
-                        {/if}
-                    </span> 
-                </div>
-            </div>
-        </div>
-    </div>
+                    </Button>
+                {:else if action === "proposed"}
+                    {#if actors.youAreBidder}
+                        <Button type="subdued-light" on:click={startModify}>
+                            Modify
+                        </Button>
+                        <Button type="primary" on:click={declineTrade}>
+                            Withdraw
+                        </Button>
+                    {:else}
+                        <Button type="subdued-light" on:click={startCounter}>
+                            Counter
+                        </Button>
+                        <Button type="subdued-light" on:click={declineTrade}>
+                            Decline
+                        </Button>
+                        <Button type="primary" on:click={acceptTrade}>
+                            Accept
+                        </Button>
+                    {/if}
+                {:else}
+                    <Button type="primary" on:click={newTrade}>
+                        New Trade with {actors.partner.first_name}
+                    </Button>
+                {/if}
+            </section>
+        </footer>
+    </article>
 {:else if mode === "loading"}
-    <!-- action processing-->
-    <div class="trade--proposing theme-dark">
-        <p><span class="load-indicator large"></span></p>
-        <p class="text-emphasis text-body-large">
-            {action} trade
-        </p>
-    </div>
+    <article class="loading">
+        <Icon icon="loader" size="40px"/>
+        <span>{action} trade</span>
+    </article>
 {:else if mode === "done"}
-    <!-- action done -->
-    <div class="trade--proposed theme-dark text-body-large">
-        <p><span class=icon-checkmark></span></p>
-        <p id=action-completed-text class=text-emphasis>
-            You {action} a trade 
-            {["proposed", "withdrew", "modified"].includes(action) ? "to" : "from"} 
+    <article class="done">
+        <Icon icon=checkmark size="40px" />
+        <span>
+            You {action} a trade
+            {actors?.youAreBidder ? "to" : "from"}
             {actors?.partner.name}.
-        </p>
-        <p><Button class="subdued" on:click={() => closeTrade(result)}>Close</Button></p>
-    </div>
+        </span>
+        <Button type="subdued-dark" on:click={() => closeTrade(result)}>
+            Close
+        </Button>
+    </article>
 {/if}
 
 <style>
-    .trade--content::before {
-        content: none;
+    article {
+        font: 300 18px locator-web,Helvetica Neue,Helvetica,Arial,sans-serif;
+        display: flex;
+        height: 100%;
+        box-sizing: border-box;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        justify-content: center;
+        font-style: italic;
+        font-size: 18px;
+        font-weight: 400;
+        color: white;
+        overflow: hidden;
     }
-    .trade--side.trade--partner {
-        border-right: 1px solid #0002;
+    article > span {
+        color: #b39ea9;
+    }
+    article.trade-window {
+        padding: 40px 0 40px 40px;
+        color: #5f5668;
+        font-size: 15px;
+        gap: 0;
+        align-items: stretch;
+        font-style: normal;
+        position: relative;
+    }
+    header, footer {
+        background: white;
+    }
+    header {
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        grid-template-areas: "l c r";
+    }
+    .back-btn {
+        display: flex;
+        align-items: center;
+        text-transform: none;
+        font-size: 15px;
+        font-weight: 400;
+        letter-spacing: normal;
+    }
+    .back-btn span {
+        font-size: 40px;
+        font-weight: 200;
+        margin-bottom: 0.2em;
+    }
+    h2 {
+        grid-area: c;
+        margin: 0;
+        font-size: 22px;
+        font-weight: 300;
+        font-style: normal;
+    }
+    header > span:last-child {
+        grid-area: r;
+        justify-self: end;
+    }
+    hr {
+        flex-shrink: 0;
+        height: 1px;
+        margin: 0;
+        border: none;
+        background-position: bottom left;
+        background-repeat: repeat-x;
+        background: linear-gradient(90deg, #B078B1, #B5CE80, #51B2D5, #B078B1);
+    }
+    main {
+        display: flex;
+        flex-grow: 1;
+        min-height: 0;
+        gap: 1px;
+        background: #DDD;
+    }
+    footer {
+        border-top: 1px solid #DDD;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+    }
+    footer section {
+        gap: 1ch;
+        display: flex;
+    }
+    @media screen and (max-width: 960px) {
+        article.trade-window {
+            padding: 10px;
+            border-radius: 6px;
+        }
+        header {
+            padding: 10px;
+        }
+        .back-btn {
+            font-size: 0;
+        }
+        main {
+            display: block;
+            overflow: auto;
+            background: none;
+            flex-direction: column;
+        }
+        footer {
+            padding: 10px;
+        }
     }
 </style>

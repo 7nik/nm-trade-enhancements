@@ -9,7 +9,7 @@
         }
     }
 
-	import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher } from "svelte";
 
     /**
      * The placeholder text on the input field
@@ -24,8 +24,8 @@
      */
     export let value: T | null;
 
-	const dispatch = createEventDispatcher();
-	$: dispatch("change", value);
+    const dispatch = createEventDispatcher();
+    $: dispatch("change", value);
 
     $: text = value?.name ?? "";
     $: lowText = text.toLowerCase();
@@ -67,6 +67,7 @@
         position: absolute;
         top: 100%;
         width: 100%;
+        box-sizing: border-box;
         max-height: 35vh;
         background: white;
         border: 1px lightgrey solid;

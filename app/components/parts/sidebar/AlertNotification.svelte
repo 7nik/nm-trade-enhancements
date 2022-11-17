@@ -2,11 +2,14 @@
     import type NM from "../../../utils/NMTypes";
 
     import { firstName, firstNamePossessive } from "../../../services/user";
-    import { timeAgo } from "../../../utils/date";
     import Avatar from "../../elements/Avatar.svelte";
     import { liveListProvider } from "../../../utils/NMLiveApi";
     import { sharedTradePreview } from "../../tradePreviews";
+    import Icon from "../../elements/Icon.svelte";
     import { getContext } from "svelte";
+    import CoreCompleted from "../../dialogs/CoreCompleted.svelte";
+    import { createDialog } from "../../dialogs/modals";
+    import Time from "../../elements/Time.svelte";
 
     /**
      * The notification to display
@@ -15,7 +18,7 @@
 
     let verbPhrase = notification.verb_phrase;
     // getVerbPhrase
-    { 
+    {
         const noun = notification.object.noun;
         const ending = notification.actor.action_data ? ":" : ".";
             // is it even used?
@@ -44,15 +47,16 @@
         ? (elem: HTMLElement) => { sharedTradePreview(elem, notification.object.id); }
         : () => {};
 
-    function markRead() {
+    function markRead(ev: Event) {
         if (notification.read) return;
         liveListProvider("notifications").markRead(notification.id);
+        ev.stopPropagation();
     }
 
     const openTrade = getContext<(id: number) => void>("openTrade");
     function notificationClick(ev: Event & {currentTarget:HTMLAnchorElement}) {
         markRead(ev);
-            ev.preventDefault();
+        ev.preventDefault();
 
         switch (notification.object.type) {
             case "trade-event":
@@ -72,40 +76,86 @@
 
 <svelte:options immutable />
 
-<li class="nm-notifications-feed--item user-status" class:unread={!notification.read}
+<a href={notification.object.url}
+    class:unread={!notification.read}
+    on:click={notificationClick}
     use:notificationPreview
 >
-    <a id="notification-{notification.id}"
-        href={notification.object.url}
-        class="nm-notification"
-        on:click={notificationClick}
-    >
-        <Avatar user={notification.actor} size="small" class="nm-notification--icon user-status--icon" />
-        <div class="user-status--attachment nm-notification--image {notification.object.images_class}">
-            {#each notification.object.images as src}
-                <img {src} alt="Notification thumbnail">
-            {/each}
+    <Avatar user={notification.actor} />
+    <section>
+        <div>
+            {#if verbPhrase}
+                <strong>{firstName(notification.actor)}</strong>
+                {verbPhrase}
+            {/if}
+            {#if notification.actor.action_data}
+                <i>{notification.actor.action_data}</i>
+            {/if}
         </div>
-        <div class="nm-notification--content user-status--content">
-            <span class="nm-notification--story text-subdued">
-                {#if verbPhrase}
-                    <span class="nm-notification--story-content">
-                        <strong>{firstName(notification.actor)}</strong>
-                    <span>{verbPhrase}</span>
-                    </span>
-                {/if}
-                {#if notification.actor.action_data}
-                    <span class="nm-notification--story-comment text-prominent text-emphasis">
-                        {notification.actor.action_data}
-                    </span>
-                {/if}
-            </span>
-            <span class="nm-notification--meta text-subdued text-emphasis">
-                <time>{timeAgo(notification.actor.time)}</time>
-                <i class="icon-checkmark dark nm-notification--mark-read tip" title="Mark as read"
-                    on:click|preventDefault|stopPropagation={markRead}
-                ></i>
-            </span>
+        <div class="bottom">
+            <Time stamp={notification.actor.time} />
+            {#if !notification.read}
+                <span class="read">
+                    <Icon icon="checkmark" size="14px" hint="Mark as read" on:click={markRead} />
+                </span>
+            {/if}
         </div>
-    </a>
-</li>
+    </section>
+    <img src={notification.object.images[0]} alt="Notification thumbnail">
+</a>
+
+<style>
+    a {
+        padding: 7.5px 10px;
+        gap: 0 10px;
+        text-decoration: none;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 400;
+    }
+    a.unread {
+        background: rgba(75,187,245,.2);
+    }
+    a:hover {
+        background: #f4f4f4;
+    }
+    :global(a) + a::before {
+        content: "";
+        display: block;
+        height: 1px;
+        width: 100%;
+        background: #efefef;
+        margin: 0 -10px 0 50px;
+        position: relative;
+        top: -9px;
+    }
+    a:hover::before {
+        background: transparent;
+    }
+    section {
+        flex-grow: 1;
+        max-width: calc(100% - 100px);
+        display: flex;
+        gap: 2px;
+        flex-direction: column;
+        justify-content: center;
+        color: #857a90;
+    }
+    div.bottom {
+        display: flex;
+        justify-content: space-between;
+    }
+    strong, i {
+        color: #2c2830;
+        font-weight: 400;
+    }
+    .unread:not(:hover) .read {
+        display: none;
+    }
+    img {
+        max-width: 40px;
+    }
+</style>

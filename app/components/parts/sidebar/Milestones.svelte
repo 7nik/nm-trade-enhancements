@@ -1,6 +1,8 @@
 <script lang="ts">
     import config from "../../../services/config";
     import { liveListProvider } from "../../../utils/NMLiveApi";
+    import Header from "./Header.svelte";
+    import List from "./List.svelte";
     import Milestone from "./Milestone.svelte";
 
     const {
@@ -23,56 +25,46 @@
     })
 
     $: loading = $recentLoading || $suggestedLoading || $completedLoading;
-
-    function gotoPackOpenPage(settId: number) {
-        // TODO implement pack opening?
-        window.open("https://neonmob.com/series/"+settId);
-    }
+    $: empty = !$recentMilestones.length && !$suggestedMilestones.length && !$completedMilestones.length;
 </script>
 
-<div class="milestone-notification-cont">
+<List icon="badge" emptyMessage="No Milestones"
+    show={loading ? "loading" : empty ? "empty" : "content"}
+>
     {#if $recentMilestones.length > 0}
-        <ul>
-            <div class="milestone-classifications">
-                <span class="milestone-type">recent progress</span>
-                <span class="see-all-milestone">
-                    <a target="_self" href="{config["profile-milestones"]}">see all milestones</a>
-                </span>
-            </div>
-            {#each $recentMilestones as milestone (milestone)}
-                <Milestone {milestone} {gotoPackOpenPage} />
-            {/each}
-        </ul>
+        <Header>
+            recent progress
+            <a target="_self" href="{config["profile-milestones"]}">see all milestones</a>
+        </Header>
+        {#each $recentMilestones as milestone (milestone)}
+            <Milestone {milestone} />
+        {/each}
     {/if}
     {#if $suggestedMilestones.length > 0}
-        <ul>
-            <div class="milestone-classifications">
-                <span class="milestone-type">MILESTONE SUGGESTION</span>
-            </div>
-            {#each $suggestedMilestones as milestone (milestone)}
-                <Milestone {milestone} {gotoPackOpenPage} />
-            {/each}
-        </ul>
+        <Header>milestone suggestion</Header>
+        {#each $suggestedMilestones as milestone (milestone)}
+            <Milestone {milestone} />
+        {/each}
     {/if}
     {#if $completedMilestones.length > 0}
-        <ul class="disable-completed">
-            <span class="milestone-classifications">
-                <span class="milestone-type">RECENTLY COMPLETED</span>
-            </span>
+        <Header>recently completed</Header>
+        <section>
             {#each $completedMilestones as milestone (milestone)}
-                <Milestone {milestone} {gotoPackOpenPage} />
+                <Milestone {milestone} />
             {/each}
-        </ul>
+        </section>
     {/if}
+</List>
 
-    {#if loading}
-        <i class="load-indicator large"></i>
-    {:else if !$recentMilestones.length && !$suggestedMilestones.length && !$completedMilestones.length}
-        <div class="empty-state">
-            <i class="nm-messages--empty--icon">
-                <i class="icon-badge"></i>
-            </i>
-            <p class="text-emphasis text-subdued text-small">No Milestones.</p>
-        </div>
-    {/if}
-</div>
+<style>
+    a:link, a:visited {
+        color: #0d9ce6;
+        text-decoration: none;
+    }
+    a:hover {
+        color: #085b85;
+    }
+    section {
+        filter: grayscale(1);
+    }
+</style>

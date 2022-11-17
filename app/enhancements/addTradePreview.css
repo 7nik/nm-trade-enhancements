@@ -3,8 +3,11 @@
     background: #efefef;
     border-radius: 5px;
     filter: drop-shadow(0 1px 4px rgb(0, 0, 0, 0.35));
-    width: 280px;
-    max-width: 280px;
+    width: 300px;
+    max-width: 300px;
+}
+.tippy-box[data-theme~='trade'] .tippy-content {
+    padding: 0;
 }
 .tippy-box[data-theme~='trade'] .tippy-arrow {
     color: #efefef;

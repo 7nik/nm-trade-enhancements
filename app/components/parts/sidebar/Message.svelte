@@ -3,17 +3,26 @@
 
     import { firstName } from "../../../services/user";
     import currentUser from "../../../services/currentUser";
-    import { timeAgo } from "../../../utils/date";
     import { linky } from "../../../utils/utils";
     import Avatar from "../../elements/Avatar.svelte";
     import TradePreviews from "../../TradePreviews.svelte";
+    import Time from "../../elements/Time.svelte";
 
+    /**
+     * The message data
+     */
     export let message: NM.Message;
+    /**
+     * The collocutor's data
+     */
     export let collocutor: NM.UserCollocutor;
+    /**
+     * Whether collapse the message with the previous one
+     */
     export let isCondensed = false;
 
-    const commenter = message.user_id === currentUser.id ? currentUser.you : collocutor;    
-    let isTradeActive = message.attachment?.active ?? false;
+    const commenter = message.user_id === currentUser.id ? currentUser.you : collocutor;
+    let showTrade = message.attachment?.active ?? false;
 
     // converts the attachment into TradePreview compatible object
     function makeTradeObject(data: Exclude<NM.Message["attachment"], undefined>) {
@@ -31,49 +40,84 @@
 
 <svelte:options immutable />
 
-<li class="comment {isCondensed ? "condensed" : "non-condensed"}" 
-    class:with-attachment={message.attachment}
->
-    <a class="comment--icon" target="_self" href={commenter.links.profile}>
+<li class:isCondensed>
+    <a class="avatar" target="_self" href={commenter.links.profile}>
         <Avatar user={commenter} />
     </a>
-    <div class="comment--content">
+    <header>
         {#if message.attachment?.type === "trade"}
-            <div
-                class="comment--attachment trade {message.attachment.state}"
-                class:active={isTradeActive}
-            >
-                <span class="text-prominent comment--heading">
-                    {firstName(commenter)} {message.comment}
-                </span>
-                <time class="comment--time text-emphasis">
-                    {timeAgo(message.created)}
-                </time>
-                <span
-                    class="text-link comment--trade-details-link"
-                    on:click={() => isTradeActive = !isTradeActive}
-                >
-                    {#if isTradeActive}
-                        <TradePreviews trades={[makeTradeObject(message.attachment)]} />
-                    {:else}
-                        Show Details
-                    {/if}
-                </span>
-            </div>
+            {firstName(commenter)} {message.comment}
         {:else}
-            <div class="comment--default">
-                <a class="text-prominent comment--heading"
-                    target="_self" href={commenter.links.profile}
-                >
-                    {firstName(commenter)}
-                </a>
-                <time class="comment--time text-emphasis">
-                    {timeAgo(message.created)}
-                </time>
-                <div class="comment--text">
-                    {linky(message.comment)}
-                </div>
-            </div>
+            <a target="_self" href={commenter.links.profile}>
+                {firstName(commenter)}
+            </a>
         {/if}
-    </div>
+        <Time stamp={message.created} />
+    </header>
+
+    <section>
+        {#if message.attachment?.type === "trade"}
+            {#if showTrade}
+                <TradePreviews trades={[makeTradeObject(message.attachment)]} />
+            {:else}
+                <div on:click={() => showTrade = true}>
+                    Show Details
+                </div>
+            {/if}
+        {:else}
+            {linky(message.comment)}
+        {/if}
+    </section>
 </li>
+
+<style>
+    li {
+        padding: 8px 10px;
+        gap: 0 5px;
+        display: grid;
+        grid-template-columns: 40px auto;
+        grid-template-rows: 10px minmax(20px, auto);
+    }
+    li.isCondensed {
+        grid-template-rows: 0 0 auto;
+        padding-top: 0;
+    }
+    li:not(:first-child):not(.isCondensed)::before {
+        content: "";
+        display: block;
+        height: 1px;
+        width: calc(100% + 10px);
+        background: #e6e6e6;
+        position: relative;
+        top: -6px;
+        grid-area: 1/2;
+    }
+    .avatar {
+        grid-area: 1/1 / 4/2;
+    }
+    .isCondensed .avatar {
+        display: none;
+    }
+    header {
+        grid-area: 2/2;
+        font-size: 14px;
+        color: #2c2830;
+    }
+    header a:link, header a:visited, section div {
+        font-size: 14px;
+        color: #0d9ce6;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    header a:hover, section div:hover {
+        color: #085b85;
+    }
+    .isCondensed header {
+        display: none;
+    }
+    section {
+        font-size: 14px;
+        color: #5f5668;
+        grid-area: 3/2;
+    }
+</style>

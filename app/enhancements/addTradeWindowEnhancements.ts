@@ -14,7 +14,7 @@ import config from "../services/config";
 addPatches(() => {
     angular.module("nm.trades").run([
         "$rootScope",
-        "nmTrades", 
+        "nmTrades",
         "pieceTraderClickTracker",
         "artOverlay",
         "artNotificationCenter",
@@ -23,8 +23,8 @@ addPatches(() => {
         "artConfirm",
         (
             $scope: angular.IScope,
-            nmTrades: Services.NMTrade, 
-            pieceTraderClickTracker: Services.PieceTraderClickTracker, 
+            nmTrades: Services.NMTrade,
+            pieceTraderClickTracker: Services.PieceTraderClickTracker,
             artOverlay: Services.ArtOverlay,
             artNotificationCenter: Services.ArtNotificationCenter,
             artSubscriptionService: Services.ArtSubscriptionService,
@@ -78,7 +78,7 @@ addPatches(() => {
 
                 if (typeof backOrTrade !== "object") return;
                 const trade = backOrTrade;
-             
+
                 // _showBadges
                 if (trade.badges && trade.badges.length > 0) {
                     for (let badge of trade.badges) {
@@ -187,8 +187,8 @@ addPatches(() => {
 
                 const youAreBidder = currentUser.id === bidder.id;
                 const actors = {
-                    youAreBidder, 
-                    bidder, 
+                    youAreBidder,
+                    bidder,
                     responder,
                     you: youAreBidder ? bidder : responder,
                     partner: youAreBidder ? responder : bidder,
@@ -204,7 +204,7 @@ addPatches(() => {
                         side: initialCardData.offerType === "bidder_offer" ? "bidder" : "responder",
                         card: pieceData.piece,
                         sett: pieceData.piece && "set" in pieceData.piece ? pieceData.piece.set : pieceData.sett!,
-                    } 
+                    }
                 }
 
                 tradeWindow = new TradeWindow({

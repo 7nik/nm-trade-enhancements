@@ -1,11 +1,12 @@
 <script lang="ts">
     import type NM from "../../../utils/NMTypes";
-    
+
     import Friend from "./Friend.svelte";
     import NMApi from "../../../utils/NMApi";
     import { friendList } from "../../../services/user";
-
-    export let openConversation: (userId: number) => void;
+    import Icon from "../../elements/Icon.svelte";
+    import Header from "./Header.svelte";
+    import List from "./List.svelte";
 
     const MAX_SEARCH_RESULTS = 10;
 
@@ -19,7 +20,7 @@
             .sort((a,b) => b.first_name.localeCompare(a.first_name));
     }
     let people: NM.UserFriend[] = [];
-    
+
     $: isSearching = searchTerm.length > 0;
     let searchLoading = false;
     let searchTitle = "";
@@ -29,7 +30,7 @@
             : `Top ${Math.min(MAX_SEARCH_RESULTS, people.length)} Search Result${people.length > 1 ? "s" : ""}`;
     }
 
-    $: if (isSearching) searchPeople(searchTerm); 
+    $: if (isSearching) searchPeople(searchTerm);
     let searchPeopleTimer: NodeJS.Timeout;
     function searchPeople(query: string) {
         clearTimeout(searchPeopleTimer);
@@ -48,67 +49,92 @@
     }
 </script>
 
-<ul class="friends-list user-status--list">
-    <div class="friends-list--search user-status--list--heading">
-        <input id="friend-search" class="friends-list--search--input"
-            placeholder="Search for friends" autocomplete="off"
-            bind:value={searchTerm}
-        >
-        <label class="friends-list--search--icon" for="friend-search"
-            on:click={() => searchTerm = ""}
-        >
-            <i class={isSearching ? "icon-close" : "icon-search"}></i>
-        </label>
-    </div>
- 
-    <li class="user-status--list--heading small-caps">
+<div>
+    <input id="friend-search"
+        placeholder="Search for friends" autocomplete="off"
+        bind:value={searchTerm}
+    >
+    <label for="friend-search" on:click={() => searchTerm = ""} >
+        <Icon icon={isSearching ? "close" : "search"} size="15px" />
+    </label>
+</div>
+
+<List icon="owners" emptyMessage="Your friends list is empty\nJust click the add a friend button on a person's profile"
+    show={friends.length === 0 && !isSearching ? "empty" : "content"}
+>
+    <Header>
         Your Friends
-        <span class="user-status--list--heading--action">
+        <span>
             {#if isSearching}
                 {friends.length === 1 ? "1 match" : `${friends.length} matches`}
             {:else if friends.length > 0}
                 {friends.length === 1 ? "1 friend" : `${friends.length} friends`}
             {/if}
         </span>
-    </li>
+    </Header>
+    {#if friends.length}
+        <section>
+            {#each friends as friend (friend.id)}
+                <Friend {friend} showStatus={!isSearching} />
+            {/each}
+        </section>
+    {/if}
 
-    <div class="my-friends--list">
-        {#each friends as friend (friend.id)}
-            <Friend {friend} {isSearching} startConversation={openConversation} />   
-        {/each}
-    </div>
- 
     {#if isSearching && searchTerm.length > 2}
-        <li class="user-status--list--heading small-caps">
+        <Header>
             {searchTitle}
             {#if searchLoading}
-                <span class="user-status--list--heading--action">
-                    <i class="load-indicator"></i>
-                </span>
+                <Icon icon="loader" />
+            {:else}
+                {people.length === 1 ? "1 match" : `${people.length} matches`}
             {/if}
-        </li>
- 
+        </Header>
         {#each people.slice(0, MAX_SEARCH_RESULTS) as friend (friend.id)}
-            <Friend {friend} isSearching={true} startConversation={openConversation} />   
+            <Friend {friend} showStatus={true} />
         {/each}
     {/if}
-</ul>
- 
-{#if friends.length === 0 && !isSearching}
-    <div class="empty-state">
-        <i class="icon-owners dark"></i>
-        <h3>Your friends list is empty</h3>
-        <p class="text-emphasis text-subdued text-small">Just click the add a friend button on a person's profile.</p>
-    </div>
-{/if}
- 
+</List>
+
 <style>
-    .my-friends--list {
+    div {
+        padding: 10px;
+        position: relative;
+        border-bottom: 1px solid #efefef;
+    }
+    input {
+        width: 100%;
+        border: none;
+        background-color: #efefef;
+        color: #2c2830;
+        font-size: 14px;
+        font-family: inherit;
+        height: 34px;
+        padding: 1em 1.5em;
+        border-radius: 3px;
+        box-sizing: border-box;
+        outline: none;
+    }
+    input:focus {
+        background-color: #e2e2e2;
+    }
+    input::placeholder {
+        color: #A4A1A6
+    }
+    label {
+        position: absolute;
+        right: 20px;
+        top: 19px;
+        cursor: pointer;
+        display: flex;
+        opacity: .5;
+    }
+
+    section {
         display: flex;
         flex-direction: column;
     }
     /* put online friend to the top of the list */
-    .my-friends--list > :global(.online) {
+    section > :global(.online) {
         order: -1;
     }
 </style>

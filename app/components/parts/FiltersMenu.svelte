@@ -1,15 +1,16 @@
 <script context="module" lang="ts">
     import type NM from "../../utils/NMTypes";
+    import type { IconName } from "../elements/Icon.svelte";
 
     import NMApi from "../../utils/NMApi";
     import { loadValue, saveValue } from "../../utils/storage";
     import NameFilterSet from "../dialogs/NameFilterSet.svelte";
-    import { confirm } from "../dialogs/modals";
+    import { confirm, createDialog } from "../dialogs/modals";
 
     type SettType = "oop"|"limCredit"|"limFree"|"unlim"|"rie";
     const settType: Record<number, SettType> = {};
     const loading: Record<number, Promise<NM.Sett>> = {};
-        
+
     async function getSettType (settId: number) {
         if (settId in settType) return settType[settId];
         const sett = settId in loading
@@ -38,7 +39,7 @@
     }
     type ActiveFilter = {
         prefix: string,
-        icon?: string,
+        icons?: (IconName | "oop" | "rie" | "pipe")[],
         text?: string,
         tip: string,
     }
@@ -137,17 +138,7 @@
      * @returns - the new filter set or null if saving was canceled
      */
     async function saveFilterSet (filters: Filters) {
-        const data = await new Promise<{name:string,includeSett:boolean}|null>((resolve) => {
-            const dialog = new NameFilterSet({
-                target: document.body,
-                props: {
-                    onclose(data) {
-                        dialog.$destroy();
-                        resolve(data);
-                    },
-                },
-            });
-        });
+        const data = await createDialog(NameFilterSet, {});
         if (!data) return null;
         const filterSet = {
             ...data,
@@ -193,7 +184,7 @@
         return false;
     }
 </script>
-<!-- @component 
+<!-- @component
     A component to edit print search filters
 -->
 <script lang="ts">
@@ -207,11 +198,12 @@
     import ownedCollections from "../../services/ownedCollections";
     import { getProgress, makeShortTip } from "./CollectionProgress.svelte";
     import DoubleRange from "../elements/DoubleRange.svelte";
-    import Toggle from "../elements/Toggle.svelte";
+    import PushSwitch from "../elements/PushSwitch.svelte";
     import Dropdown from "../elements/Dropdown.svelte";
     import { isTrading } from "../../utils/cardsInTrades";
     import OwnedCards from "../../services/ownedCards";
     import { error, num2text } from "../../utils/utils";
+    import Icon from "../elements/Icon.svelte";
 
     /**
      * Users involved in the trade
@@ -271,7 +263,7 @@
         chase: false,
         variant: false,
         legendary: false,
-        
+
         oppositeOwns: [0, Infinity],
         holderOwns: [1, Infinity],
         cardCount: [1, Infinity],
@@ -288,7 +280,7 @@
     $: defaultFilters.sett = sett;
 
     let filterSet = $filterSetList.find(({ name }) => name.toLowerCase() === "default") ?? null;
-    let filters: Filters = filterSet 
+    let filters: Filters = filterSet
         ? {...defaultFilters, ...filterSet.filters, sett}
         : {...defaultFilters, sett};
     // try to unset filterSet when the filters changes
@@ -372,11 +364,11 @@
 
         let newActiveFilters: ActiveFilter[] = [];
         if (filterSet) {
-            newActiveFilters.push({ 
-                prefix: "FS", 
-                text: filterSet.name, 
-                tip: `Filter set "${filterSet.name}"` 
-            }); 
+            newActiveFilters.push({
+                prefix: "FS",
+                text: filterSet.name,
+                tip: `Filter set "${filterSet.name}"`
+            });
             if (!filterSet.filters.sett && filters.sett) {
                 newActiveFilters.push(getFilterLabel("sett")!);
             }
@@ -437,7 +429,7 @@
     /**
      * Apply the current filter set
      */
-    async function setFilterSet() {
+    async function setFilters() {
         if (!filterSet) return;
 
         const oldSett = filters.sett;
@@ -487,7 +479,7 @@
     /**
      * Get the filter hint
      */
-    function getHint (name: keyof Filters | "sharedS" | "uncompletedS") {
+    function getHint (name: keyof Filters) {
         switch (name) {
             case "shared": return isItYou
                 ? `Series that both you and ${actors.partner.first_name} are collecting`
@@ -527,7 +519,7 @@
             case "sett":
             case "hiddenSetts":
                 return "";
-            default: 
+            default:
                 error("Unimplemented hint", name);
                 return "";
         }
@@ -565,18 +557,18 @@
         switch (name) {
             case "shared": return {
                 prefix: "S",
-                icon: "icon-im-common-series",
+                icons: ["commonSeries"],
                 tip,
             };
             case "notOwned": return null;
             case "wishlisted": return {
                 prefix: "C",
-                icon: "icon-im-wishlisted",
+                icons: ["wishlisted"],
                 tip,
             };
             case "duplicatesOnly": return null;
 
-            case "common": 
+            case "common":
             case "uncommon":
             case "rare":
             case "veryRare":
@@ -585,12 +577,12 @@
             case "variant":
             case "legendary": return {
                 prefix: "CR",
-                icon: `i rarity ${name}`,
+                icons: [name],
                 tip,
             };
             case "notInTrades": return {
                 prefix: "C",
-                icon: "icon-nmte-not-traded",
+                icons: ["trade"],
                 tip,
             };
             case "incompleteSetts": return {
@@ -600,27 +592,27 @@
             }
             case "oopSetts": return {
                 prefix: "ST",
-                icon: "icon-nmte-oop",
+                icons: ["oop"],
                 tip,
             };
             case "limCreditSetts": return {
                 prefix: "ST",
-                icon: "icon-im-limited, credit",
+                icons: ["limited", "credit"],
                 tip,
             };
             case "limFreebieSetts": return {
                 prefix: "ST",
-                icon: "icon-im-limited, icon-im-freebie",
+                icons: ["limited", "freebie"],
                 tip,
             };
             case "unlimSetts": return {
                 prefix: "ST",
-                icon: "icon-im-unlimited",
+                icons: ["unlimited"],
                 tip,
             };
             case "rieSetts": return {
                 prefix: "ST",
-                icon: "icon-nmte-rie",
+                icons: ["rie"],
                 tip,
             };
             case "collection": return {
@@ -654,11 +646,11 @@
                     tip: `Cards only from the series "${filters.sett.name}"`,
                 } : null;
             case "hiddenSetts": return null;
-            default: 
+            default:
                 error("Unimplemented filter label", name);
                 return null;
         }
-    }   
+    }
 
     /**
      * Get the search filters
@@ -752,10 +744,10 @@
             });
         }
         // card hiding based on series type
-        if (filters.oopSetts 
-            || filters.limCreditSetts 
-            || filters.limFreebieSetts 
-            || filters.unlimSetts 
+        if (filters.oopSetts
+            || filters.limCreditSetts
+            || filters.limFreebieSetts
+            || filters.unlimSetts
             || filters.rieSetts
         ) {
             const missingInfo = prints
@@ -775,20 +767,20 @@
 
         output.update((arr) => arr.concat(prints));
     }
-    
+
     /**
      * Set the print's series as a selected
      */
     export function selectSett (print: NM.PrintInTrade) {
-        filters.sett = { 
-            id: print.sett_id, 
+        filters.sett = {
+            id: print.sett_id,
             name: print.sett_name,
         };
     }
     /**
      * Add the print's series to the hidden ones
-     */ 
-    export async function hideSett (print: NM.PrintInTrade) {        
+     */
+    export async function hideSett (print: NM.PrintInTrade) {
         const [yourProgress, partnerProgress] = await Promise.all([
             getProgress(actors.you.id, print.sett_id),
             getProgress(actors.partner.id, print.sett_id),
@@ -815,26 +807,26 @@
     }
 </script>
 
-<div class="trade--edit-filters--menu">
+<article>
     <h1 class="small-caps">Filter Set</h1>
-    <span class="filter-row">
-        <select bind:value={filterSet} on:change={setFilterSet}>
+    <span class="row">
+        <select bind:value={filterSet} on:change={setFilters}>
             <option value={null}>Choose a filter set</option>
             {#each $filterSetList as fs}
                 <option value={fs}>{fs.name}</option>
             {/each}
         </select>
         {#if filterSet}
-            <i class="icon-trash" on:click={deleteCurrentFilterSet}></i>
+            <Icon icon="trash" size="12px" on:click={deleteCurrentFilterSet} />
         {:else}
-            <i class="icon-nmte-save" on:click={saveNewFilterSet}></i>
+            <Icon icon="save" size="12px" on:click={saveNewFilterSet} />
         {/if}
     </span>
 
     <h1 class="small-caps">Series</h1>
-    <span class="filter-row">
+    <span class="row">
         <DoubleRange list={collectionNumbers} bind:value={filters.collection} title="{isItYou ? actors.partner.first_name : "You"} collected"/>
-        <i class="icon-nmte-reset" on:click={() => filters.collection = defaultFilters.collection}/>
+        <Icon icon="reload" size="12px" on:click={() => filters.collection = defaultFilters.collection}/>
     </span>
     <span class="row">
         <PushSwitch bind:value={filters.shared} icon="commonSeries" hint={getHint("shared")}/>
@@ -854,147 +846,156 @@
             {@const coll2 = (isItYou ? ownerCollections : oppositeCollections).getProgress(item.id)}
             <div class="collection">
                 <div class="name">{item.name}</div>
-                <div class="progress" 
-                    style:--left={coll1 ? coll1.core.owned/coll1.core.count : 0} 
-                    style:--right={coll2 ? coll2.core.owned/coll2.core.count : 0} 
+                <div class="progress"
+                    style:--left={coll1 ? coll1.core.owned/coll1.core.count : 0}
+                    style:--right={coll2 ? coll2.core.owned/coll2.core.count : 0}
                 />
                 {#if (coll1 ?? coll2)?.core.count !== (coll1 ?? coll2)?.total.count}
-                    <div class="progress" 
-                        style:--left={coll1 ? (coll1.chase.owned+coll1.variant.owned+coll1.legendary.owned)/(coll1.chase.count+coll1.variant.count+coll1.legendary.count) : 0} 
-                        style:--right={coll2 ? (coll2.chase.owned+coll2.variant.owned+coll2.legendary.owned)/(coll2.chase.count+coll2.variant.count+coll2.legendary.count) : 0} 
+                    <div class="progress"
+                        style:--left={coll1 ? (coll1.chase.owned+coll1.variant.owned+coll1.legendary.owned)/(coll1.chase.count+coll1.variant.count+coll1.legendary.count) : 0}
+                        style:--right={coll2 ? (coll2.chase.owned+coll2.variant.owned+coll2.legendary.owned)/(coll2.chase.count+coll2.variant.count+coll2.legendary.count) : 0}
                     />
                 {/if}
             </div>
-        </Dropdown> 
-        <i class="icon-nmte-reset" on:click={() => filters.sett = null}/>
+        </Dropdown>
+        <Icon icon="reload" size="12px" on:click={() => filters.sett = null}/>
     </span>
-    <span class="filter-row filter-group">
-        <Toggle bind:value={filters.oopSetts} icon="icon-nmte-oop" hint={getHint("oopSetts")}/>
-        <Toggle bind:value={filters.limCreditSetts} icon="icon-im-limited" hint={getHint("limCreditSetts")}>
-            <i class="credit"></i>
-        </Toggle>
-        <Toggle bind:value={filters.limFreebieSetts} icon="icon-im-limited" hint={getHint("limFreebieSetts")}>
-            <i class="icon-im-freebie"></i>
-        </Toggle>
-        <Toggle bind:value={filters.unlimSetts} icon="icon-im-unlimited" hint={getHint("unlimSetts")} />
-        <Toggle bind:value={filters.rieSetts} icon="icon-nmte-rie" hint={getHint("rieSetts")}/>
+    <span class="row multi-switch">
+        <PushSwitch bind:value={filters.oopSetts} text="OoP" hint={getHint("oopSetts")}/>
+        <PushSwitch bind:value={filters.limCreditSetts} icon={["limited", "credit"]} hint={getHint("limCreditSetts")}/>
+        <PushSwitch bind:value={filters.limFreebieSetts} icon={["limited", "freebie"]} hint={getHint("limFreebieSetts")}/>
+        <PushSwitch bind:value={filters.unlimSetts} icon="unlimited" hint={getHint("unlimSetts")}/>
+        <PushSwitch bind:value={filters.rieSetts} text="RIE" hint={getHint("rieSetts")}/>
     </span>
-    
+
     <h1 class="small-caps">Cards</h1>
-    <span class="filter-row">
-        <Toggle bind:value={filters.wishlisted} icon={filters.wishlisted ? "icon-im-wishlisted" : "icon-im-wishlist"} hint={getHint("wishlisted")}/>
+    <span class="row">
+        <PushSwitch bind:value={filters.wishlisted} icon="wishlist" activeIcon="wishlisted" hint={getHint("wishlisted")}/>
         <!-- <Toggle bind:value={filters.shared} icon="icon-im-common-series" hint={getHint("shared")}/> -->
-        <Toggle bind:value={filters.notInTrades} icon="icon-nmte-not-traded" hint={getHint("notInTrades")}/>
+        <PushSwitch bind:value={filters.notInTrades} icon="trade" hint={getHint("notInTrades")}/>
         <input type=search class="search small search-card" placeholder="Search by card name" bind:value={filters.cardName}>
-        <i class="icon-nmte-reset" on:click={() => filters.cardName = ""}/>
+        <Icon icon="reload" size="12px" on:click={() => filters.cardName = ""}/>
     </span>
-    <span class="filter-row filter-group">
+    <span class="row multi-switch rarities">
         {#each RARITIES as rarity}
-            <Toggle bind:value={filters[rarity]} icon="i rarity {rarity}" hint={getHint(rarity)} />
+            <PushSwitch bind:value={filters[rarity]} icon={rarity} hint={getHint(rarity)} />
         {/each}
-    </span> 
-    <span class="filter-row">
-        <DoubleRange list={holderOwnsNumbers} bind:value={filters.holderOwns} title={isItYou ? "You own" : `${actors.partner.first_name} owns`}/>
-        <Toggle value={filters.duplicatesOnly} hint={getHint("duplicatesOnly")}
-            on:change={() => filters.holderOwns = filters.duplicatesOnly ? defaultFilters.holderOwns : [2, Infinity]} 
-        >2+</Toggle>
     </span>
-    <span class="filter-row">
-        <DoubleRange list={oppositeOwnsNumbers} bind:value={filters.oppositeOwns} title={isItYou ? `${actors.partner.first_name} owns` : "You own"}/>
-        <Toggle value={filters.notOwned} icon="icon-im-unowned" hint={getHint("notOwned")}
-            on:change={() => filters.oppositeOwns = filters.notOwned ? defaultFilters.oppositeOwns : [0, 0]} 
+    <span class="row">
+        <DoubleRange list={holderOwnsNumbers} bind:value={filters.holderOwns} title={isItYou ? "You own" : `${actors.partner.first_name} owns`}/>
+        <PushSwitch value={filters.duplicatesOnly} text="2+" hint={getHint("duplicatesOnly")}
+            on:change={() => filters.holderOwns = filters.duplicatesOnly ? defaultFilters.holderOwns : [2, Infinity]}
         />
     </span>
-    <span class="filter-row">
-        <DoubleRange list={cardCountNumbers} bind:value={filters.cardCount} title="Card count"/>
-        <i class="icon-nmte-reset" on:click={() => filters.cardCount = defaultFilters.cardCount}/>
+    <span class="row">
+        <DoubleRange list={oppositeOwnsNumbers} bind:value={filters.oppositeOwns} title={isItYou ? `${actors.partner.first_name} owns` : "You own"}/>
+        <PushSwitch value={filters.notOwned} icon="unowned" hint={getHint("notOwned")}
+            on:change={() => filters.oppositeOwns = filters.notOwned ? defaultFilters.oppositeOwns : [0, 0]}
+        />
     </span>
-</div>
+    <span class="row">
+        <DoubleRange list={cardCountNumbers} bind:value={filters.cardCount} title="Card count"/>
+        <Icon icon="reload" size="12px" on:click={() => filters.cardCount = defaultFilters.cardCount}/>
+    </span>
+</article>
 
 <style>
-    .trade--edit-filters--menu {
+    article {
         background: white;
-        padding: 10px;
+        padding: 15px;
         border: 1px solid #d6d6d6;
         border-radius: 10px;
         box-shadow: 0 0 20px #0002;
         min-width: 300px;
         width: 350px;
+        box-sizing: border-box;
         font-size: 12px;
         line-height: 1em;
         color: #5f5668;
     }
-    .trade--edit-filters--menu h1 {
+    h1 {
         text-align: center;
-        padding: 5px 5px;
-        margin: 0 -10px;
+        padding: 5px;
+        margin: 0 -15px;
         color: #2c2830;
+        font-size: 10px;
+        font-weight: 500;
+        text-transform: uppercase;
     }
-    .trade--edit-filters--menu h1:not(:first-of-type) {
-        margin-top: 5px;
+    h1:not(:first-of-type) {
+        margin-top: 10px;
         padding-top: 10px;
         border-top: 1px solid #d6d6d6;
-    }    
-    
-    .filter-row {
+    }
+
+    .row {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         width: 100%;
         margin: 5px 0 0 0;
         gap: 0.5em;
     }
-    .filter-row > :global(*) {
+    .row > :global(*) {
         flex-grow: 1;
         margin-left: 0;
         margin-right: 0;
     }
 
-    .filter-row :global(.slider),
-    .filter-row :global(.container),
-    .filter-row select,
-    .filter-row input[type=search] {
+    .row :global(.slider),
+    .row :global(.container),
+    .row select,
+    .row input[type=search] {
         flex-grow: 500;
     }
-    .filter-row select {
+    .row select {
         border: 1px solid #ccc;
         background-color: white;
         border-radius: 3px;
+        outline: none;
+        font-size: 12px;
     }
-    .filter-row :global(input[type=search]) {
+    .row :global(input[type=search]) {
         height: 28px;
-        margin: 0;    
+        margin: 0;
         padding: 7.5px 11.25px;
         font-size: 11px;
+        color: black;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        box-shadow: inset 0 1px 2px #0001;
+        outline: none;
+        -webkit-appearance: textfield;
     }
-    .filter-row.filter-group {
-        gap: 0;
+    .row :global(input[type=search]::-webkit-search-cancel-button) {
+        -webkit-appearance: none;
     }
-  
-    .filter-row.filter-group > :global(*) {
-        padding: 6.5px 0;
-        margin: 0;
+    .row :global(.slider + /* reload icon */ span) {
+        margin-top: 10px;
     }
-   
-    .trade--edit-filters--menu :global(.i.rarity) {
-        width: 16px;
-        height: 16px;
-        margin: -5px;
+    .row :global(label) {
+        color: #8b8a8c;
+        width: 38px;
+        height: 28px;
     }
-    .trade--edit-filters--menu .credit {
-        width: 12px;
-        height: 12px;
-    }
-    .trade--edit-filters--menu .icon-trash {
+    .row :global(span:last-child) {
         cursor: pointer;
     }
-    .trade--edit-filters--menu :global(.btn [class*="icon-"]::before) {
+    .row.multi-switch {
+        gap: 0;
         color: #8b8a8c;
+        border: 1px solid #d6d6d6;
+        border-radius: 4px;
     }
-    .trade--edit-filters--menu :global(.btn.selected [class*="icon-"]::before) {
-        color: #1482A1;
+    .row.multi-switch > :global(label) {
+        box-shadow: none;
+        border-right: 1px solid #d6d6d6;
+        border-radius: 0;
     }
-    .trade--edit-filters--menu :global(.btn .text-icon) {
-        min-width: 12px;
+    .row.multi-switch > :global(label:last-child) {
+        border-right: none;
+    }
+    .rarities {
+        font-size: 16px;
     }
 
     .collection {

@@ -17,30 +17,62 @@
      * @returns the CSS class
      */
     export function getLetterGradeClass (grade: number) {
-        return GRADES[grade]
-            .toLowerCase()
-            .replace('-', '-minus')
-            .replace('+', '-plus');
+        return GRADES[grade][0];
     }
     const EXTRA = "Not responding to trade offers brings down your Trader Grade, \
         while responding brings it up. You can also propose trades to help improve your grade.";
 </script>
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
-    
+
+    import currentUser from "../../services/currentUser";
     import { error } from "../../utils/utils";
-    
+    import { firstNamePossessive } from "../../services/user";
+    import tip from "./tip";
+
     export let user: NM.User;
-    
+
     const grade = Math.floor(user.trader_score);
     if (grade < 0 || grade > 13) error("Bad grade", user.trader_score);
-    const yourself = user.name === "You";
-    const name = yourself ? "Your" : user.first_name+"'s";
-    const tip = `${name} trader grade is: ${getLetterGrade(grade)}. ${yourself ? EXTRA : ""}`;
+    const yourself = user.id === currentUser.id;
+    const name = yourself ? "Your" : firstNamePossessive(user);
+    const hint = `${name} trader grade is: ${getLetterGrade(grade)}. ${yourself ? EXTRA : ""}`;
 </script>
 
 <svelte:options immutable/>
 
-<span class="trader-grade tip {getLetterGradeClass(grade)}" title={tip}>
+<span class={getLetterGradeClass(grade)} use:tip={hint}>
     {getLetterGrade(grade)}
-</span> 
+</span>
+
+<style>
+    span {
+        font-family: locator-web,Helvetica Neue,Helvetica,Arial,sans-serif;
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.035em;
+        line-height: 20px;
+        color: white;
+        padding-top: 2px;
+        box-sizing: border-box;
+        width: 20px;
+        height: 20px;
+        vertical-align: middle;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 100%;
+    }
+    span.A {
+        background: #e72864;
+    }
+    span.B {
+        background: #50aed2;
+    }
+    span.C {
+        background: #4dcd9a;
+    }
+    span.D, span.F {
+        background: #524b5a;
+    }
+</style>

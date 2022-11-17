@@ -1,4 +1,4 @@
-<!-- @component 
+<!-- @component
     A component to search and add prints to an offer
 -->
 <script lang="ts">
@@ -14,6 +14,8 @@
     import Button from "../elements/Button.svelte";
     import PrintDetails from './PrintDetails.svelte';
     import FiltersMenu from "./FiltersMenu.svelte";
+    import Icon from "../elements/Icon.svelte";
+    import tip from "../elements/tip";
 
     /**
      * Users involved in the trade
@@ -35,10 +37,6 @@
     const dispatch = createEventDispatcher();
 
     const isItYou = cardOwner.id === actors.you.id;
-    // ID of the user in another list
-    // const oppositeOwnerId = isItYou ? actors.partner.id : actors.you.id;
-    // show the offer, show the bio, or adding prints
-    // let state: "offer" | "bio" | "search" = "offer";
 
     let filtersMenu: FiltersMenu;
     $: ({ hiddenSetts, isSettSelected, activeFilters } = filtersMenu ?? {});
@@ -68,7 +66,6 @@
     $: if (filtersMenu) loadPrints();
     async function loadPrints() {
         loading = true;
-        filteredPrints = writable([]);
         // stop loadMorePrints() and prevent next runs
         loadMorePrintsKey = -Math.abs(loadMorePrintsKey);
 
@@ -77,6 +74,7 @@
         if (cacheKey in cache) {
             prints = cache[cacheKey];
         } else {
+            filteredPrints = writable([]);
             prints = NMApi.trade.findPrints(cardOwner.id, query);
             cache[cacheKey] = prints;
         }
@@ -86,6 +84,7 @@
         await prints.waitLoading();
 
         if (loadPrintsKey !== localKey) return;
+        filteredPrints = writable([]);
         await filtersMenu.applyFilters(prints.list, offer, filteredPrints);
 
         if (loadPrintsKey !== localKey) return;
@@ -115,227 +114,300 @@
         // if canceled or another instance of loadMorePrints was run
         if (loadMorePrintsKey !== localKey) return;
         await filtersMenu.applyFilters(newPrints, offer, filteredPrints);
-        
+
         if (loadMorePrintsKey !== localKey) return;
         loadMorePrints();
     }
-    
+
     function addPrint(print: NM.PrintInTrade) {
         offer = [
-            ...offer.filter((p) => p.id !== print.id), 
+            ...offer.filter((p) => p.id !== print.id),
             print,
         ];
         $filteredPrints = $filteredPrints.filter(p => p !== print);
         dispatch("close");
     }
+
+    let filterMenuBtn: HTMLElement;
+    function updateFilterMenuPosition() {
+        const button = filterMenuBtn.firstElementChild as HTMLElement;
+        const filterContainer = filterMenuBtn.lastElementChild as HTMLElement;
+        const buttonWidth = button.offsetWidth;
+        const menuWidth = filterContainer.offsetWidth;
+        let left = 0, top = 0;
+        let parent = button;
+        do {
+            left += parent.offsetLeft;
+            top += parent.offsetTop;
+            parent = parent.offsetParent as HTMLElement;
+        } while (parent);
+        left = left + buttonWidth/2 - menuWidth/2;
+        if (left < 5) left = 5;
+        top = top - button.offsetTop + 5;
+        filterMenuBtn.style.setProperty("--left", `${left}px`);
+        filterMenuBtn.style.setProperty("--top", `${top}px`);
+    }
 </script>
 
-<div class="trade--add-items cards-mode active">
-    <div class=trade--side--header>
-        <Avatar user={cardOwner} size="small"/>
-        <span class="header-note">
-            Add cards {isItYou ? "you" : cardOwner.first_name} will give
+<svelte:window on:resize={updateFilterMenuPosition}/>
+
+<article>
+    <header>
+        <Avatar user={cardOwner} />
+        Add cards {isItYou ? "you" : cardOwner.first_name} will give
+        <span class="edit-filters-btn"
+            on:mouseenter={updateFilterMenuPosition}
+            bind:this={filterMenuBtn}
+        >
+            <Button type="subdued-light" size="mini">Edit filters</Button>
+            <div class="filters-menu">
+                <FiltersMenu
+                    {actors}
+                    {cardOwner}
+                    {sett}
+                    bind:this={filtersMenu}
+                    on:filtersChange={loadPrints}
+                />
+            </div>
         </span>
-        <span class="trade--edit-filters">
-            <Button class="subdued">Edit filters</Button>
+        <span class=close-btn on:click={() => dispatch("close")}>
+            <Icon icon="close"/>
         </span>
-        <div class="trade--edit-filters--container">
-            <FiltersMenu 
-                {actors}
-                {cardOwner}
-                {sett}
-                bind:this={filtersMenu}
-                on:filtersChange={loadPrints}
-            />
-        </div>
-        <span class=trade--side--header--actions>
-            <i class="close-x small" on:click={() => dispatch("close")}>×</i>
-        </span>
-    </div>
-    <div class=trade--add-items--filters>
-        <div class="active-filters">
-            {#if $activeFilters?.length > 0}
-                {#each $activeFilters as filter (filter.tip)}
-                    {#key filter.tip}
-                        <span class="active-filter tip" title={filter.tip}>
-                            <span class="active-filter--prefix">{filter.prefix}</span><!--  
-                                comments to avoid inserting whitespace
-                            -->{#if filter.icon}{#each filter.icon.split(",") as icon}<!--  
-                                --><i class={icon}/><!--  
-                            -->{/each}{/if}<!--  
-                            -->{#if filter.text}<span>{filter.text}</span>{/if}
-                        </span>
-                    {/key}
-                {/each}
-            {:else}
-                <span class="active-filter all-cards">
-                    All cards
-                </span>
-            {/if}
-        </div>
-        {#if $hiddenSetts?.length > 0}
-            <div class="hiddenSeries">
-                <span class="small-caps">Hidden series: </span>
+    </header>
+
+    <section class="active-filters">
+        {#if $activeFilters?.length > 0}
+            {#each $activeFilters as filter (filter.tip)}
+                {#key filter.tip}
+                    <span class="active-filter" use:tip={filter.tip}>
+                        <span class="prefix">{filter.prefix}</span>
+                        {#if filter.icons}{#each filter.icons as icon}
+                            {#if icon === "pipe"}
+                                <span class="pipe"></span>
+                            {:else if icon === "oop"}
+                                <span>OoP</span>
+                            {:else if icon === "rie"}
+                                <span>RIE</span>
+                            {:else}
+                                <Icon icon={icon} size="12px" />
+                            {/if}
+                        {/each}{/if}
+                        {#if filter.text}<span>{filter.text}</span>{/if}
+                    </span>
+                {/key}
+            {/each}
+        {:else}
+            <span class="active-filter all-cards">
+                All cards
+            </span>
+        {/if}
+    </section>
+
+    {#if $hiddenSetts?.length > 0}
+        <section class="hidden-series">
+            <span>Hidden series: </span>
                 {#each $hiddenSetts as sett, i (sett.id)}
                     {#if i},{/if}
-                    <span class="tip" title={sett.tip}>{sett.name}</span>
-                    <span class="tip" title="Show series" on:click={() => filtersMenu.showSett(sett.id)}>✕</span>
+                    <span use:tip={sett.tip}>{sett.name}</span>
+                    <span use:tip={"Show series"} on:click={() => filtersMenu.showSett(sett.id)}>✕</span>
                 {/each}
+            </section>
+    {/if}
+
+    <section class=print-list>
+        {#if $filteredPrints.length > 0}
+            <ul bind:this={viewport} on:scroll={loadMorePrints}>
+                {#each $filteredPrints as print (print.id)}
+                    <PrintDetails
+                        {print}
+                        {actors}
+                        direction={isItYou ? "give" : "receive"}
+                    >
+                        <Button size="mini" icon="add" on:click={() => addPrint(print)} hint="Add one"/>
+                        <span slot="series" class="card-actions">
+                            {#if !$isSettSelected}
+                                <Icon icon="search" size="10px"
+                                    hint="Select this series"
+                                    on:click={() => filtersMenu.selectSett(print)}
+                                />
+                                <Icon icon="close" size="10px"
+                                    hint="Hide this series"
+                                    on:click={() => filtersMenu.hideSett(print)}
+                                />
+                            {/if}
+                        </span>
+                    </PrintDetails>
+                {/each}
+                {#if loading}
+                    <li class=loading-more-results>
+                        <Icon icon="loader" size="32px"/>
+                    </li>
+                {/if}
+            </ul>
+        {:else if loading}
+            <div class=loading-results>
+                <Icon icon="loader" size="50px"/>
             </div>
-        {/if}
-    </div>
-    <div id=print-list class=trade--search--items bind:this={viewport} on:scroll={loadMorePrints}>
-        <ul>
-            {#each $filteredPrints as print (print.id)}
-                <PrintDetails 
-                    {print} 
-                    {actors} 
-                    direction={isItYou ? "give" : "receive"}
-                >
-                    <Button class="mini" icon="add" on:click={() => addPrint(print)} title="Add one"/>
-                    <span slot="series">
-                        {#if !$isSettSelected}
-                            <i class="icon-button icon-search tip" title="Select this series" on:click={() => filtersMenu.selectSett(print)}></i>
-                            <i class="icon-button icon-close tip" title="Hide this series" on:click={() => filtersMenu.hideSett(print)}></i>
-                        {/if}
-                    </span>
-                </PrintDetails>
-            {/each}
-        </ul>
-        {#if !loading && $filteredPrints.length === 0}
-            <div class=trade--search--empty>
-                <div class=text-emoji>😭</div>
-                <div class="text-emphasis text-subdued text-body">
+        {:else}
+            <div class=empty-result>
+                <span>😭</span>
+                <i>
                     {isItYou ? "You don't" : `${actors.partner.first_name} doesn't`}
                     have any cards matching that search.
-                </div>
-            </div>
-        {:else if loading && $filteredPrints.length === 0}
-            <div class=trade--side--loading>
-                <i class="load-indicator medium"></i>
-            </div>
-        {:else if loading && $filteredPrints.length > 0}
-            <div class=trade--side--items--loading>
-                <i class="load-indicator btn-load-indicator"></i>
+                </i>
             </div>
         {/if}
-    </div>
-</div>
+    </section>
+</article>
 
 <style>
-    .trade--add-items {
+    article {
         display: flex;
         flex-direction: column;
+        flex-grow: 1;
+        font-weight: 400;
     }
-    .trade--add-items .trade--add-items--filters {
-        overflow: initial;
-        padding: 0;
-    }
-    .trade--add-items .trade--search--items {
-        position: initial;
-    }
-
-    .trade--side--header {
+    header {
         display: flex;
+        align-items: center;
+        background: #efefef;
+        padding: 10px;
+        gap: 1ch;
+        color: #2c2830;
     }
-    .trade--add-items .trade--edit-filters {
-        position: absolute;
-        top: 10px;
-        right: 5em;
+    .edit-filters-btn {
+        flex-grow: 1;
+        flex-shrink: 0;
+        display: grid;
+        grid-template-columns: 2fr max-content 1fr;
     }
-
-    .trade--edit-filters--container {
+    .edit-filters-btn > :global(button) {
+        grid-column-start: 2;
+    }
+    .filters-menu {
         visibility: hidden;
-        position: absolute;
-        top: 5px;
-        right: min(max(4.5em - 175px + 5px, 5px), 100% - 350px - 5px);
+        position: fixed;
+        top: var(--top, 5px);
+        left: var(--left, 5px);
         transition-property: visibility;
-        transition-delay: 0.25s;
+        transition-delay: 0.35s;
         z-index: 2;
     }
-    .trade--edit-filters:hover + .trade--edit-filters--container,
-    .trade--edit-filters:active + .trade--edit-filters--container,
-    .trade--edit-filters--container:hover {
+    @media (max-height: 700px) and (min-width: 961px) {
+        .filters-menu {
+            top: -63px;
+        }
+    }
+    .edit-filters-btn > :global(:first-child:hover + .filters-menu),
+    .edit-filters-btn > :global(:first-child:active + .filters-menu),
+    .filters-menu:hover {
         visibility: visible;
         transition-delay: 0s;
     }
+    .close-btn {
+        align-self: flex-start;
+        cursor: pointer;
+    }
+    .close-btn:not(:hover) {
+        opacity: 0.6;
+    }
+
     .active-filters {
         display: flex;
-        width: 100%;
         flex-wrap: wrap;
         gap: 10px;
         padding: 10px;
+        border-bottom: 1px solid #0002;
     }
     .active-filter {
         display: inline-flex;
         align-items: center;
         border: 1px solid #d6d6d6;
-        font-size: 12px;
+        font-size: 0;
         border-radius: 5px;
+        color: #8b8a8c;
+        padding-right: 5px;
+    }
+    .active-filter *, .active-filter.all-cards {
+        font-size: 12px;
+        font-weight: 500;
     }
     .active-filter.all-cards {
         padding: 2px 5px;
     }
-    .active-filter .active-filter--prefix {
+    .active-filter .prefix {
         padding: 2px 5px;
+        color: #5f5668;
         background: #d6d6d6;
-    }
-    .active-filter > * {
-        padding: 0 5px;
-    }
-    .active-filter > :global([class*="icon"] + [class*="icon"]) {
-        margin-left: -5px;
-    }
-    .active-filter :global(.i.rarity) {
-        width: 14px;
-        height: 14px;
         margin: 0;
-        padding: 0 12px;
+        font-weight: 400;
     }
-    .active-filter :global(.credit) {
-        width: 14px;
-        height: 14px;
-        margin: 0 5px;
+    .active-filter > :global(*) {
+        margin-left: 5px;
     }
-    .active-filter :global(.pipe) {
-        padding: 0;
-        margin: 0;
+    .active-filter .pipe {
         height: auto;
+        margin: 0 0 0 5px;
         align-self: stretch;
-        border-color: #d6d6d6;
+        border-right: 1px solid #d6d6d6;
     }
 
-    .hiddenSeries {
-        width: 100%;
+    .hidden-series {
         padding: 10px;
-        border-top: 1px solid rgba(0,0,0,.1);
+        border-bottom: 1px solid #0002;
         white-space: normal;
         font-size: 10px;
         color: #9f96a8;
     }
-    .hiddenSeries span {
+    .hidden-series span {
         white-space: nowrap;
     }
-    .hiddenSeries span.tip:nth-child(odd) {
+    .hidden-series span:nth-child(odd):not(:first-child) {
         cursor: pointer;
         color: #9f96a8;
         position: relative;
         bottom: -1px;
     }
-    .hiddenSeries span.tip:nth-child(odd):hover {
+    .hidden-series span:nth-child(odd):hover {
         color: #085b85;
     }
 
-    :global(.trade--item) .icon-button {
+    .print-list {
+        flex-grow: 1;
+        display: flex;
+        min-height: 0;
+    }
+    .print-list > * {
+        flex-grow: 1;
+        overflow: auto;
+        padding: 0;
+        margin: 0;
+    }
+    .empty-result, .loading-results {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .empty-result span {
+        font-size: 60px;
+    }
+    .empty-result i {
+        color: #9f96a8;
+        line-height: 140%;
+        font-weight: 400;
+    }
+    .loading-more-results {
+        text-align: center;
+        padding: 10px;
+    }
+    .card-actions {
         margin-left: 0.5ch;
+        letter-spacing: 0.5ch;
         cursor: pointer;
         opacity: 0;
     }
-    :global(.trade--item):hover .icon-button {
+    ul :global(li:hover .card-actions) {
         opacity: 1;
-    }
-    :global(.trade--item):hover .icon-button::before {
-        font-size: 10px;
-        color: #9f96a8;
     }
 </style>

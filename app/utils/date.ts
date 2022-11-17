@@ -109,7 +109,7 @@ moment.defineLocale("nm-til", {
  */
 export function timeAgo (time: string, baseTime?: string, isCondensed = false) {
     moment.locale(isCondensed ? "nm-condense" : "nm-base");
-    return baseTime 
+    return baseTime
         ? moment(time).from(baseTime)
         : moment(time).fromNow();
 }
@@ -132,3 +132,5 @@ export function timeTil (time: string, isCondensed = false, hourToDate = 72) {
 export function timestampNow () {
     return moment().format();
 }
+
+export default moment;

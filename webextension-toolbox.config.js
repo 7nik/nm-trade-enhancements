@@ -9,7 +9,7 @@ module.exports = {
         config.plugins
             .find(plugin => plugin.constructor && plugin.constructor.name === "CopyPlugin")
             .patterns[0].globOptions.ignore
-            .push("**/*.css", "enhancements/*", "userscript/*", "utils/*");
+            .push("**/*.css", "components/*", "enhancements/*", "userscript/*", "utils/*");
 
         // extract css into own files
         config.plugins.push(new MiniCssExtractPlugin({
@@ -28,7 +28,9 @@ module.exports = {
         });
 
         // add svelte support
-        config.plugins.push(new SvelteCheckPlugin());
+        config.plugins.push(new SvelteCheckPlugin({
+            args: [`--ignore "dist"`],
+        }));
         config.resolve.alias = {
             svelte: path.resolve('node_modules', 'svelte')
         };

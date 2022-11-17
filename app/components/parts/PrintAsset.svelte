@@ -101,6 +101,7 @@
     
     import tippy from "tippy.js";
     import config from "../../services/config";
+    import Icon from "../elements/Icon.svelte";
 
     /**
      * A print whose image/video will be displayed
@@ -148,9 +149,11 @@
     }
 
     const data = getPrintData(print, size);
-    const { width, height, ratio } = setSize
-        ? getDimensionSize(data, maxWidth, maxHeight)
-        : { width:"", height:"", ratio:0 };
+    let { width, height, ratio } = getDimensionSize(data, maxWidth, maxHeight);
+    if (!setSize) {
+        width = "";
+        height = "";
+    }
     const showReplica = !hideIcons && "is_replica" in print && print.is_replica;
     const showLimited = !hideIcons && "version" in print && print.version === 3 /* lim sett */;
 
@@ -181,30 +184,31 @@
 
 <svelte:options immutable/>
 
-<div class="img" style:width style:height style:aspect-ratio={ratio}>
-    <div class="piece-{data.type} {size}" use:makePeekable>
-        {#if data.type === "video" && data.sources && !grayOut}
-            <video class="asset" use:stopHiddenVideo
-                poster={data.url} {width} {height} autoplay loop {muted} 
-                on:click={(ev) => ev.currentTarget.play()}
-                on:contextmenu|preventDefault
-            >
-                {#each data.sources as source}
-                    <source src={source.url} type={source.mime_type}>
-                {/each}
-            </video>
-        {:else}
-            <img class="asset" class:grayOut 
-                style:width style:height
-                src={data.url ?? config.defaultImageUrl} alt={print.name}
-            >
-        {/if}
-    </div>
+
+<div style:width style:height style:aspect-ratio={ratio} use:makePeekable >
+    {#if data.type === "video" && data.sources && !grayOut}
+        <video
+            poster={data.url} {width} {height} autoplay loop {muted}
+            on:click={(ev) => ev.currentTarget.play()}
+            on:contextmenu|preventDefault
+            use:stopHiddenVideo
+        >
+            {#each data.sources as source}
+                <source src={source.url} type={source.mime_type}>
+            {/each}
+        </video>
+    {:else}
+        <img class:grayOut 
+            style:width style:height
+            alt={print.name}
+            src={data.url ?? config.defaultImageUrl} 
+        >
+    {/if}
     {#if showReplica}
-        <span class="RE-icon tip" title="Replica"></span>
+        <span><Icon icon="RE" size="26px" hint="Replica"/></span>
     {/if}
     {#if showLimited }
-        <span class="LE-icon tip" title="Limited Edition"></span>
+        <span><Icon icon="LE" size="26px" hint="Limited Edition"/></span>
     {/if}
     <!-- {#if showLoading}
         <i class="load-indicator on-white-bg"></i>
@@ -212,7 +216,20 @@
 </div>
 
 <style>
+    div {
+        position: relative;
+    }
+    img, video {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
     .grayOut:not(:active) {
         filter: grayscale(1);
+    }
+    span {
+        position: absolute;
+        top: 3%;
+        right: 3%;
     }
 </style>

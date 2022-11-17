@@ -14,6 +14,7 @@
     import TradeMessages from "./TradeMessages.svelte";
     import NMApi from "../../../utils/NMApi";
     import { setContext } from "svelte";
+    import Icon from "../../elements/Icon.svelte";
 
     /**
      * A method to open an existing trade or start a new one
@@ -53,8 +54,8 @@
      * @param data - the collocutor's ID or the conversation's data
      */
     export async function openConversation(
-        data: NM.ConversationInfo | number, 
-        canClose = true, 
+        data: NM.ConversationInfo | number,
+        canClose = true,
         oldState: typeof state | null = state
     ) {
         const canBack = oldState === "messages"
@@ -120,79 +121,62 @@
     setContext("showOverlay", showOverlay);
 </script>
 
-<div class="nmte-overlay" hidden={hidden && !component}>
+<article class:hidden={hidden && !component}>
     {#if component}
-        <div class="nm-overlay modal trade-modal nm-overlay-content">
+        <section>
             <!-- recreate the component when the props get changed -->
-            {#key componentProps} 
+            {#key componentProps}
                 <svelte:component this={component} {...componentProps} />
             {/key}
-        </div>
+        </section>
     {:else}
-        <div class="nm-notifications--backdrop" on:click={() => showTab("none")}></div>
+        <aside on:click={() => showTab("none")}></aside>
     {/if}
-    <div class="nm-notifications {state}" id="notification-center" {hidden}>
+    <main>
         {#if state !== "conversation"}
-            <div class="nm-notifications--nav nm-segmented-ui-controller text-small">
+            <nav>
                 {#if !beginner}
-                    <a id="milestone-list-button"
-                        class:segment-shown={state === "milestone"}
+                    <span class:active={state === "milestone"}
                         on:click={() => showTab("milestone")}
                     >
-                        <span>Milestones</span>
-                    </a>
+                        Milestones
+                    </span>
                 {/if}
                 {#if showFriends}
-                    <a id="friends-list-button"
-                        class:segment-shown={state === "friends"}
+                    <span class:active={state === "friends"}
                         on:click={() => showTab("friends")}
                     >
-                        <span>
-                            Friends
-                            <FlagCounter class="friends nm-friends--count-flag"
-                                value={$friendsOnline}
-                            />
-                        </span>
-                    </a>
+                        Friends
+                        <FlagCounter color="#17C48D" value={$friendsOnline} />
+                    </span>
                 {/if}
                 {#if canTrade}
-                    <a id="messages-feed-button"
-                        class:segment-shown={state === "messages"}
+                    <span class:active={state === "messages"}
                         on:click={() => showTab("messages")}
                     >
-                        <span>
-                            Trades &amp; Messages
-                            <FlagCounter class="nm-messages--unread-flag"
-                                value={$unreadMessageAndTradeCount}
-                            />
-                        </span>
-                    </a>
-                {/if}
-                <a id="notifications-feed-button"
-                class:segment-shown={state === "notifications"}
-                on:click={() => showTab("notifications")}>
-                    <span>
-                        Alerts
-                        <FlagCounter class="nm-messages--unread-flag"
-                            value={$unreadNotificationCount}
-                        />
+                        Trades &amp; Messages
+                        <FlagCounter value={$unreadMessageAndTradeCount} />
                     </span>
-                </a>
-                <span class="nm-notifications--close" 
-                    on:click={() => showTab("none")}
+                {/if}
+                <span class:active={state === "notifications"}
+                    on:click={() => showTab("notifications")}
                 >
-                    <i class="close-x small">&times;</i>
+                    Alerts
+                    <FlagCounter value={$unreadNotificationCount} />
                 </span>
-            </div>
+                <span>
+                    <Icon icon="close" size="16px" on:click={() => showTab("none")} />
+                </span>
+            </nav>
         {/if}
 
-        <div class="nm-notifications--content">
+        <div>
             {#if state === "milestone"}
                 <Milestones/>
             {:else if state === "friends"}
-                <Friends {openConversation} />
+                <Friends />
             {:else if state === "messages"}
-                <TradeMessages {openConversation} />
+                <TradeMessages />
             {:else if state === "notifications"}
                 <Notifications />
             {:else if state === "conversation"}
@@ -201,11 +185,11 @@
                 {/key}
             {/if}
         </div>
-    </div>
-</div>
+    </main>
+</article>
 
 <style>
-    .nmte-overlay:not([hidden]) {
+    article {
         position: fixed;
         top: 0;
         bottom: 0;
@@ -213,30 +197,71 @@
         right: 0;
         display: flex;
         z-index: 1100;
-        align-content: center;
+        align-content: stretch;
     }
-    .nm-notifications--backdrop {
-        position: static;
+    article.hidden {
+        display: none;
+    }
+    section, aside {
         flex-grow: 1;
     }
-    .nm-overlay {
-        flex-grow: 1;
-        visibility: visible;
-        opacity: 1;
-        position: static;
-        display: flex;
-        align-items: center;
-        text-align: initial;
-        padding: 40px 0 40px 32px;
+    section {
+        background: rgba(37,26,48,.9);
     }
-    .nm-notifications {
-        flex-grow: 0;
+    main {
+        width: 360px;
         flex-shrink: 0;
+        box-shadow: 0 0 50px #0002;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        background: white;
+    }
+    nav {
+        flex-shrink: 0;
+        height: 50px;
+        border-bottom: 1px solid #e6e6e6;
+        box-sizing: border-box;
+        display: flex;
+        padding: 17px 10px;
+        gap: 16px;
+        color: #5f5668;
+        font-size: 13px;
+    }
+    nav span {
+        cursor: pointer;
+    }
+    nav .active {
+        color: #2c2830;
+        display: inline-block;
         position: relative;
     }
-
-    .nm-notifications :global(.load-indicator.large) {
+    nav .active::after {
+        content: "";
         display: block;
-        margin: 40vh auto 0;
+        height: 2px;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -18px;
+        background-image: linear-gradient(90deg,#61D3A5,#64b8d7,#B078B1);
+    }
+    nav > :last-child {
+        height: 1em;
+        font-weight: 600;
+        color: black;
+        margin-left: auto;
+        position: relative;
+        top: -5px;
+        cursor: pointer;
+    }
+    nav > :last-child:not(:hover) {
+        opacity: 0.4;
+    }
+    main > div {
+        flex-grow: 1;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
     }
 </style>

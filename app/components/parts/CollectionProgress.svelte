@@ -47,20 +47,20 @@
         return `${progress.total.owned}/${progress.total.count}`;
     }
 
-    export { 
+    export {
         getProgress,
         makeShortTip,
-        makeLongTip, 
+        makeLongTip,
     };
 </script>
 <!-- @component
     Render a collection progress with attached tooltip.
-    
+
     Also, provides methods to generate collection progress text.
  -->
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
-    
+
     import tippy from "tippy.js";
     import { onDestroy } from "svelte";
 
@@ -69,7 +69,7 @@
      * The series ID of which the progress will be displayed
      */
     export let settId: number;
-    
+
     let ready = false;
     let progress = getProgress(user.id, settId);
     let shortTip: string;
@@ -91,8 +91,8 @@
         progress.then(setTips);
     } else {
         setTips(progress);
-    }    
-    
+    }
+
     collectionUsage[user.id] = 1 + (collectionUsage[user.id] ?? 0);
     onDestroy(() => {
         collectionUsage[user.id] -= 1;
@@ -111,10 +111,20 @@
     {:else if !shortTip}
         —
     {:else}
-        <a  class="href-link" href={link} target="_blank" 
+        <a href={link} target="_blank"
             use:tippy={{ allowHTML: true, content: longTip, theme: "tooltip" }}
         >
             {shortTip}
         </a>
     {/if}
 </span>
+
+<style>
+    a:link, a:visited, a:hover {
+        color: #0d9ce6;
+        text-decoration: none;
+    }
+    .text-warning {
+        color: #E7327C;
+    }
+</style>

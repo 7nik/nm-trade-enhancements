@@ -1,96 +1,14 @@
-.trade--add-items--filters {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: stretch;
-    align-content: space-between;
-    height: 89px;
+.nm-overlay.trade-modal.modal {
+    padding: 0;
 }
-.trade--add-items--filters input.small.search {
-    font-size: 12px;
-    height: auto;
-    padding: 0.5em 0.6em;
-    width: 20px;
-}
-.trade--add-items--filters .filter-sets {
-    width: calc(49% - 50px);
-    flex-grow: 1;
-}
-.trade--add-items--filters input.search:focus {
-    width: calc(50% - 30px);
-    margin: 0;
-    flex-grow: 1;
-}
-.trade--add-items--filters input.search:focus + .filter-sets {
-    display: none;
-}
-.trade--add-items--filters .icon-button {
-    align-self: flex-end;
-    padding: 13px 0 0 5px;
-    font-size: inherit;
-    width: 30px;
-    display: none;
-    cursor: pointer;
-}
-.trade--add-items--filters .icon-button:hover {
-    color: #085b85;
-}
-.trade--add-items--filters .filter-sets:hover + .icon-button,
-.trade--add-items--filters .filter-sets + .icon-button:hover {
-    display: initial;
-}
-.trade--add-items--filters .filter-sets:hover + .icon-button + .reset,
-.trade--add-items--filters .filter-sets + .icon-button:hover + .reset {
-    display: none;
-}
-.trade--add-items--filters select.series{
-    flex-grow: 1;
+.nm-overlay.trade-modal.modal .nm-overlay-content,
+.nm-overlay.trade-modal.modal .nm-overlay-content > div:not([class]) {
+    height: 100%;
+    width: 100%;
 }
 
-#print-list .hidden-item {
-    display: none;
-}
-
-.trade--item .icon-button {
-    margin-left: 0.5ch;
-    position: relative;
-    bottom: 1px;
-    opacity: 0;
-    color: #9f96a8;
-    cursor: pointer;
-}
-.trade--item .search-series-button {
-    width: 10px;
-    height: 10px;
-    background-image: var(--search-icon);
-}
-.trade--item:hover .icon-button {
-    opacity: 1;
-}
-.trade--item .card-trading {
-    font-size: 13px;
-    position: absolute;
-    top: 15px;
-    right: 20px;
-}
-.trade--item .print-chooser {
-    border: none;
-    background: none;
-    color: #5f5668;
-    cursor: pointer;
-}
-
-.trade--side--items--loading:empty {
-    display: none;
-}
-
-
-#trade--search--empty {
-    animation: fadeIn 0s 0.15s backwards;
-}
-* ~ #trade--search--empty {
-    opacity: 0;
-}
-@keyframes fadeIn {
-    from {opacity: 0;}
-    to {opacity: 1;}
+@media screen and (min-width: 961px) {
+    .nm-overlay.trade-modal.modal .nm-overlay-content > .trade-window {
+        padding-right: 40px;
+    }
 }

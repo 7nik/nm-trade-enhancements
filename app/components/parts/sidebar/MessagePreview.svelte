@@ -4,9 +4,9 @@
     import { firstName } from "../../../services/user";
     import currentUser from "../../../services/currentUser";
     import Avatar from "../../elements/Avatar.svelte";
-    import { timeAgo } from "../../../utils/date";
     import { liveListProvider } from "../../../utils/NMLiveApi";
     import { getContext } from "svelte";
+    import Time from "../../elements/Time.svelte";
 
     /**
      * The message data
@@ -25,30 +25,62 @@
     }
 </script>
 
-<li class="nm-notification user-status" class:unread={!message.read}>
-    <div
-        id="message-notification"
-        class:unread={!message.read}
-        on:click={messageClick}
-    >
-        <Avatar user={recipient} size="small" class="user-status--icon" />
-        <div class="user-status--content">
-            <span id="message-name" class="text-prominent">{firstName(recipient)}</span>
-            <time class="text-emphasis">{timeAgo(message.actor.time)}</time>
-            <div id="message-text">
-                {#if recipient.id === currentUser.id}
-                    <span class="small-caps">You:</span>
-                {/if}
-                <span
-                    class="message-preview"
-                    art-truncate-words="getMessage()"
-                    truncate-filters="['linky', 'textToHtml']"
-                    max-words="100"
-                    word-tolerance="50"
-                >
-                    {message.actor.action_data}
-                </span>
-            </div>
+<article class:unread={!message.read} on:click={messageClick}>
+    <Avatar user={recipient} />
+    <section>
+        <span>
+            {firstName(recipient)}
+            <Time stamp={message.actor.time} />
+        </span>
+        <div>
+            {#if message.object.users[0].id === currentUser.id}
+                <span>You:</span>
+            {/if}
+            {message.actor.action_data}
         </div>
-    </div>
-</li>
+    </section>
+</article>
+
+<style>
+    article {
+        height: 55px;
+        padding: 0 10px;
+        gap: 10px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+    article.unread {
+        background: rgba(75,187,245,.2);
+    }
+    article:hover {
+        background: #f4f4f4;
+    }
+    section {
+        flex-grow: 1;
+        align-self: stretch;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    span {
+        font-size: 14px;
+        color: #2c2830;
+    }
+    article + article section {
+        border-top: 1px solid #efefef;
+    }
+    article:hover + article section {
+        border-top-color: transparent;
+    }
+    div {
+        font-size: 14px;
+        color: #5f5668;
+    }
+    div span {
+        color: #857a90;
+        font-size: 10px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+</style>

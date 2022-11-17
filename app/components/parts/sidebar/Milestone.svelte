@@ -2,61 +2,120 @@
     import type NM from "../../../utils/NMTypes";
 
     import { num2text } from "../../../utils/utils";
-    import { timeAgo, timeTil } from "../../../utils/date";
     import SettAsset from "../SettAsset.svelte";
+    import Icon from "../../elements/Icon.svelte";
+    import RarityText from "../../elements/RarityText.svelte";
+    import Time from "../../elements/Time.svelte";
 
+    /**
+     * The milestone data
+     */
     export let milestone: NM.Milestone;
-    export let gotoPackOpenPage: (settId: number) => void;
+
+    function gotoPackOpenPage (settId: number) {
+        // in fact, it should open the pack opening layer
+        // but there are too much to implement
+        window.open("https://neonmob.com/series/"+settId);
+    }
 </script>
 
 <svelte:options immutable />
 
-<li>
-    <span on:click={() => gotoPackOpenPage(milestone.sett.id)}>
-        <span class="milestone-series">
-            <span class="thumb">
-                <SettAsset sett={milestone.sett} size="small"/>
+<article on:click={() => gotoPackOpenPage(milestone.sett.id)}>
+    <aside>
+        <SettAsset sett={milestone.sett} size="small"/>
+    </aside>
+    <section>
+        <header>{milestone.sett.name}</header>
+        <div>
+            <span class="default">
+                By <span class="creator">{milestone.sett.creator.name}</span>
             </span>
-            <span class="info">
-                <span class="text-fav-set">{milestone.sett.name}</span>
-                <br>
-                <small class="creator-info">
-                    <span>By</span>
-                    {#if milestone.sett.creator.pro_status}
-                        <span title="Pro Collector" class="svg-pro-icon tip"></span>
-                    {/if}
-                    <span class="creator-name">{milestone.sett.creator.name}</span>
-                </small>
-                <span class="discontinue-info">
-                    {#if milestone.completed_date}
-                        {timeAgo(milestone.completed_date)}
-                    {:else if (milestone.discontinue_date)}
-                        {timeTil(milestone.discontinue_date, false, 24)} to collect
-                    {/if}
-                </span>
+            <span class="hovered">
+                {#if milestone.completed_date}
+                    <Time stamp={milestone.completed_date} />
+                {:else if (milestone.discontinue_date)}
+                    <Time stamp={milestone.discontinue_date} hourToDate={24} />
+                    to collect
+                {/if}
             </span>
-        </span>
-        <span class="badges">
-            <span class="rarity creator-info">
-                <i class="i {milestone.css_class}"></i>
-                <span class="rarity-count">
-                    <span class="text text-rarity-{milestone.css_class}">
-                        {milestone.owned}/{milestone.total}
-                    </span>
-                </span>
-            </span>
-            <span class="rarity discontinue-info">
-                <i class="i carat medium"></i>
-                <span class="rarity-count">
-                    <span class="text">{num2text(milestone.reward, 0)}</span>
-                </span>
-            </span>
-        </span>
-    </span>
-</li>
-    
+        </div>
+    </section>
+    <div class="badge">
+        <div class="default">
+            <Icon icon={milestone.css_class} />
+            <RarityText rarity={milestone.css_class}>
+                {milestone.owned}/{milestone.total}
+            </RarityText>
+        </div>
+        <div class="hovered">
+            <Icon icon="carat" />
+            {num2text(milestone.reward, 0, false)}
+        </div>
+    </div>
+</article>
+
 <style>
-    li > span {
-        width: 100%;
+    article {
+        padding: 10px;
+        gap: 0 10px;
+        text-decoration: none;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 400;
+        overflow: hidden;
+    }
+    article:hover {
+        background: #f4f4f4;
+    }
+    :global(article) + article {
+        border-top: 1px solid #efefef;
+    }
+    article:not(:hover) .hovered, article:hover .default {
+        display: none;
+    }
+    aside {
+        width: 40px;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    section {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        color: #2c2830;
+    }
+    section div {
+        font-size: 13px;
+        color: #8A7F95;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    section div span :global(time) {
+        font-size: 13px;
+        font-style: normal;
+    }
+    .creator {
+        color: #109DE6;
+    }
+    .badge {
+        width: 24px;
+        margin-bottom: 4px;
+    }
+    .badge > * {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+    .badge .hovered {
+        font-weight: 500;
+        color: #085B85;
     }
 </style>

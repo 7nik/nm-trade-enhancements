@@ -3,6 +3,7 @@ import type { Instance, Props } from "tippy.js";
 import TradePreviews from "./TradePreviews.svelte";
 import tippy, { createSingleton } from "tippy.js";
 import NMApi from "../utils/NMApi";
+import Icon from "./elements/Icon.svelte";
 
 declare global {
     interface HTMLElement {
@@ -84,19 +85,30 @@ export function sharedTradePreview (elem: HTMLElement, tradeId: number) {
             if (instance.props.content) return;
             currentTradeId = tradeId;
             const preview = document.createElement("div");
-            new TradePreviews({
+            const loader = new Icon({
                 target: preview,
                 props: {
-                    trades: [await NMApi.trade.get(tradeId)],
-                    showButton: false
+                    icon: "loader",
+                    size: "40px",
                 },
             });
+            instance.setContent(preview);
+
+            const trade = await NMApi.trade.get(tradeId);
             // set only if it is still actual
             if (currentTradeId === tradeId) {
+                loader.$destroy();
+                new TradePreviews({
+                    target: preview,
+                    props: {
+                        trades: [trade],
+                        showButton: false
+                    },
+                });
                 instance.setContent(preview);
             }
         },
-        onShow: () => { document.body.contains(elem); },
+        onShow: () => document.body.contains(elem) ? undefined : false,
     });
     // and override the previous tips if there are any
     tips[tradeId] = tip;

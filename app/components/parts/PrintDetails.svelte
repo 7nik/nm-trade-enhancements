@@ -22,7 +22,7 @@
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
     import type { Actors } from "../TradeWindow.svelte";
-    
+
     import PrintAsset from "./PrintAsset.svelte";
     import CollectionProgress from "./CollectionProgress.svelte";
     import NMApi from "../../utils/NMApi";
@@ -30,6 +30,9 @@
     import { tradePreview } from "../tradePreviews";
     import { onDestroy } from "svelte";
     import { num2text } from "../../utils/utils";
+    import Icon from "../elements/Icon.svelte";
+    import tip from "../elements/tip";
+    import RarityText from "../elements/RarityText.svelte";
 
     /**
      * The involved users
@@ -51,11 +54,11 @@
      * The current viewed trade
      */
     export let tradeId: number | null = null;
-    
+
     $: total = print.num_prints_total === "unlimited" ? "∞" : num2text(print.num_prints_total);
 
     let printChooserState: "off" | "view" | "loading" | "select" = showPrintNumber === "list" ? "view" : "off";
-    let prints: Record<number, NM.PrintInTrade & {trading?:boolean}> = {
+    let prints: Record<number|string, NM.PrintInTrade & {trading?:boolean}> = {
         [print.print_num]: print,
     };
     // get all the numbers of all the copies the user owns
@@ -74,7 +77,7 @@
     }
 
     $: trades = derived(
-        getTrades(print, direction, direction === "give" ? "print" : "card"), 
+        getTrades(print, direction, direction === "give" ? "print" : "card"),
         (tradeIds) => tradeIds?.filter((id) => id !== tradeId),
     );
     // update the list when trades changes
@@ -86,27 +89,27 @@
                     ...prints[num],
                     trading,
                 }
-                }
+            }
             print = Object.values(prints)
                 .find(({ print_id }) => print.print_id === print_id)!;
         }
     }
     // the number of copies, init with data from the trade, if available,
-    // but the data in the trade can be outdated because it's cached 
+    // but the data in the trade can be outdated because it's cached
     // so, anyway load the actual data
     const youOwn = getPrintCount(
         actors.you.id,
         print.id,
-        actors.youAreBidder 
-            ? (print.own_counts?.bidder ?? null) 
+        actors.youAreBidder
+            ? (print.own_counts?.bidder ?? null)
             : (print.own_counts?.responder ?? null),
     );
     const partnerOwns = getPrintCount(
         actors.partner.id,
         print.id,
-        actors.youAreBidder 
+        actors.youAreBidder
             ? (print.own_counts?.responder ?? null)
-            : (print.own_counts?.bidder ?? null), 
+            : (print.own_counts?.bidder ?? null),
     );
 
     cardInfoUsage[actors.partner.id] = 1 + (cardInfoUsage[actors.partner.id] ?? 0);
@@ -121,42 +124,39 @@
 
 <svelte:options immutable/>
 
-<li class=trade--item>
-    <div class="trade--item--piece">
-        <PrintAsset {print} size="medium" isPublic={true} />
-    </div>
+<li>
+    <PrintAsset {print} size="medium" setSize={false} isPublic={true} hideIcons={false} />
+    <dl>
+        <dt>Name</dt>
+        <dd>{print.name}</dd>
 
-    <dl class="trade--item--meta text-small">
-        <dt class=small-caps>Name</dt>
-        <dd class="text-body text-prominent">{print.name}</dd>
-
-        <dt class=small-caps>Series</dt>
+        <dt>Series</dt>
         <dd>
-            <a target=_blank class=href-link href="/series/{print.sett_id}">{print.sett_name}</a>
+            <a target=_blank href="/series/{print.sett_id}">{print.sett_name}</a>
             <slot name="series"/>
         </dd>
-        
-        <dt class=small-caps>Collected</dt>
+
+        <dt>Collected</dt>
         <dd>
             <CollectionProgress user={actors.you} settId={print.sett_id} />,
             <CollectionProgress user={actors.partner} settId={print.sett_id} />
         </dd>
 
-        <dt class=small-caps>Rarity</dt>
+        <dt>Rarity</dt>
         <dd>
-            <i class="i rarity {print.rarity.class}"></i> 
-            <span class="text-rarity-{print.rarity.class}">{print.rarity.name}</span>
+            <Icon icon={print.rarity.class} hint={print.rarity.name} />
+            <RarityText rarity={print.rarity.class}>{print.rarity.name}</RarityText>
         </dd>
 
-        <dt class=small-caps>{showPrintNumber === "no" ? "Copies" : "Print"}</dt>
+        <dt>{showPrintNumber === "no" ? "Copies" : "Print"}</dt>
         <dd>
             {#if showPrintNumber === "no"}
                 {total} cards
             {:else if printChooserState === "off"}
                 #{print.print_num}/{total} cards
             {:else if printChooserState === "view"}
-                <span class="tip" style:cursor="pointer" on:click={loadPrints} 
-                    title="Click to change the print number"
+                <span style:cursor="pointer" on:click={loadPrints}
+                    use:tip={"Click to change the print number"}
                 >
                     #{print.print_num}/{total} cards
                 </span>
@@ -169,7 +169,7 @@
                     disabled={Object.keys(prints).length == 1}
                     bind:value={print}
                 >
-                    {#each Object.keys(prints).map(Number) as num}
+                    {#each Object.keys(prints) as num}
                         <option value={prints[num]}>
                             #{num} {prints[num].trading ? "⇄" : ""}
                         </option>
@@ -178,53 +178,97 @@
             {/if}
         </dd>
 
-        <dt class=small-caps>Own</dt>
+        <dt>Own</dt>
         <dd>
-            <span class=you-own class:text-warning={$youOwn === 0}>
+            <span class:text-warning={$youOwn === 0}>
                 You own {$youOwn ?? "?"}.
-            </span> 
-            <span class=partner-owns class:text-warning={$partnerOwns === 0}>
+            </span>
+            <span class:text-warning={$partnerOwns === 0}>
                 {actors.partner.first_name} owns {$partnerOwns ?? "?"}.
             </span>
         </dd>
     </dl>
 
     {#if $trades && $trades.length > 0 }
-        <i class="icon-card-trading" use:tradePreview={{ tradeIds: $trades }}></i>
+        <div class="trade-usage" use:tradePreview={{ tradeIds: $trades }}>
+            <Icon icon="card-trading" size="12px"/>
+        </div>
     {/if}
 
     {#if $$slots.default}
-        <div class=trade--item--action>
+        <div class=card-action>
             <slot/>
         </div>
     {/if}
 </li>
 
 <style>
-    .trade--item--meta dt {
-        width: 80px;
+    li {
+        padding: 10px 20px;
+        display: flex;
+        position: relative;
+        align-items: flex-start;
+        flex-shrink: 0;
     }
-    .trade--item--meta dd {
-        width: calc(100% - 80px);
+    li:not(:last-child) {
+        border-bottom: 1px solid rgba(0,0,0,.1);
     }
-    .print-chooser {
+    li > :global(:first-child) {
+        min-width: 20%;
+        width: 20%;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+    dl {
+        flex-grow: 1;
+        margin: 5px 10px;
+        line-height: 1.4;
+        display: grid;
+        grid-template-columns: min-content auto;
+        gap: 0 10px;
+    }
+    dt {
+        color: #9f96a8;
+        font-size: 10px;
+        font-weight: 500;
+        text-transform: uppercase;
+        justify-self: end;
+        align-self: center;
+    }
+    dd {
+        font-size: 13px;
+        font-weight: 400;
+        margin: 0;
+    }
+    dd:first-of-type {
+        font-size: 15px;
+        font-weight: 400;
+        line-height: 18px;
+        word-break: break-word;
+    }
+    a:link, a:visited, a:hover {
+        color: #0d9ce6;
+        text-decoration: none;
+    }
+    select {
         border: none;
+        outline: none;
         background: none;
-        color: #5f5668;
+        color: inherit;
+        font-size: inherit;
+        font-weight: inherit;
+        margin: -2px;
         cursor: pointer;
     }
-    .icon-card-trading {
+    .text-warning {
+        color: #E7327C;
+    }
+    .trade-usage {
         position: absolute;
         right: 30px;
         top: 15px;
-        font-size: 12px;
-        background: black;
-        padding: 2px;
-        transform: rotate(45deg);
     }
-    .icon-card-trading::before {
-        content: 'S';
-        color: white;
-        transform: rotate(-45deg);
+    .card-action {
+        align-self: center;
     }
 </style>

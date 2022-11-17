@@ -1,44 +1,39 @@
 <script lang="ts">
-    import type NM from "../../../utils/NMTypes";
-    
     import { liveListProvider } from "../../../utils/NMLiveApi";
     import AlertNotification from "./AlertNotification.svelte";
+    import Header from "./Header.svelte";
+    import List from "./List.svelte";
 
     const notificationList = liveListProvider("notifications");
     const {
         store: notifications,
         loading,
     } = notificationList;
-    
+
     function markAllRead() {
         notificationList.markRead();
     }
-
-    function viewNotification(notification: NM.Notification<object, string, string>) {
-        if (notification.object.type === "trade") {
-            return true; // the global catcher will open the trade
-        }
-        // TODO implement rest
-        return false;
-    }
 </script>
 
-{#if $loading}
-    <i class="load-indicator large"></i>
-{:else if $notifications.length > 0}
-    <ul class="nm-notifications-feed">
-        {#if $notifications.some(({ read }) => !read)}
-            <li class="small-caps user-status--list--heading">
-                <span class="text-link" on:click={markAllRead}>Mark all as read</span>
-            </li>
-        {/if}
-        {#each $notifications as notification (notification.id)}
-            <AlertNotification {notification} {viewNotification} />
-        {/each}
-    </ul>
-{:else}
-    <div class="empty-state">
-        <i class="empty-alert--notifications"></i>
-        <p class="text-emphasis text-subdued text-small">No notifications</p>
-    </div>
-{/if}
+<List icon="notifications" emptyMessage="No notifications"
+    show={$loading ? "loading" : $notifications.length > 0 ? "content" : "empty"}
+>
+    {#if $notifications.some(({ read }) => !read)}
+        <Header>
+            <span on:click={markAllRead}>Mark all as read</span>
+        </Header>
+    {/if}
+    {#each $notifications as notification (notification.id)}
+        <AlertNotification {notification} />
+    {/each}
+</List>
+
+<style>
+    span {
+        color: #0d9ce6;
+        cursor: pointer;
+    }
+    span:hover {
+        color: #085b85;
+    }
+</style>

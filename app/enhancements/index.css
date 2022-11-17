@@ -6,7 +6,7 @@
 @import url(./skipPromoPage.css);
 
 :root {
-    --core-gem-icon: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAMCAYAAAC9QufkAAACTUlEQVQoU3VRW0iTYRh+3m/7928rt9LNZaZzSzecCzNqDDWEKAqFyEpZrMPwVDCCIOh610HSTRB0oAPdBNkBlKLb8CK6KDqAGUROiqw128G5/fv/r2/LiV303Hx87/s+PM/7vIQVDNznusJ8sjfgMl5yO6TIsU5putI7fjPV6XdIt4JO4/mFD5gaHCS11KPKwJHLif2qyq52e2Snv1F+m8iop8Jdhtfn7mW2L2n8ttcubevYIn8R82f2+OnZCpnT0fFkd1HDpChUdXmN6GiSUVTxc+ZHPjr3S73CCTZ3tQSfQy5x0oyhr8eHF9Q/nuzhGq4BvMViZvA1GtBWZ4DJQIgn1dzcomIq2ZP1BK/dAItRV7I7y/UYpYGz0w+UbK5fp2fUGvTAVl8NsyA6q/VIZDUspMvrlSFrGtbnFUEmDkYPaWjosTe9uHSnqKiBKpsVO/oCsNqtMAglSUfI5rUyURWv8j0LFMSf4SXXs5MEzilyesqfS2buFpaVdovNgu5DQdRs2gAS/jgX8zkVv+ez0PIqiOENSdKJsfDGd6tpj45OeBYT+QnhoM3RUIPe8G6Y1xlRFEl+/ZRCPquCMfaeTDg8FrJ//OdUXDgYiTzpTGdyN5RC0bvZacPeg7uQSgJLmSKYnmZ0Oj48HK6dJhI7r71zJZRodNKz8C31VDhwtfia4fK4hCJ9tpqMB0IhS1mxglXblULJwXDk0b50avm6s7mpodm3NS5JfGQoXPu8ovhfcqkRi8VYPN6+01FXf9Hd6r4wP1vzKhajv7GvwR8AsNgcRdQufwAAAABJRU5ErkJggg==);
+    --core-gem-icon: url('data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 12"%3e%3clinearGradient id="a" x1="0" x2="0" y1="0" y2="1"%3e%3cstop stop-color="%23528eee" offset="0%25"/%3e%3cstop stop-color="%23ccdafe" offset="75%25"/%3e%3c/linearGradient%3e%3cpath fill="url(%23a)" d="M4.6 0 0 4.6 7.5 12 15 4.6 10.6 0 7.5 2.8Z"/%3e%3cpath fill="%23528eee" d="M0 4.6h3L4.6 3V0Z"/%3e%3cpath fill="%23514da4" d="M0 4.6h3L7.5 9v3Z"/%3e%3cpath fill="%23979de9" d="M15 4.6h-3L7.5 9v3Z"/%3e%3cpath fill="%23bed3ff" d="M4.6 3V0l2.9 2.8v3ZM10.6 3V0L15 4.6h-3Z"/%3e%3c/svg%3e');
 }
 
 /* to avoid jumps of the sidebar buttons in the header */
@@ -20,6 +20,7 @@
     background: #FBF8CF;
     color: #2c2830;
     box-shadow: 0 1px 2px rgba(0, 0, 0, .15);
+    text-align: center;
 }
 .tippy-box[data-theme~='tooltip'] .tippy-arrow {
     color: #FBF8CF;
@@ -40,38 +41,4 @@
 i.i.core {
     background-image: var(--core-gem-icon);
     background-size: auto;
-}
-/* add [class] to increase the rule specifity */
-[class].icon-trash::before {
-    margin: 0 3px;
-}
-[class][class*="icon-nmte-"]::before {
-    font-style: normal;
-    font-weight: normal;
-    vertical-align: top;
-    color: inherit;
-    cursor: pointer;
-    margin: 0 3px;
-}
-[class].icon-nmte-oop::before {
-    font-family: inherit;
-    content: "OoP";
-}
-[class].icon-nmte-rie::before {
-    font-family: inherit;
-    content: "RIE";
-}
-[class].icon-nmte-not-traded::before {
-    font-family: "glyphter nm icon font";
-    content: "\0053";
-}
-[class].icon-nmte-reset::before {
-    font-family: "icomoon nm icon font";
-    content: "\e953";
-}
-[class].icon-nmte-save::before {
-    content: "";
-    width: 12px;
-    height: 12px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 22 22"><path stroke="rgb(95,86,104)" stroke-width="2" fill="transparent" d="m0,2 v16 a2,2,0,0,0,2,2 h2 v-5 a1,1,0,0,1,1,-1 H15 a1,1,0,0,1,1,1 v5 H2 H18 a2,2,0,0,0,2,-2 V5 L15,0 H7 v5 a1,1,0,0,0,1,1 H12 a1,1,0,0,0,1,-1 V0 H2 a2,2,0,0,0,-2,2"/></svg>');
 }

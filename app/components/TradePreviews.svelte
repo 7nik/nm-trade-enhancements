@@ -3,10 +3,11 @@
  -->
 <script lang="ts">
     import type NM from "../utils/NMTypes";
-    
+
     import { firstName } from "../services/user";
     import currentUser from "../services/currentUser";
     import PrintPreview from "./parts/PrintPreview.svelte";
+    import Button from "./elements/Button.svelte";
 
     type Trade = Pick<NM.Trade, "id"|"bidder_offer"|"responder_offer"> & {
         bidder: NM.UserMinimal,
@@ -42,49 +43,87 @@
 </script>
 
 {#if trades.length > 1}
-    <header class="text-prominent text-small">
+    <nav>
         <span class:off={pos===0} on:click={() => switchPreview(-1)}>&lt;</span>
         trade with {partnerName}
         <span class:off={pos===trades.length-1} on:click={() => switchPreview(+1)}>&gt;</span>
-    </header>
+    </nav>
 {/if}
 
-<a class="trade-preview" href="?view-trade={trades[pos].id}" on:click>
-    <div class="trade-preview--give">
-        <div class="trade-preview--heading small-caps">You will give</div>
+<a href="?view-trade={trades[pos].id}" on:click>
+    <section>
+        <header>You will give</header>
         {#each yourOffer as print}
             <PrintPreview {print} highlight={print.id === highlightCardId} />
         {/each}
-    </div>
-    <div class="trade-preview--get">
-        <div class="trade-preview--heading small-caps">{partnerName} will give</div>
+    </section>
+    <hr>
+    <section>
+        <header>{partnerName} will give</header>
         {#each partnerOffer as print}
             <PrintPreview {print} highlight={print.id === highlightCardId} />
         {/each}
-    </div>
+    </section>
     {#if showButton}
-        <div class="btn small trade-preview--action">View Trade</div>
+        <Button size="max">View Trade</Button>
     {/if}
 </a>
 
 <style>
-    header {
+    nav {
+        font-size: 13px;
         padding: 7px;
         border-bottom: 1px solid rgba(0,0,0,.1);
+        margin-bottom: 5px;
         text-align: center;
         user-select: none;
+        color: #2c2830;
     }
-    header span {
+    nav span {
         cursor: pointer;
         font-weight: 500;
         padding: 1px 7px;
         border-radius: 10px;
     }
-    header span.off {
+    nav span.off {
         color: #888;
         cursor: initial;
     }
-    header span:not(.off):hover {
+    nav span:not(.off):hover {
         background: rgba(0,0,0,.15);
+    }
+
+    a {
+        display: flex;
+        flex-direction: column;
+        border-radius: 5px;
+        overflow: hidden;
+        text-decoration: none;
+        background-color: #efefef;
+    }
+    hr {
+        width: 100%;
+        margin: 0;
+        border: none;
+        border-bottom: 1px solid rgba(0,0,0,.1);
+    }
+    section {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 7px 10px 5px;
+    }
+    header {
+        width: 100%;
+        color: #857a90;
+        font-size: 10px;
+        font-family: locator-web,Helvetica Neue,Helvetica,Arial,sans-serif;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: .035em;
+    }
+    a > :global(button) {
+        height: 28px;
     }
 </style>
