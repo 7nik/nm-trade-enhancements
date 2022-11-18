@@ -230,7 +230,7 @@
     }
 
     .carat {
-        background-image: url('//d1ld1je540hac5.cloudfront.net/assets/svg/carats/carat.svg');
+        background-image: url('https://d1ld1je540hac5.cloudfront.net/assets/svg/carats/carat.svg');
     }
     .card-trading {
         background: black;
@@ -245,10 +245,10 @@
         transform: rotate(-45deg);
     }
     .credit {
-        background-image: url('//d1ld1je540hac5.cloudfront.net/assets/svg/credit.svg');
+        background-image: url('https://d1ld1je540hac5.cloudfront.net/assets/svg/credit.svg');
     }
     .loader {
-        background-image: url('//d1ld1je540hac5.cloudfront.net/assets/img/loader.gif');
+        background-image: url('https://d1ld1je540hac5.cloudfront.net/assets/img/loader.gif');
     }
     .notifications {
         mask-image: url('data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"%3e%3cpath fill="none" d="m14 10.4-2-3V5A3.8 3.8 0 0 0 8 1h-.8c-1.8.4-3.1 2-3.1 3.8 0 .3 0-.2 0 0V7.6l-2 2.9c-.1 0-.1 0 0 0v.1h11.8c.1 0 .1-.1 0-.1ZM6 13a2 2 0 1 0 4 0" stroke="white" stroke-width="1.6"/%3e%3c/svg%3e');
@@ -256,16 +256,16 @@
         background: currentColor;
     }
     .pro {
-        background-image: url('//d1ld1je540hac5.cloudfront.net/assets/svg/carats/pro.svg');
+        background-image: url('https://d1ld1je540hac5.cloudfront.net/assets/svg/carats/pro.svg');
     }
     .save {
         background-image: url('data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"%3e%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 22 22"%3e%3cpath stroke="%235F5668" stroke-width="2" fill="transparent" d="M0 2v16a2 2 0 0 0 2 2h2v-5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v5H2h16a2 2 0 0 0 2-2V5l-5-5H7v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V0H2a2 2 0 0 0-2 2"/%3e%3c/svg%3e%3c/svg%3e');
     }
     .RE {
-        background-image: url('//d1ld1je540hac5.cloudfront.net/assets/svg/icon-RE.svg');
+        background-image: url('https://d1ld1je540hac5.cloudfront.net/assets/svg/icon-RE.svg');
     }
     .LE {
-        background-image: url('//d1ld1je540hac5.cloudfront.net/assets/svg/icon-LE.svg');
+        background-image: url('https://d1ld1je540hac5.cloudfront.net/assets/svg/icon-LE.svg');
     }
 
     .common {

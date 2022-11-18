@@ -85,6 +85,7 @@ export function sharedTradePreview (elem: HTMLElement, tradeId: number) {
             if (instance.props.content) return;
             currentTradeId = tradeId;
             const preview = document.createElement("div");
+            preview.style.textAlign = "center";
             const loader = new Icon({
                 target: preview,
                 props: {

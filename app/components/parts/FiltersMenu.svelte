@@ -906,7 +906,7 @@
         box-sizing: border-box;
         font-size: 12px;
         line-height: 1em;
-        color: #5f5668;
+        color: #8b8a8c;
     }
     h1 {
         text-align: center;
@@ -968,7 +968,6 @@
         margin-top: 10px;
     }
     .row :global(label) {
-        color: #8b8a8c;
         width: 38px;
         height: 28px;
     }
@@ -977,7 +976,6 @@
     }
     .row.multi-switch {
         gap: 0;
-        color: #8b8a8c;
         border: 1px solid #d6d6d6;
         border-radius: 4px;
     }
