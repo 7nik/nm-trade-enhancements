@@ -35,7 +35,7 @@
                 {#if milestone.completed_date}
                     <Time stamp={milestone.completed_date} />
                 {:else if (milestone.discontinue_date)}
-                    <Time stamp={milestone.discontinue_date} hourToDate={24} />
+                    <Time stamp={milestone.discontinue_date} />
                     to collect
                 {/if}
             </span>
