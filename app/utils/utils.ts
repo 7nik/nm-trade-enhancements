@@ -68,7 +68,7 @@ export function num2text(val: number, precision = 1, roundDown = true) {
  * @param number - the number to format
  * @returns the formatted number
  */
-export function comma(number: number) {
+export function comma(number = 0) {
     const arr: (string|number)[] = [];
     while (number >= 1000) {
         arr.unshift((number%1000).toString().padStart(3, "0"));

@@ -24,7 +24,7 @@
     }
 </script>
 
-<DialogWindow blurry={"rgba(26,20,23,.8)"} bind:close on:closed>
+<DialogWindow blurry={"rgba(26,20,23,.8)"} bind:close on:closed closeable={false}>
     <article>
         <header>{title}</header>
         <hr>

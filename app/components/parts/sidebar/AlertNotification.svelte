@@ -10,6 +10,7 @@
     import CoreCompleted from "../../dialogs/CoreCompleted.svelte";
     import { createDialog } from "../../dialogs/modals";
     import Time from "../../elements/Time.svelte";
+    import LevelUp from "../../dialogs/LevelUp.svelte";
 
     /**
      * The notification to display
@@ -51,20 +52,24 @@
         if (notification.read) return;
         liveListProvider("notifications").markRead(notification.id);
         ev.stopPropagation();
+        ev.preventDefault();
     }
 
     const openTrade = getContext<(id: number) => void>("openTrade");
     function notificationClick(ev: Event & {currentTarget:HTMLAnchorElement}) {
         markRead(ev);
-        ev.preventDefault();
 
         switch (notification.object.type) {
             case "trade-event":
                 openTrade(notification.object.id);
                 break;
             case "series-completed":
-                const data = notification.object as unknown as NM.Reward;
-                createDialog(CoreCompleted, { data });
+                const seriesReward = notification.object as unknown as NM.Reward;
+                createDialog(CoreCompleted, { data: seriesReward });
+                break;
+            case "leveled-up":
+                const levelReward = notification.object as unknown as NM.UserLevelUp;
+                createDialog(LevelUp, { data: levelReward });
                 break;
             case "Series-remainder":
             case "badge-obtained":
@@ -101,7 +106,9 @@
             {/if}
         </div>
     </section>
-    <img src={notification.object.images[0]} alt="Notification thumbnail">
+    {#if notification.object.images[0]}
+        <img src={notification.object.images[0]} alt="Notification thumbnail">
+    {/if}
 </a>
 
 <style>

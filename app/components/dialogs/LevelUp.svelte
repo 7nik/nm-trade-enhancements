@@ -18,7 +18,6 @@
      */
     export let data: NM.UserLevelUp;
 
-    // const isProUser = currentUser.isProUser;
     const icon = data.app_icon_selector as IconName;
     let iconColor = currentUser.level.icon_color;
     let level = data.level - 1;
@@ -36,7 +35,7 @@
     }
 </script>
 
-<RewardWindow on:closed on:closed={location.reload}
+<RewardWindow on:closed on:closed={() => location.reload()}
     title="Level Up!" button="Great!"
 >
     <h2>
@@ -49,7 +48,7 @@
             {/key}
         </div>
     </h2>
-    <div class="icon">
+    <div class="level-icon">
         <span style:background={iconColor}>
             <Icon {icon} size="28px"/>
         </span>
@@ -72,8 +71,9 @@
     h2 {
         font-size: 22px;
         font-weight: 700;
-        margin: 5px;
+        margin: -12px 0 px;
         letter-spacing: .61px;
+        color: white;
     }
     h2 div, h3 div {
         display: inline-flex;
@@ -86,14 +86,16 @@
         top: -1.3em;
         transition: top .6s;
     }
-    .icon {
+    .level-icon {
         width: min-content;
-        margin: 15px auto;
+        height: min-content;
+        margin: 10px auto;
+        padding: 3px;
         border: 4px solid #241f21;
         border-radius: 50%;
         position: relative;
     }
-    .icon span {
+    .level-icon span {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -103,13 +105,12 @@
         border-radius: 100%;
         vertical-align: middle;
     }
-    .icon div {
+    .level-icon div {
         position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left:0;
-        margin: -10px;
+        top: -7px;
+        left:-7px;
+        width: 70px;
+        height: 70px;
     }
     h3 {
         margin: 3px;
