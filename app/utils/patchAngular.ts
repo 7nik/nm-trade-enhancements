@@ -104,7 +104,7 @@ function applyPatches () {
             applied = true;
         },
     ];
-    
+
     patchers.forEach(patch => patch(angular));
     angular.module("nmApp").run(patcher);
 
@@ -123,7 +123,9 @@ export default function addPatches(patcher: ((angular: Angular.IAngularStatic)=>
     templatePatchList.push(...templatePatches);
 }
 
-if (document.readyState === "complete") {
+if (location.pathname.startsWith("/redeem/")) {
+    // nothing to patch on this page
+} else if (document.readyState === "complete") {
     if (location.hash !== "#reloaded") {
         location.hash = "#reloaded";
         location.reload();

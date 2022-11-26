@@ -1,3 +1,4 @@
+import "./skipPromoPage"; // to prevent blocking by currentUser
 import "./addArrowsOnCardView";
 import "./addHotkeys";
 import "./addLastActionAgo";
@@ -11,7 +12,6 @@ import "./fixAutoWithdrawnTrade";
 import "./makePiecePeekable";
 import "./patchPieceService";
 import "./patchWebSockets";
-import "./skipPromoPage";
 import "./sortCardsInTradePreview";
 
 // hide all tips after clicking
