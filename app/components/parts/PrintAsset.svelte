@@ -5,7 +5,7 @@
 
     type SIZES = "small" | "medium" | "large" | "large-promo" | "xlarge" | "original";
     type VIDEO_SIZES = "medium" | "large" | "original";
-    
+
     /**
      * Get the info about the asset of the requested size
      */
@@ -16,8 +16,8 @@
         };
         if (print.piece_assets.video) {
             if (size in print.piece_assets.video) {
-                data = { 
-                    type: "video", 
+                data = {
+                    type: "video",
                     url: data.url, // preview
                     ...print.piece_assets.video[size as VIDEO_SIZES],
                 };
@@ -59,7 +59,7 @@
         width = Math.min(width, data.width);
         height = Math.min(height, data.height);
 
-        return { 
+        return {
             width: width+"px",
             height: height+"px",
             ratio: width/height,
@@ -98,8 +98,8 @@
  -->
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
-    
-    import tippy from "tippy.js";
+
+    import tip from "../elements/tip";
     import config from "../../services/config";
     import Icon from "../elements/Icon.svelte";
 
@@ -163,22 +163,14 @@
     function makePeekable (elem: HTMLElement) {
         // if no need to peek
         if (!grayOut) return;
-        const cardType = print.piece_assets.video ? "animated" : "colored";
-        tippy(elem, {
-            content: `Press and hold to see the ${cardType} version`,
-            theme: "tooltip",
-        });
         elem.addEventListener("mousedown", () => {
             grayOut = false;
         });
         elem.addEventListener("mouseup", () => {
             grayOut = true;
         });
-        return {
-            destroy() {
-                elem._tippy?.destroy();
-            }
-        };
+        const cardType = print.piece_assets.video ? "animated" : "colored";
+        return tip(elem, `Press and hold to see the ${cardType} version`);
     }
 </script>
 
@@ -198,10 +190,10 @@
             {/each}
         </video>
     {:else}
-        <img class:grayOut 
+        <img class:grayOut
             style:width style:height
             alt={print.name}
-            src={data.url ?? config.defaultImageUrl} 
+            src={data.url ?? config.defaultImageUrl}
         >
     {/if}
     {#if showReplica}

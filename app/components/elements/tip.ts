@@ -5,17 +5,20 @@ import tippy from "tippy.js";
  * @param elem - element to trigger the tooltip
  * @param hint - the tooltip text
  */
-function attachTip (elem: HTMLElement, hint: string) {
+function attachTip (elem: HTMLElement, hint: string | { html: string }) {
     // destroy previous tip if presented
     // eslint-disable-next-line no-underscore-dangle
     elem._tippy?.destroy();
 
-    if (!hint) return;
+    const allowHTML = typeof hint === "object";
+    const content = allowHTML ? hint.html : hint;
+    if (!content) return;
 
     tippy(elem, {
         appendTo: document.body,
-        content: hint,
         theme: "tooltip",
+        allowHTML,
+        content,
     });
 }
 
@@ -24,7 +27,7 @@ function attachTip (elem: HTMLElement, hint: string) {
  * @param elem - element to trigger the tooltip
  * @param hint - the tooltip text
  */
-export default function tradePreview (elem: HTMLElement, hint: string) {
+export default function (elem: HTMLElement, hint: string | { html: string }) {
     attachTip(elem, hint);
     return {
         update: attachTip.bind(null, elem),

@@ -61,7 +61,7 @@
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
 
-    import tippy from "tippy.js";
+    import tip from "../elements/tip";
     import { onDestroy } from "svelte";
 
     export let user: NM.User;
@@ -112,7 +112,7 @@
         —
     {:else}
         <a href={link} target="_blank"
-            use:tippy={{ allowHTML: true, content: longTip, theme: "tooltip" }}
+            use:tip={{ html: longTip }}
         >
             {shortTip}
         </a>
