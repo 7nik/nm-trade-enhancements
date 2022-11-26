@@ -2,10 +2,10 @@
     import type NM from "../../../utils/NMTypes";
 
     import { num2text } from "../../../utils/utils";
-    import SettAsset from "../SettAsset.svelte";
     import Icon from "../../elements/Icon.svelte";
     import RarityText from "../../elements/RarityText.svelte";
     import Time from "../../elements/Time.svelte";
+    import ImgAsset from "../ImgAsset.svelte";
 
     /**
      * The milestone data
@@ -22,9 +22,12 @@
 <svelte:options immutable />
 
 <article on:click={() => gotoPackOpenPage(milestone.sett.id)}>
-    <aside>
-        <SettAsset sett={milestone.sett} size="small"/>
-    </aside>
+    <a target="_self" href={milestone.sett.public_url}>
+        <ImgAsset image={milestone.sett.sett_assets.small.url}
+            alt="{milestone.sett.name}'s cover"
+            icon={milestone.sett.difficulty.class_name}
+        />
+    </a>
     <section>
         <header>{milestone.sett.name}</header>
         <div>
@@ -77,7 +80,7 @@
     article:not(:hover) .hovered, article:hover .default {
         display: none;
     }
-    aside {
+    a {
         width: 40px;
         border-radius: 8px;
         overflow: hidden;

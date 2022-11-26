@@ -6,8 +6,8 @@
 
     import { firstName } from "../services/user";
     import currentUser from "../services/currentUser";
-    import PrintPreview from "./parts/PrintPreview.svelte";
     import Button from "./elements/Button.svelte";
+    import ImgAsset from "./parts/ImgAsset.svelte";
 
     type Trade = Pick<NM.Trade, "id"|"bidder_offer"|"responder_offer"> & {
         bidder: NM.UserMinimal,
@@ -54,14 +54,22 @@
     <section>
         <header>You will give</header>
         {#each yourOffer as print}
-            <PrintPreview {print} highlight={print.id === highlightCardId} />
+            <div class:highlight={print.id === highlightCardId}>
+                <ImgAsset image={print.piece_assets.image.small.url}
+                    alt={print.name} icon={print.rarity.class}
+                />
+            </div>
         {/each}
     </section>
     <hr>
     <section>
         <header>{partnerName} will give</header>
         {#each partnerOffer as print}
-            <PrintPreview {print} highlight={print.id === highlightCardId} />
+            <div class:highlight={print.id === highlightCardId}>
+                <ImgAsset image={print.piece_assets.image.small.url}
+                    alt={print.name} icon={print.rarity.class}
+                />
+            </div>
         {/each}
     </section>
     {#if showButton}
@@ -112,7 +120,15 @@
         align-items: center;
         flex-wrap: wrap;
         justify-content: center;
+        gap: 5px;
         padding: 7px 10px 5px;
+    }
+    div {
+        width: 74px;
+        height: 74px;
+    }
+    div.highlight {
+        box-shadow: 0 2px 5px #8400ff;
     }
     header {
         width: 100%;

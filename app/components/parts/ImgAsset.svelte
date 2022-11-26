@@ -1,34 +1,33 @@
 <!-- @component
-    Renders a small sett cover image
+    Renders an image with icon in the bottom left corner
  -->
-<script lang="ts">
-    import type NM from "../../utils/NMTypes";
+ <script lang="ts">
+    import type { IconName } from "../elements/Icon.svelte";
 
     import Icon from "../elements/Icon.svelte";
 
     /**
-     * The sett for displaying the cover image
+     * The image to display
      */
-    export let sett: Pick<NM.Sett, "name"|"sett_assets"|"public_url"|"difficulty"> & Partial<Pick<NM.Sett,"links">>;
+    export let image: string;
     /**
-     * The cover image size, the display size is set by the container
+     * The icon on the image
      */
-    export let size: keyof NM.Sett["sett_assets"] = "small";
+    export let icon: IconName;
+    /**
+     * The image description
+     */
+    export let alt: string;
 </script>
 
-<a target="_self" href={sett.links?.permalink ?? sett.public_url}>
-    <figure>
-        <img src="{sett.sett_assets[size].url}" alt="{sett.name}'s cover">
-        <span>
-            <Icon icon={sett.difficulty.class_name} size="16px" />
-        </span>
+<figure>
+    <img src="{image}" alt="{alt}">
+    <span>
+        <Icon icon={icon} size="16px" />
+    </span>
     </figure>
-</a>
 
 <style>
-    a {
-      outline: none;
-    }
     figure {
         position: relative;
         border-radius: 4px;

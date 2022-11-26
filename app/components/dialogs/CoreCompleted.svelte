@@ -6,11 +6,12 @@
 
     import RewardWindow from "./RewardWindow.svelte";;
     import Icon from "../elements/Icon.svelte";
-    import SettAsset from "../parts/SettAsset.svelte";
+    // import SettAsset from "../parts/SettAsset.svelte";
     import NMApi from "../../utils/NMApi";
     import currentUser from "../../services/currentUser";
     import EarnedCarats from "../parts/EarnedCarats.svelte";
     import { ordinal } from "../../utils/utils";
+    import ImgAsset from "../parts/ImgAsset.svelte";
 
     /**
      * The reward data
@@ -44,9 +45,13 @@
             <br>
             {data.sett.name}
         </p>
-        <div class="sett">
-            <SettAsset sett={data.sett} size="small" />
-        </div>
+        <a target="_self" href={data.sett.public_url}>
+            <!-- <SettAsset sett={data.sett} size="small" /> -->
+            <ImgAsset image={data.sett.sett_assets.small.url}
+                alt="{data.sett.name}'s cover"
+                icon={data.sett.difficulty.class_name}
+            />
+        </a>
         <section class="stats">
             <div>
                 <span>Ranking</span>
@@ -74,9 +79,13 @@
             <h5>OTHER SERIES YOU MIGHT LIKE</h5>
             <div>
                 {#each suggestions as sett}
-                    <div class="sett">
-                        <SettAsset {sett} />
-                    </div>
+                    <a target="_self" href={data.sett.public_url}>
+                        <!-- <SettAsset {sett} /> -->
+                        <ImgAsset image={sett.sett_assets.small.url}
+                            alt="{sett.name}'s cover"
+                            icon={sett.difficulty.class_name}
+                        />
+                    </a>
                 {/each}
             </div>
         </section>
@@ -101,7 +110,8 @@
         color: #B39EA9;
         letter-spacing: .42px;
     }
-    .sett {
+    a {
+        display: block;
         width: 80px;
         height: 80px;
         margin: auto;
@@ -147,7 +157,8 @@
         justify-content: space-evenly;
         margin-top: 10px;
     }
-    .setts .sett {
+    .setts a {
+        display: block;
         width: 60px;
         height: 60px;
         margin: 0;
