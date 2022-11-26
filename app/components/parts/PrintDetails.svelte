@@ -72,9 +72,13 @@
         printChooserState = "select";
     }
 
-    $: trades = derived(
-        getTrades(print, direction, direction === "give" ? "print" : "card"),
+    const trades = derived(
+        getTrades(print, direction, "card"),
         (tradeIds) => tradeIds?.filter((id) => id !== $tradeId),
+    );
+    $: isTradingPrint = derived(
+        getTrades(print, direction, direction === "give" ? "print" : "card"),
+        (tradeIds) => tradeIds && tradeIds.find((id) => id !== $tradeId),
     );
     // update the list when trades changes
     $: if (printChooserState === "select") {
@@ -186,7 +190,9 @@
     </dl>
 
     {#if $trades && $trades.length > 0 }
-        <div class="trade-usage" use:tradePreview={{ tradeIds: $trades }}>
+        <div class="trade-usage" class:trade-print={$isTradingPrint}
+            use:tradePreview={{ tradeIds: $trades }}
+        >
             <Icon icon="card-trading" size="12px"/>
         </div>
     {/if}
@@ -263,6 +269,10 @@
         position: absolute;
         right: 30px;
         top: 15px;
+        opacity: 0.5;
+    }
+    .trade-usage.trade-print {
+        opacity: 1;
     }
     .card-action {
         align-self: center;

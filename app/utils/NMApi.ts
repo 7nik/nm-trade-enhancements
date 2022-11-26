@@ -18,7 +18,7 @@ type GetParam = string|number|boolean;
 
 /**
  * Constructs a full URL string
- * @param type - the server 
+ * @param type - the server
  * @param url - an absolute or full URL
  * @param params - optional get-params
  * @returns a full URL
@@ -219,7 +219,7 @@ class Paginator<T> {
     }
 
     /**
-     * The claimed total number of items 
+     * The claimed total number of items
      */
     get size () {
         return this.#count;
@@ -281,7 +281,7 @@ const API = {
         }
     },
     category: {
-        // list: /api/categories/?page=[PAGE] 
+        // list: /api/categories/?page=[PAGE]
         // setts: /api/setts/legacy_list/?category=[CATEGORY]&metrics_id=[USER_ID]&user_id=[USER_ID]&page_size=[BETWEEN 1 AND 50]
     },
     trade: {
@@ -293,13 +293,13 @@ const API = {
         async get (id: number, allowCache = true) {
             if (allowCache) {
                 const trade = cache.trades.find(id);
-                if (trade) return trade;
+                if (trade) return structuredClone(trade);
             }
             const trade = await api.get<NM.Trade>(`/trades/${id}/`);
             // make the prints go in descending order of rarity
             trade.bidder_offer.prints.reverse().sort((a, b) => b.rarity.rarity - a.rarity.rarity);
             trade.responder_offer.prints.reverse().sort((a, b) => b.rarity.rarity - a.rarity.rarity);
-            
+
             cache.trades.add(trade);
             return trade;
         },
@@ -331,7 +331,7 @@ const API = {
          * Get info about a certain card
          * @param ownerId - the card owner ID
          * @param cardId  - the card ID
-         * @returns 
+         * @returns
          */
         async findPrint (ownerId: number, cardId: number) {
             const data = await api.get<Paginated<NM.PrintInTrade>>("/search/prints/", {
@@ -402,7 +402,7 @@ const API = {
         },
         // activityFeed: napi /activityfeed/sett/[SET_ID]/?amount=[BETWEEN 10 AND 100]&page=[BETWEEN 1 AND 100]
         // openedPackInfo: napi /activityfeed/story/pack-opened/[ACTIVITY_ID]
-        // cardsInfo: /api/sets/[SET_ID]/piece-names 
+        // cardsInfo: /api/sets/[SET_ID]/piece-names
     },
     user: {
         /**
@@ -434,7 +434,7 @@ const API = {
             );
             return merge(data);
 
-        }, 
+        },
         /**
          * Get the number of copies of each card the user owns
          * @param id - the owner ID
@@ -470,7 +470,7 @@ const API = {
          * @returns paginated array of friends
          */
         getFriends () {
-            return new Paginator<NM.UserFriend>(makeUrl("api", "/friend/"));  
+            return new Paginator<NM.UserFriend>(makeUrl("api", "/friend/"));
         },
         /**
          * Check whether the user is in the current user's friend list
@@ -499,10 +499,10 @@ const API = {
          * @returns array of blocked users
          */
         getBlockedUsers () {
-            return api.get<NM.UserFriend[]>("/block_user/");  
+            return api.get<NM.UserFriend[]>("/block_user/");
         },
         /**
-         * Check whether the user is blocked by the current user 
+         * Check whether the user is blocked by the current user
          * or the user has blocked the current user
          * @param userId - the user ID to check
          * @returns whether blocked and who has blocked
@@ -511,7 +511,7 @@ const API = {
             return api.get<{
                 is_blocked: boolean,
                 user_initiated: boolean,
-            }>(`/block_user/${userId}/`);  
+            }>(`/block_user/${userId}/`);
         },
         /**
          * Add the user to the blocked list
