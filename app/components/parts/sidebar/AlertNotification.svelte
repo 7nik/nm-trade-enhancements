@@ -159,6 +159,9 @@
         color: #2c2830;
         font-weight: 400;
     }
+    .unread .read {
+        height: 1em;
+    }
     .unread:not(:hover) .read {
         display: none;
     }

@@ -473,6 +473,7 @@
     h2 {
         grid-area: c;
         margin: 0;
+        color: #5f5668;
         font-size: 22px;
         font-weight: 300;
         font-style: normal;
