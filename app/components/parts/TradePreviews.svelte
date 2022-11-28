@@ -44,9 +44,9 @@
 
 {#if trades.length > 1}
     <nav>
-        <span class:off={pos===0} on:click={() => switchPreview(-1)}>&lt;</span>
+        <span class:off={pos===0} on:click|stopPropagation={() => switchPreview(-1)}>&lt;</span>
         trade with {partnerName}
-        <span class:off={pos===trades.length-1} on:click={() => switchPreview(+1)}>&gt;</span>
+        <span class:off={pos===trades.length-1} on:click|stopPropagation={() => switchPreview(+1)}>&gt;</span>
     </nav>
 {/if}
 
