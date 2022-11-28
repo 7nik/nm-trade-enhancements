@@ -95,14 +95,16 @@
         // if disabled
         if (loadMorePrintsKey < 0) return;
         if (prints?.isLoading) return;
-        if (!prints?.hasMore || !viewport) {
+        if (!prints?.hasMore || !viewport && $filteredPrints.length > 0) {
             loading = false;
             return;
         }
-        const offset = viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop;
-        if (offset > 1000) {
-            loading = false;
-            return;
+        if (viewport) {
+            const offset = viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop;
+            if (offset > 1000) {
+                loading = false;
+                return;
+            }
         }
 
         loading = true;
