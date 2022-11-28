@@ -1,8 +1,8 @@
 import type NM from "../utils/NMTypes";
 
-import { getTrades } from "../utils/cardsInTrades";
+import { getTrades } from "../services/tradingCards";
 import addPatches from "../utils/patchAngular";
-import { tradePreview, sharedTradePreview } from "../components/tradePreviews";
+import { tradePreview, sharedTradePreview } from "../components/actions/tradePreviews";
 
 type CardScope = angular.IScope & {
     piece: NM.PrintInTrade,

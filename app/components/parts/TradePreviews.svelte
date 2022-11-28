@@ -2,12 +2,12 @@
     Renders a small trade preview
  -->
 <script lang="ts">
-    import type NM from "../utils/NMTypes";
+    import type NM from "../../utils/NMTypes";
 
-    import { firstName } from "../services/user";
-    import currentUser from "../services/currentUser";
-    import Button from "./elements/Button.svelte";
-    import ImgAsset from "./parts/ImgAsset.svelte";
+    import { firstName } from "../../services/user";
+    import currentUser from "../../services/currentUser";
+    import Button from "../elements/Button.svelte";
+    import ImgAsset from "./ImgAsset.svelte";
 
     type Trade = Pick<NM.Trade, "id"|"bidder_offer"|"responder_offer"> & {
         bidder: NM.UserMinimal,

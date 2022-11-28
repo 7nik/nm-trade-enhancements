@@ -200,7 +200,7 @@
     import DoubleRange from "../elements/DoubleRange.svelte";
     import PushSwitch from "../elements/PushSwitch.svelte";
     import Dropdown from "../elements/Dropdown.svelte";
-    import { isTrading } from "../../utils/cardsInTrades";
+    import { isTrading } from "../../services/tradingCards";
     import OwnedCards from "../../services/ownedCards";
     import { error, num2text } from "../../utils/utils";
     import Icon from "../elements/Icon.svelte";

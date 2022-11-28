@@ -8,7 +8,7 @@
     import { fade } from "svelte/transition";
     import RewardWindow from "./RewardWindow.svelte";
     import Icon from "../elements/Icon.svelte";
-    import animate from "../elements/animate";
+    import animate from "../actions/animate";
     import currentUser from "../../services/currentUser";
     import config from "../../services/config";
     import EarnedCarats from "../parts/EarnedCarats.svelte";

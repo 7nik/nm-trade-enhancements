@@ -149,7 +149,7 @@
     A component for displaying various icons
  -->
 <script lang="ts">
-    import tip from "./tip";
+    import tip from "../actions/tip";
 
     type CssUnit = "cm"|"mm"|"in"|"px"|"pt"|"pc"|"em"|"ex"|"ch"|"rem"|"vw"|"vh"|"vmin"|"vmax"|"%";
 

@@ -1,6 +1,6 @@
-import TradePreviews from "./TradePreviews.svelte";
-import NMApi from "../utils/NMApi";
-import tooltip from "../utils/tooltip";
+import TradePreviews from "../parts/TradePreviews.svelte";
+import NMApi from "../../utils/NMApi";
+import tooltip from "../../utils/tooltip";
 
 import "./tradePreviews.css";
 

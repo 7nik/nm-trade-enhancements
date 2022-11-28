@@ -15,7 +15,7 @@
     import PrintDetails from './PrintDetails.svelte';
     import FiltersMenu from "./FiltersMenu.svelte";
     import Icon from "../elements/Icon.svelte";
-    import tip from "../elements/tip";
+    import tip from "../actions/tip";
 
     /**
      * Prints the card owner will give

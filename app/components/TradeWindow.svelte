@@ -31,7 +31,7 @@
  -->
  <script lang="ts">
     import Button from "./elements/Button.svelte";
-    import TradeWindowList from "./parts/TradeWindowOffer.svelte";
+    import TradeWindowList from "./trade-window/TradeWindowOffer.svelte";
     import NMApi from "../utils/NMApi";
     import { alert, confirm } from "./dialogs/modals";
     import currentUser from "../services/currentUser";

@@ -1,12 +1,12 @@
 <script lang="ts">
-    import type NM from "../../../utils/NMTypes";
+    import type NM from "../../utils/NMTypes";
 
-    import { firstName } from "../../../services/user";
-    import currentUser from "../../../services/currentUser";
-    import { linky } from "../../../utils/utils";
-    import Avatar from "../../elements/Avatar.svelte";
-    import TradePreviews from "../../TradePreviews.svelte";
-    import Time from "../../elements/Time.svelte";
+    import { firstName } from "../../services/user";
+    import currentUser from "../../services/currentUser";
+    import { linky } from "../../utils/utils";
+    import Avatar from "../elements/Avatar.svelte";
+    import TradePreviews from "../parts/TradePreviews.svelte";
+    import Time from "../elements/Time.svelte";
 
     /**
      * The message data

@@ -99,7 +99,7 @@
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
 
-    import tip from "../elements/tip";
+    import tip from "../actions/tip";
     import config from "../../services/config";
     import Icon from "../elements/Icon.svelte";
 

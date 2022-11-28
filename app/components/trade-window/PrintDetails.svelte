@@ -25,15 +25,15 @@
     import type NM from "../../utils/NMTypes";
     import type { Actors } from "../TradeWindow.svelte";
 
-    import PrintAsset from "./PrintAsset.svelte";
+    import PrintAsset from "../parts/PrintAsset.svelte";
     import CollectionProgress from "./CollectionProgress.svelte";
     import NMApi from "../../utils/NMApi";
-    import { getTrades, isTrading } from "../../utils/cardsInTrades";
-    import { tradePreview } from "../tradePreviews";
+    import { getTrades, isTrading } from "../../services/tradingCards";
+    import { tradePreview } from "../actions/tradePreviews";
     import { getContext, onDestroy } from "svelte";
     import { num2text } from "../../utils/utils";
     import Icon from "../elements/Icon.svelte";
-    import tip from "../elements/tip";
+    import tip from "../actions/tip";
     import RarityText from "../elements/RarityText.svelte";
     import { alert } from "../dialogs/modals";
 

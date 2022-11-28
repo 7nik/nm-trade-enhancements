@@ -61,7 +61,7 @@
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
 
-    import { htmlTip } from "../elements/tip";
+    import { htmlTip } from "../actions/tip";
     import { onDestroy } from "svelte";
 
     export let user: NM.User;

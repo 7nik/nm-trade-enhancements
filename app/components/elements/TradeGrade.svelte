@@ -28,7 +28,7 @@
     import currentUser from "../../services/currentUser";
     import { error } from "../../utils/utils";
     import { firstNamePossessive } from "../../services/user";
-    import tip from "./tip";
+    import tip from "../actions/tip";
 
     export let user: NM.User;
 

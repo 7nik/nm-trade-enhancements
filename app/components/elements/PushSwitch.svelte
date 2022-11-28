@@ -6,7 +6,7 @@
 
     import { error } from "../../utils/utils";
     import Icon from "./Icon.svelte";
-    import tip from "./tip";
+    import tip from "../actions/tip";
 
     /**
      * The current value

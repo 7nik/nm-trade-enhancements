@@ -1,9 +1,9 @@
-import type NM from "./NMTypes";
+import type NM from "../utils/NMTypes";
 
-import NMApi from "./NMApi";
+import NMApi from "../utils/NMApi";
 import { writable, derived } from "svelte/store";
-import currentUser from "../services/currentUser";
-import { liveListProvider } from "./NMLiveApi";
+import currentUser from "./currentUser";
+import { liveListProvider } from "../utils/NMLiveApi";
 
 type Side = "receive" | "give";
 type Direction = Side | "both";
@@ -62,7 +62,7 @@ function findTrades (print: NM.PrintInTrade, dir: Direction, level: Level) {
 function getTrades (print: NM.PrintInTrade, dir: Direction, level: Level) {
     return derived(cardStore, () => {
         const trades = findTrades(print, dir, level);
-        // return null instead of the empty array to avoid triggering of 
+        // return null instead of the empty array to avoid triggering of
         // all the subscribers by replacing empty array with another empty array
         return trades.length > 0 ? trades : null;
     });
