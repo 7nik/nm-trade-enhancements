@@ -15,6 +15,7 @@
     import NMApi from "../../../utils/NMApi";
     import { setContext } from "svelte";
     import Icon from "../../elements/Icon.svelte";
+    import { alert } from "../../dialogs/modals";
 
     /**
      * A method to open an existing trade or start a new one
@@ -71,7 +72,12 @@
                 showTab("conversation");
                 return;
             }
-            conversation = await NMApi.user.getConversationInfo(data);
+            try {
+                conversation = await NMApi.user.getConversationInfo(data);
+            } catch (reason) {
+                alert(String(reason));
+                return;
+            }
         } else {
             conversation = data;
         }

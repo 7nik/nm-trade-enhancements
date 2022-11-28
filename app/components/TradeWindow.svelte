@@ -123,6 +123,9 @@
 
             mode = "view";
             action = trade.state;
+        }, (reason) => {
+            alert(String(reason));
+            closeTrade(false);
         });
     // load the initial data
     } else if (initialData.actors) {
@@ -150,7 +153,7 @@
                 sett_id: initialData.sett.id,
                 sett_name: initialData.sett.name,
                 sett_name_slug: "",
-                is_replica: false,
+                is_replica: initialData.card.is_replica,
                 version: 1,
                 print_id: 0,
                 print_num: 0,
@@ -168,6 +171,13 @@
                         yourOffer = print ? [print] : [];
                     } else {
                         partnersOffer = print ? [print] : [];
+                    }
+                }, (reason) => {
+                    alert(String(reason));
+                    if (initialData!.side === "bidder") {
+                        yourOffer = [];
+                    } else {
+                        partnersOffer = [];
                     }
                 });
         }

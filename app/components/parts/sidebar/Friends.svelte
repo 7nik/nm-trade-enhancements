@@ -41,9 +41,13 @@
         }
         searchPeopleTimer = setTimeout(async () => {
             searchLoading = true;
-            const data = await NMApi.user.searchPeople(query.trim());
-            if (searchTerm !== query) return;
-            people = data;
+            try {
+                const data = await NMApi.user.searchPeople(query.trim());
+                if (searchTerm !== query) return;
+                people = data;
+            } catch (reason) {
+                alert(String(reason));
+            }
             searchLoading = false;
         }, 500);
     }

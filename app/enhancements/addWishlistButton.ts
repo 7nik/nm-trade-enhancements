@@ -95,7 +95,7 @@ type Scope = angular.IScope & ParentScope & {
  */
 addPatches(() => {
     angular.module("nm.trades").controller("wishlistCardsButton", ["$scope", ($scope: Scope) => {
-        $scope.toggleWishlists = async (ev: MouseEvent) => {
+        $scope.toggleWishlists = (ev: MouseEvent) => {
             // as we don't have access to the list of all cards
             // we'll make CollectionController to show cards we need and save them all
 
@@ -143,7 +143,7 @@ addPatches(() => {
                 elem.style.setProperty("--time", `${0.5 + Math.random() * cards.length * 0.07}s`);
                 return { card, elem, d };
             });
-            // wishlist from farthest to closest to the button 
+            // wishlist from farthest to closest to the button
             stars.sort((a, b) => b.d - a.d);
             // unwishlist from closest to farthest from the button
             if (!wishlistMode) stars.reverse();
@@ -157,19 +157,21 @@ addPatches(() => {
             document.body.prepend(div);
 
             // toggle favorites in five threads
-            await Promise.all(Array(5).fill(0).map(async function toggle(): Promise<any> {
+            Promise.allSettled(Array(5).fill(0).map(async function toggle(): Promise<any> {
                 const star = stars.shift();
                 if (!star) return;
                 star.card.favorite = await NMApi.card.toggleFavorite(star.card.id);
                 star.elem.className = wishlistMode ? "icon-liked" : "icon-like";
+                // recursively toggle the next card
                 return toggle();
-            }));
+            })).finally(() => {
+                // to show the wishlisting of the last star
+                setTimeout(() => {
+                    $scope.applyFilters();
+                    div.remove();
+                }, 500);
+            });
 
-            // to show the wishlisting of the last star
-            setTimeout(() => {
-                $scope.applyFilters();
-                div.remove();
-            }, 500);
         };
     }]);
 }, {

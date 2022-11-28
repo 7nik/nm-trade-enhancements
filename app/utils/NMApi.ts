@@ -50,13 +50,21 @@ async function request<T> (url: fullURL | URL, body: RequestInit): Promise<T> {
         await auth();
         resp = await fetch(url, body);
     }
+    if (resp.status === 503) {
+        // if server overloaded try again before throwing error
+        resp = await fetch(url, body);
+    }
     if (resp.ok) {
         return resp.status === 204 ? null : resp.json();
     }
-    const data = await resp.json();
-    error(url.toString(), resp.status, data);
-    if (data.detail) {
-        throw new Error(data.detail);
+    if (resp.headers.get("Content-Type")?.includes("/json")) {
+        const data = await resp.json();
+        error(url.toString(), resp.status, resp.statusText, data);
+        if (data.detail) {
+            throw new Error(data.detail);
+        }
+    } else {
+        error(url.toString(), resp.status, resp.statusText);
     }
     let detail: string;
     switch (resp.status) {
@@ -193,14 +201,17 @@ class Paginator<T> {
         if (!this.#next || this.#lock) return [];
         const promise = request<Paginated<T>>(this.#next, { method: "GET" });
         this.#lock = promise;
-        const data = await promise;
-        this.#list = this.#list.concat(data.results);
-        this.#count = data.count;
-        // this.#prev = data.previous;
-        this.#next = data.next;
-        this.#lock = null;
-        this.#store.set(this.#list);
-        return data.results;
+        try {
+            const data = await promise;
+            this.#list = this.#list.concat(data.results);
+            this.#count = data.count;
+            // this.#prev = data.previous;
+            this.#next = data.next;
+            this.#store.set(this.#list);
+            return data.results;
+        } finally {
+            this.#lock = null;
+        }
     }
 
     /**

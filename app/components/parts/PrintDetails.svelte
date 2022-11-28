@@ -35,6 +35,7 @@
     import Icon from "../elements/Icon.svelte";
     import tip from "../elements/tip";
     import RarityText from "../elements/RarityText.svelte";
+    import { alert } from "../dialogs/modals";
 
     /**
      * The print to display, can be replaced
@@ -60,16 +61,21 @@
     // get all the numbers of all the copies the user owns
     async function loadPrints () {
         printChooserState = "loading";
-        const details = await NMApi.user.ownedPrints(actors.you.id, print.id);
-        prints = details.prints.map((p) => ({
-            ...print,
-            print_num: p.print_num,
-            print_id: p.id,
-        })).reduce((map, p) => {
-            map[p.print_num] = p;
-            return map;
-        }, {} as Record<number, NM.PrintInTrade>);
-        printChooserState = "select";
+        try {
+            const details = await NMApi.user.ownedPrints(actors.you.id, print.id);
+            prints = details.prints.map((p) => ({
+                ...print,
+                print_num: p.print_num,
+                print_id: p.id,
+            })).reduce((map, p) => {
+                map[p.print_num] = p;
+                return map;
+            }, {} as Record<number, NM.PrintInTrade>);
+            printChooserState = "select";
+        } catch (reason) {
+            alert(String(reason));
+            printChooserState = "view";
+        }
     }
 
     const trades = derived(
