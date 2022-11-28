@@ -1,0 +1,49 @@
+/* style text tooltip the same way as NM */
+.nmte-tip {
+    z-index: 1104;
+    background: #FBF8CF;
+    padding: .45em .8em .4em;
+    max-width: 250px;
+    color: #2c2830;
+    border-radius: .3em;
+    filter: drop-shadow(0 1px 2px #0002);
+    text-align: center;
+    font-size: 13px;
+}
+.nmte-tip .arrow {
+    width: 18px;
+    height: 6px;
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+}
+.nmte-tip .arrow svg {
+    display: block;
+    width: 100%;
+    fill: #FBF8CF;
+}
+.nmte-tip[data-popper-placement=bottom] .arrow {
+    bottom: auto;
+    top: -6px
+}
+.nmte-tip[data-popper-placement=bottom] .arrow svg {
+    transform: scaleY(-1);
+}
+
+:root {
+    --core-gem-icon: url('data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 12"%3e%3clinearGradient id="a" x1="0" x2="0" y1="0" y2="1"%3e%3cstop stop-color="%23528eee" offset="0%25"/%3e%3cstop stop-color="%23ccdafe" offset="75%25"/%3e%3c/linearGradient%3e%3cpath fill="url(%23a)" d="M4.6 0 0 4.6 7.5 12 15 4.6 10.6 0 7.5 2.8Z"/%3e%3cpath fill="%23528eee" d="M0 4.6h3L4.6 3V0Z"/%3e%3cpath fill="%23514da4" d="M0 4.6h3L7.5 9v3Z"/%3e%3cpath fill="%23979de9" d="M15 4.6h-3L7.5 9v3Z"/%3e%3cpath fill="%23bed3ff" d="M4.6 3V0l2.9 2.8v3ZM10.6 3V0L15 4.6h-3Z"/%3e%3c/svg%3e');
+}
+
+.nmte-tip .i {
+    width: 18px;
+    height: 15px;
+    margin: 0 0 3px 2px;
+}
+.nmte-tip .i.core {
+    width: 15px;
+    background-image: var(--core-gem-icon);
+    background-size: auto;
+}
+.nmte-tip .pipe {
+    margin-bottom: 4px;
+}

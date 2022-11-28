@@ -8,6 +8,7 @@ import typescript from '@rollup/plugin-typescript';
 import styles from "rollup-plugin-styles";
 import commonjs from '@rollup/plugin-commonjs';
 import replace from '@rollup/plugin-replace';
+import { visualizer } from "rollup-plugin-visualizer";
 
 const dev = process.env.NODE_ENV === "development" || process.env.npm_lifecycle_event?.startsWith("dev-");
 const usHeader = UserscriptHeader.fromPackage("./package.json");
@@ -40,9 +41,13 @@ export default {
             }
         }),
         replace({
-          'process.env.NODE_ENV': JSON.stringify('production'),
+          'process.env.NODE_ENV': dev ? '"development"' : '"production"',
         }),
-        styles(),
+        styles({
+            mode: ["inject", { singleTag: true }],
+            // attempts to minimize CSS by CSSNano or CSSO
+            // was allowing to save just a few KiB
+        }),
         resolve({
             browser: true,
             dedupe: ['svelte']
@@ -65,6 +70,10 @@ export default {
                     return leaveMetaBlock.inmeta;
                 }
             }
+        }),
+        !dev && visualizer({
+            open: true,
+            template: "treemap",
         }),
     ]
 };

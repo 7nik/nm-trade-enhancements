@@ -1,0 +1,48 @@
+/* the trade preview styles */
+.nmte-preview, .nmte-preview-sidebar {
+    z-index: 1111;
+    background: #efefef;
+    padding: 0;
+    width: 300px;
+    max-width: 300px;
+    color: #2c2830;
+    border-radius: 5px;
+    filter: drop-shadow(0 1px 4px #0005);
+    text-align: center;
+    font-size: 13px;
+}
+.nmte-preview-sidebar {
+    filter: drop-shadow(1px 1px 7px #0005);
+}
+
+.nmte-preview .arrow,
+.nmte-preview-sidebar .arrow {
+    width: 18px;
+    height: 6px;
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+}
+.nmte-preview .arrow svg,
+.nmte-preview-sidebar .arrow svg {
+    display: block;
+    width: 100%;
+    fill: #efefef;
+}
+.nmte-preview-sidebar .arrow,
+.nmte-preview[data-popper-placement=left] .arrow {
+    right: -12px;
+    left: auto;
+    top: 50%;
+}
+.nmte-preview-sidebar .arrow svg,
+.nmte-preview[data-popper-placement=left] .arrow svg {
+    transform: rotate(-90deg);
+}
+.nmte-preview[data-popper-placement=bottom] .arrow {
+    bottom: auto;
+    top: -6px
+}
+.nmte-preview[data-popper-placement=bottom] .arrow svg {
+    transform: scaleY(-1);
+}
