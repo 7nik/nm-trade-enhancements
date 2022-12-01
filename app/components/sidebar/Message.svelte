@@ -1,12 +1,12 @@
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
 
-    import { firstName } from "../../services/user";
     import currentUser from "../../services/currentUser";
+    import { firstName } from "../../services/user";
     import { linky } from "../../utils/utils";
     import Avatar from "../elements/Avatar.svelte";
-    import TradePreviews from "../parts/TradePreviews.svelte";
     import Time from "../elements/Time.svelte";
+    import TradePreviews from "../parts/TradePreviews.svelte";
 
     /**
      * The message data
@@ -25,7 +25,7 @@
     let showTrade = message.attachment?.active ?? false;
 
     // converts the attachment into TradePreview compatible object
-    function makeTradeObject(data: Exclude<NM.Message["attachment"], undefined>) {
+    function makeTradeObject (data: Exclude<NM.Message["attachment"], undefined>) {
         const youAreBidder = data.bidder_id === currentUser.id;
         // make the prints go in descending order of rarity
         data.bidder_offer.prints.reverse().sort((a, b) => b.rarity.rarity - a.rarity.rarity);
@@ -33,7 +33,7 @@
         return {
             ...data,
             bidder: youAreBidder ? currentUser.you : collocutor,
-            responder: youAreBidder ? collocutor : currentUser.you
+            responder: youAreBidder ? collocutor : currentUser.you,
         };
     }
 </script>
@@ -60,7 +60,7 @@
             {#if showTrade}
                 <TradePreviews trades={[makeTradeObject(message.attachment)]} />
             {:else}
-                <div on:click={() => showTrade = true}>
+                <div on:click={() => { showTrade = true; }}>
                     Show Details
                 </div>
             {/if}

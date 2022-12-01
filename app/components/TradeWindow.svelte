@@ -30,14 +30,16 @@
     A component for interacting with trades.
  -->
  <script lang="ts">
-    import Button from "./elements/Button.svelte";
-    import TradeWindowList from "./trade-window/TradeWindowOffer.svelte";
-    import NMApi from "../utils/NMApi";
-    import { alert, confirm } from "./dialogs/modals";
-    import currentUser from "../services/currentUser";
-    import Icon from "./elements/Icon.svelte";
+    /* eslint-disable unicorn/consistent-destructuring, sonarjs/no-duplicate-string */
     import { setContext } from "svelte";
     import { writable } from "svelte/store";
+    import currentUser from "../services/currentUser";
+    import { firstName } from "../services/user";
+    import NMApi from "../utils/NMApi";
+    import { alert, confirm } from "./dialogs/modals";
+    import Button from "./elements/Button.svelte";
+    import Icon from "./elements/Icon.svelte";
+    import TradeWindowList from "./trade-window/TradeWindowOffer.svelte";
 
     /**
      * Object with either existing trade ID or initial trade data
@@ -75,7 +77,7 @@
         withdrawing: ["withdrew", "done"],
     };
 
-    let actors = initialData.actors;
+    let { actors } = initialData;
 
     let trade: NM.Trade | null = null;
     let parentTradeId: number | null = null;
@@ -88,14 +90,38 @@
     // what the user have done or is doing with the trade
     let action = "loading";
 
-    $: windowTitle = action === "create" ? `New Trade With ${actors?.partner.first_name}`
-        : action === "modify" ? `Modify Trade With ${actors?.partner.first_name}`
-        : action === "counter" ? `Counter a Trade From ${actors?.partner.first_name}`
-        : action === "expired" ? `${actors?.bidder.name} let this trade expire`
-        : action === "proposed" ? `${actors?.bidder.name} proposed a trade`
-        : ["modified", "withdrew", "auto-withdrew"].includes(action) ? `${actors?.bidder.name} ${action} this trade`
-        // accepted, countered, declined, auto-declined
-        : `${actors?.responder.name} ${action} this trade`;
+    let windowTitle = "";
+    $: if (actors) {
+        switch (action) {
+            case "loading":
+            case "done":
+                windowTitle = ""; // the window isn't shown
+                break;
+            case "create":
+                windowTitle = `New Trade With ${firstName(actors.partner)}`;
+                break;
+            case "modify":
+                windowTitle = `Modify Trade With ${firstName(actors.partner)}`;
+                break;
+            case "counter":
+                windowTitle = `Counter a Trade From ${firstName(actors.partner)}`;
+                break;
+            case "expired":
+                windowTitle = `${firstName(actors.bidder)} let this trade expire`;
+                break;
+            case "proposed":
+                windowTitle = `${firstName(actors.bidder)} proposed a trade`;
+                break;
+            case "modified":
+            case "withdrew":
+            case "auto-withdrew":
+                windowTitle = `${firstName(actors.bidder)} ${action} this trade`;
+                break;
+            // accepted, countered, declined, auto-declined
+            default:
+                windowTitle = `${firstName(actors.responder)} ${action} this trade`;
+        }
+    }
 
     $: isValidTrade = yourOffer.length > 0 && partnersOffer.length > 0;
     let pageWidth: number; // bound to the browser window width
@@ -108,7 +134,7 @@
         NMApi.trade.get(initialData.tradeId).then((t) => {
             trade = t;
 
-            let youAreBidder = trade.bidder.id === currentUser.id;
+            const youAreBidder = trade.bidder.id === currentUser.id;
             actors = {
                 youAreBidder,
                 bidder: trade.bidder,
@@ -117,7 +143,7 @@
                 partner: youAreBidder ? trade.responder : trade.bidder,
             };
             // to simplify the child markup
-            actors.you.name = actors.you.first_name = "You";
+            // actors.you.name = actors.you.first_name = "You";
             yourOffer = trade[youAreBidder ? "bidder_offer" : "responder_offer"].prints;
             partnersOffer = trade[youAreBidder ? "responder_offer" : "bidder_offer"].prints;
 
@@ -133,8 +159,8 @@
             throw new Error("Actors aren't provided!");
         }
         // to simplify the child markup
-        actors.you = {...actors.you, name: "You", first_name: "You"};
-        actors[actors.youAreBidder ? "bidder" : "responder"] = actors.you;
+        // actors.you = {...actors.you, name: "You", first_name: "You"};
+        // actors[actors.youAreBidder ? "bidder" : "responder"] = actors.you;
         // to speed up showing the window,
         // at first show a print that lack some unused data
         if (initialData.card) {
@@ -157,7 +183,7 @@
                 version: 1,
                 print_id: 0,
                 print_num: 0,
-            }
+            };
             if (initialData.side === "bidder") {
                 yourOffer = [fakePrint];
             } else {
@@ -194,7 +220,7 @@
     /**
      * Start a new trade
      */
-    function newTrade() {
+    function newTrade () {
         trade = null;
         parentTradeId = null;
         yourOffer = [];
@@ -205,10 +231,11 @@
         action = "create";
         mode = "edit";
     }
+
     /**
      * Propose this trade
      */
-    async function postTrade() {
+    async function postTrade () {
         if (!await confirm(`Confirm you want to ${action} this trade?`)) return;
         const prevAction = action;
         [action, mode] = ACTIONS[action];
@@ -231,10 +258,11 @@
             mode = "edit";
         }
     }
+
     /**
      * Accept this trade
      */
-    async function acceptTrade() {
+    async function acceptTrade () {
         if (!await confirm("Confirm you want to accept this trade?")) return;
         [action, mode] = ACTIONS.accept;
         try {
@@ -253,7 +281,7 @@
     /**
      * Decline this trade
      */
-    async function declineTrade() {
+    async function declineTrade () {
         const verb = actors!.youAreBidder ? "withdraw" : "decline";
         if (!await confirm(`Confirm you want to ${verb} this trade?`)) return;
         [action, mode] = ACTIONS[verb];
@@ -273,7 +301,7 @@
     /**
      * Start to modify the trade
      */
-    function startModify() {
+    function startModify () {
         parentTradeId = trade!.id;
         action = "modify";
         mode = "edit";
@@ -281,7 +309,7 @@
     /**
      * Start to counter the trade
      */
-    function startCounter() {
+    function startCounter () {
         parentTradeId = trade!.id;
         actors!.youAreBidder = true;
         actors!.bidder = actors!.you;
@@ -292,7 +320,7 @@
     /**
      * Revert the changes
      */
-    function cancelChanges() {
+    function cancelChanges () {
         parentTradeId = null;
         if (action === "counter") {
             actors!.youAreBidder = false;
@@ -308,16 +336,21 @@
      * Close the trade
      * @param back - whether the Back button was pressed
      */
-    async function cancelTrade(back = false) {
-        if ((yourOffer.length || partnersOffer.length) && !await confirm(
+    async function cancelTrade (back = false) {
+        if ((yourOffer.length > 0 || partnersOffer.length > 0) && !await confirm(
             "Are you sure you want to close this trade?",
-            "If you leave, you'll lose your trade in progress.")
-        ) return;
+            "If you leave, you'll lose your trade in progress.",
+        )) return;
         closeTrade(back);
     }
 </script>
 
-<svelte:window bind:innerWidth={pageWidth} />
+<svelte:window bind:innerWidth={pageWidth} on:keyup|capture={(ev) => {
+    if (ev.code === "Escape") {
+        ev.stopPropagation();
+        cancelTrade();
+    }
+}}/>
 
 {#if actors && (mode === "view" || mode === "edit")}
     <article class="trade-window">

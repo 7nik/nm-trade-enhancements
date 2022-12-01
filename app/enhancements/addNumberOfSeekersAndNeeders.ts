@@ -1,7 +1,7 @@
 import addPatches from "../utils/patchAngular";
 
 /**
- * Adds a tip which allows to see the total number of 
+ * Adds a tip which allows to see the total number of
  * needers/seekers of a card
  */
 

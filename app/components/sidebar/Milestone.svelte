@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type NM from "../../../utils/NMTypes";
+    import type NM from "../../utils/NMTypes";
 
-    import { num2text } from "../../../utils/utils";
-    import Icon from "../../elements/Icon.svelte";
-    import RarityText from "../../elements/RarityText.svelte";
-    import Time from "../../elements/Time.svelte";
-    import ImgAsset from "../ImgAsset.svelte";
+    import { num2text } from "../../utils/utils";
+    import Icon from "../elements/Icon.svelte";
+    import RarityText from "../elements/RarityText.svelte";
+    import Time from "../elements/Time.svelte";
+    import ImgAsset from "../parts/ImgAsset.svelte";
 
     /**
      * The milestone data
@@ -15,7 +15,7 @@
     function gotoPackOpenPage (settId: number) {
         // in fact, it should open the pack opening layer
         // but there are too much to implement
-        window.open("https://neonmob.com/series/"+settId);
+        window.open(`https://neonmob.com/series/${settId}`);
     }
 </script>
 

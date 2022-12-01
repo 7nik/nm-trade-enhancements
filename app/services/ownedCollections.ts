@@ -1,11 +1,11 @@
 import type NM from "../utils/NMTypes";
+import type { fullURL } from "../utils/NMTypes";
 
 import NMApi from "../utils/NMApi";
 import { debug, LazyMap } from "../utils/utils";
 import currentUser from "./currentUser";
-import type { fullURL } from "../utils/NMTypes";
 
-const data = new LazyMap<number, Record<number,NM.SettMetrics>>(300_000);
+const data = new LazyMap<number, Record<number, NM.SettMetrics>>(300_000);
 const loading = new Map<number, Promise<NM.SettMetrics[]>>();
 
 /**
@@ -27,7 +27,7 @@ async function loadOwnership (userId: number) {
     loading.set(userId, promise);
     try {
         const setts = await loading.get(userId)!;
-        const map = {} as Record<number,NM.SettMetrics>;
+        const map = {} as Record<number, NM.SettMetrics>;
         for (const sett of setts) {
             map[sett.id] = sett;
         }
@@ -36,15 +36,16 @@ async function loadOwnership (userId: number) {
         loading.delete(userId);
     }
 }
+
 /**
  * Frees the user's info
  * @param userId - the user ID
  */
- async function removeOwnership (userId: number) {
+async function removeOwnership (userId: number) {
     if (userId === currentUser.id) return;
     if (loading.has(userId)) await loading.get(userId);
     data.delete(userId);
-    debug(userId, "'s collections unloaded")
+    debug(userId, "'s collections unloaded");
 }
 
 type Progress = {
@@ -74,16 +75,18 @@ type Progress = {
 
 class UserCollections {
     #collections;
-    
+
     constructor (userId: number) {
         this.#collections = data.get(userId) ?? {};
     }
+
     /**
      * Get the user's collection as a list
      */
     getCollections () {
         return Object.values(this.#collections);
     }
+
     /**
      * Get info about collection progress
      * @param settId - series ID of the collection
@@ -131,11 +134,11 @@ class UserCollections {
     }
 }
 
-export default async function (userId: number) {
+export default async function getData (userId: number) {
     if (!data.has(userId)) await loadOwnership(userId);
     return {
         userCollections: new UserCollections(userId),
         freeData: removeOwnership.bind(null, userId),
     };
 }
-export type { UserCollections, Progress }
+export type { UserCollections, Progress };

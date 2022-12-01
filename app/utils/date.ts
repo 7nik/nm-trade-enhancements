@@ -79,33 +79,46 @@ import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime, {
     thresholds: [
-        { l: 'm', r: 1 },
-        { l: 'mm', r: 59, d: 'minute' },
-        { l: 'h', r: 1 },
+        { l: "m", r: 1 },
+        { l: "mm", r: 59, d: "minute" },
+        { l: "h", r: 1 },
         { l: "hh", r: 71, d: "hour" },
-        { l: 'd', r: 1 },
-        { l: 'dd', r: 29, d: 'day' },
-        { l: 'M', r: 1 },
-        { l: 'MM', r: 11, d: 'month' },
-        { l: 'y' },
-        { l: 'yy', d: 'year' },
+        { l: "d", r: 1 },
+        { l: "dd", r: 29, d: "day" },
+        { l: "M", r: 1 },
+        { l: "MM", r: 11, d: "month" },
+        { l: "y" },
+        { l: "yy", d: "year" },
     ],
 });
 // load and set locale for NM
 const locale = {
     name: "nm-relative",
     weekdays: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    months: [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ],
     formats: {},
     relativeTime: {
         future: "%s left",
-        past(out: string) {
+        past (out: string) {
             if (!out || out.includes("now")) return out;
             return `${out} ago`;
         },
-        m(n:number, _withoutSuffix:boolean, _key:string, isFuture:boolean) {
+        m (n:number, _withoutSuffix:boolean, _key:string, isFuture:boolean) {
             return isFuture
-                ? n ? "less than 1 minute" : "0 minutes"
+                ? (n ? "less than 1 minute" : "0 minutes")
                 : "just now";
         },
         mm: "%d minutes",
@@ -120,7 +133,7 @@ const locale = {
     },
 };
 // @ts-ignore - ILocale doesn't supports functions in relativeTime
-dayjs.locale(locale)
+dayjs.locale(locale);
 
 // function toPluralize (val: number, str: string) {
 //     return (val<=1 ? str : str+'s')
@@ -179,4 +192,5 @@ export function timestampNow () {
     return dayjs().format();
 }
 
+// eslint-disable-next-line unicorn/prefer-export-from
 export default dayjs;

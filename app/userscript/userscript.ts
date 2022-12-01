@@ -1,6 +1,4 @@
 import "./initServices";
-import "../enhancements/index.ts";
+import "../enhancements/index";
 
-import css from "../enhancements/index.css";
-
-GM_addStyle(css.toString());
+import "../enhancements/index.css";

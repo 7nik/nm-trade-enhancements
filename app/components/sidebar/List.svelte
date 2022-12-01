@@ -3,8 +3,9 @@
  -->
 
 <script lang="ts">
-    import type { IconName } from "../../elements/Icon.svelte";
-    import Icon from "../../elements/Icon.svelte";
+    import type { IconName } from "../elements/Icon.svelte";
+
+    import Icon from "../elements/Icon.svelte";
 
     export let show: "loading" | "empty" | "content";
     export let icon: IconName;

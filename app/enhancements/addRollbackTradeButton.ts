@@ -10,7 +10,7 @@ addPatches(() => {
     angular.module("nm.trades").controller("rollbackTradeButton", [
         "$scope",
         "nmTrades",
-        ($scope: angular.IScope & { cancelChanges: () => void }, nmTrades: Services.NMTrade ) => {
+        ($scope: angular.IScope & { cancelChanges: () => void }, nmTrades: Services.NMTrade) => {
             // save copies of the original offers
             const bidderOffer = nmTrades.getOfferData("bidder_offer").prints.slice();
             const respOffer = nmTrades.getOfferData("responder_offer").prints.slice();
@@ -45,4 +45,4 @@ addPatches(() => {
                 <span>Back</span>
             </button>`,
     }],
-})
+});

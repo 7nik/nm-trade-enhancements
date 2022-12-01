@@ -1,9 +1,9 @@
 import type NM from "../utils/NMTypes";
 
-import NMApi from "../utils/NMApi";
 import { writable, derived } from "svelte/store";
-import currentUser from "./currentUser";
+import NMApi from "../utils/NMApi";
 import { liveListProvider } from "../utils/NMLiveApi";
+import currentUser from "./currentUser";
 
 type Side = "receive" | "give";
 type Direction = Side | "both";
@@ -23,6 +23,7 @@ const cardStore = writable(cards);
  * @param level - look for a certain print or all prints
  * @return list of trade IDs or `null`
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function findTrades (print: NM.PrintInTrade, dir: Direction, level: Level) {
     if (!print) return [];
 
@@ -66,18 +67,18 @@ function getTrades (print: NM.PrintInTrade, dir: Direction, level: Level) {
         // all the subscribers by replacing empty array with another empty array
         return trades.length > 0 ? trades : null;
     });
- }
+}
 
- /**
-  * Whether the card is used in any active trade
-  * @param print - the involved card
-  * @param dir - how the card should be involved in a trade
-  * @param level - look for a certain print or all prints
-  * @return list of trade IDs or `null`
-  */
-  function isTrading (print: NM.PrintInTrade, dir: Direction, level: Level) {
-     return findTrades(print, dir, level).length > 0;
-  }
+/**
+ * Whether the card is used in any active trade
+ * @param print - the involved card
+ * @param dir - how the card should be involved in a trade
+ * @param level - look for a certain print or all prints
+ * @return list of trade IDs or `null`
+ */
+function isTrading (print: NM.PrintInTrade, dir: Direction, level: Level) {
+    return findTrades(print, dir, level).length > 0;
+}
 
 /**
  * Updates usage in trades for the given print
@@ -106,21 +107,20 @@ function updatePrint (tradeId: number, side: Side, cid: number, pid: number, cha
 async function updateTrade (tradeId: number, change: -1|1) {
     const trade = await NMApi.trade.get(tradeId);
     const youAreBidder = trade.bidder.id === currentUser.id;
-    trade[youAreBidder ? "bidder_offer" : "responder_offer"].prints
-        .forEach(({ id: cid, print_id: pid }) => {
-            updatePrint(tradeId, "give", cid, pid, change);
-        });
-    trade[youAreBidder ? "responder_offer" : "bidder_offer"].prints
-        .forEach(({ id: cid, print_id: pid }) => {
-            updatePrint(tradeId, "receive", cid, pid, change);
-        });
+    for (const print of trade[youAreBidder ? "bidder_offer" : "responder_offer"].prints) {
+        updatePrint(tradeId, "give", print.id, print.print_id, change);
+    }
+    for (const print of trade[youAreBidder ? "responder_offer" : "bidder_offer"].prints) {
+        updatePrint(tradeId, "receive", print.id, print.print_id, change);
+    }
     cardStore.set(cards);
-};
+}
 
 // get and watch for trades and their cards
 liveListProvider("trades")
     .on("init", async (trades) => {
         for (const trade of trades) {
+            // eslint-disable-next-line no-await-in-loop
             await updateTrade(trade.object.id, +1);
         }
     })

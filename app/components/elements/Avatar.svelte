@@ -17,7 +17,7 @@
 
 <svelte:options immutable/>
 
-<img {src} on:error={() => src = config.defaultAvatarUrl}
+<img {src} on:error={() => { src = config.defaultAvatarUrl; }}
     alt={user.username} class:big
 >
 

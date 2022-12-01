@@ -5,8 +5,8 @@
     import type { IconName } from "./Icon.svelte";
 
     import { error } from "../../utils/utils";
-    import Icon from "./Icon.svelte";
     import tip from "../actions/tip";
+    import Icon from "./Icon.svelte";
 
     /**
      * The current value
@@ -23,24 +23,28 @@
     /**
      * The text as icon
      */
-    export let text: string = "";
+    export let text = "";
     /**
      * The tooltip text
      */
-    export let hint: string = "";
+    export let hint = "";
 
     if (Array.isArray(icon) !== Array.isArray(activeIcon)) {
         error("Both `icon` and `activeIcon` must have the same type", icon, activeIcon);
-    } else if (Array.isArray(icon) && Array.isArray(activeIcon) && icon.length !== activeIcon.length) {
+    } else if (Array.isArray(icon)
+        && Array.isArray(activeIcon)
+        && icon.length !== activeIcon.length
+    ) {
         error("Provided different number of icons", icon, activeIcon);
     }
     $: icons = value
-        ? Array.isArray(activeIcon) ? activeIcon : [activeIcon]
-        : Array.isArray(icon) ? icon : [icon];
+        ? (Array.isArray(activeIcon) ? activeIcon : [activeIcon])
+        : (Array.isArray(icon) ? icon : [icon]);
 </script>
 
 <label class:selected={value} use:tip={hint}>
     <input type=checkbox bind:checked={value} on:change>
+    <!-- eslint-disable-next-line no-shadow -->
     {#each icons as icon}
         <Icon {icon} size="1em" />
     {/each}

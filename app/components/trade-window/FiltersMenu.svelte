@@ -2,11 +2,13 @@
     import type NM from "../../utils/NMTypes";
     import type { IconName } from "../elements/Icon.svelte";
 
+    import { writable } from "svelte/store";
     import NMApi from "../../utils/NMApi";
     import { loadValue, saveValue } from "../../utils/storage";
-    import NameFilterSet from "../dialogs/NameFilterSet.svelte";
     import { confirm, createDialog } from "../dialogs/modals";
+    import NameFilterSet from "../dialogs/NameFilterSet.svelte";
 
+    type Range = [number, number];
     type SettType = "oop"|"limCredit"|"limFree"|"unlim"|"rie";
     const settType: Record<number, SettType> = {};
     const loading: Record<number, Promise<NM.Sett>> = {};
@@ -23,7 +25,7 @@
             type = "limCredit";
         } else if (sett.version !== 2) {
             type = "limFree";
-        } else if (new Date(sett.discontinue_date).getTime() - Date.now() < 365*24*60*60_000) {
+        } else if (new Date(sett.discontinue_date).getTime() - Date.now() < 365 * 86_400_000) {
             type = "unlim";
         } else {
             type = "rie";
@@ -66,10 +68,10 @@
         incompleteSetts: boolean,
         hiddenSetts: hiddenSett[],
         notInTrades: boolean,
-        holderOwns: [number, number], // the cardOwner
-        oppositeOwns: [number, number], // the opposite user
-        cardCount: [number, number],
-        collection: [number, number],
+        holderOwns: Range, // the cardOwner
+        oppositeOwns: Range, // the opposite user
+        cardCount: Range,
+        collection: Range,
         oopSetts: boolean,
         limCreditSetts: boolean,
         limFreebieSetts: boolean,
@@ -81,27 +83,41 @@
         includeSett: boolean,
         filters: Filters,
     }
-    let filterSetList: Writable<FilterSet[]> = writable<FilterSet[]>([], (set) => {
+    const filterSetList: Writable<FilterSet[]> = writable<FilterSet[]>([], (set) => {
         const fsets = loadValue<FilterSet[]>("filterSets", []);
         // the Infinity value cannot be stored in JSON, so
         // during serialization it gets replaced with null
         // now we need to fix it back
-        fsets.forEach((fset) => {
+        for (const fset of fsets) {
             let prop: keyof Filters;
             for (prop in fset.filters) {
                 if (prop === "hiddenSetts") continue;
-                let val = fset.filters[prop];
+                const val = fset.filters[prop];
                 if (Array.isArray(val) && (val as (number|null)[]).includes(null)) {
-                    (fset.filters[prop] as number[]) = val.map((num) => num === null ? Infinity : num);
+                    (fset.filters[prop] as number[]) = val
+                        .map((num) => (num === null ? Number.POSITIVE_INFINITY : num));
                 }
             }
-        });
+        }
         set(fsets);
-    })
+    });
+
+    function isRange (val: any): val is Range {
+        return Array.isArray(val) && val.length === 2;
+    }
+
+    function areRangesEqual (r1: Range, r2:  Range) {
+        return r1[0] === r2[0] && r1[1] === r2[1];
+    }
+
+    function inRange (value: number, [start, end]: Range) {
+        return start <= value && value <= end;
+    }
 
     /**
      * Checks is the filters and the filter set completely match
      */
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     function isEqualToFilterSet (filters: Filters, fset: FilterSet) {
         let prop: keyof Filters;
         for (prop in filters) {
@@ -113,15 +129,17 @@
                 if (filters.hiddenSetts.length !== fset.filters.hiddenSetts.length) {
                     return false;
                 }
-                if (filters.hiddenSetts.some(({ id }) => !fset.filters.hiddenSetts.find(sett => sett.id === id))) {
+                if (filters.hiddenSetts.some(({ id }) => (
+                    !fset.filters.hiddenSetts.some((sett) => sett.id !== id)))
+                ) {
                     return false;
                 }
             } else {
                 const val1 = filters[prop];
                 const val2 = fset.filters[prop];
                 // prop is a range
-                if (Array.isArray(val1) && Array.isArray(val2)) {
-                    if (val1[0] !== val2[0] || val1[1] !== val2[1]) {
+                if (isRange(val1) && isRange(val2)) {
+                    if (!areRangesEqual(val1, val2)) {
                         return false;
                     }
                 // anything else: number, string, boolean
@@ -142,7 +160,7 @@
         if (!data) return null;
         const filterSet = {
             ...data,
-            filters: {...filters},
+            filters: { ...filters },
         };
         // no need to save these data
         if (!filterSet.includeSett) {
@@ -154,11 +172,11 @@
                 name: filterSet.filters.sett.name,
             };
         }
-        filterSet.filters.hiddenSetts.forEach(sett => {
+        for (const sett of filterSet.filters.hiddenSetts) {
             sett.tip = "";
-        });
+        }
 
-        filterSetList.update(fsets => {
+        filterSetList.update((fsets) => {
             fsets = fsets.filter(({ name }) => name !== filterSet.name);
             fsets.push(filterSet);
             fsets.sort((fs1, fs2) => fs1.name.localeCompare(fs2.name));
@@ -172,10 +190,10 @@
      * @param filterSet - the filter set to delete
      * @returns - if the filter set was deleted
      */
-    async function deleteFilterSet(filterSet: FilterSet) {
+    async function deleteFilterSet (filterSet: FilterSet) {
         if (await confirm("Are you sure you want to delete this filter set?")) {
-            filterSetList.update(fsets => {
-                fsets = fsets.filter(fs => fs !== filterSet);
+            filterSetList.update((fsets) => {
+                fsets = fsets.filter((fs) => fs !== filterSet);
                 saveValue("filterSets", fsets);
                 return fsets;
             });
@@ -188,22 +206,22 @@
     A component to edit print search filters
 -->
 <script lang="ts">
+    import type { Progress, UserCollections } from "../../services/ownedCollections";
     import type { rarityCss } from "../../utils/NMTypes";
     import type { Actors } from "../TradeWindow.svelte";
     import type { Writable } from "svelte/store";
-    import type { UserCollections } from "../../services/ownedCollections";
 
-    import { writable } from "svelte/store";
     import { createEventDispatcher, getContext, onDestroy } from "svelte";
-    import ownedCollections from "../../services/ownedCollections";
-    import { getProgress, makeShortTip } from "./CollectionProgress.svelte";
-    import DoubleRange from "../elements/DoubleRange.svelte";
-    import PushSwitch from "../elements/PushSwitch.svelte";
-    import Dropdown from "../elements/Dropdown.svelte";
-    import { isTrading } from "../../services/tradingCards";
     import OwnedCards from "../../services/ownedCards";
+    import ownedCollections from "../../services/ownedCollections";
+    import { isTrading } from "../../services/tradingCards";
+    import { firstNamePossessive as possName } from "../../services/user";
     import { error, num2text } from "../../utils/utils";
+    import DoubleRange from "../elements/DoubleRange.svelte";
+    import Dropdown from "../elements/Dropdown.svelte";
     import Icon from "../elements/Icon.svelte";
+    import PushSwitch from "../elements/PushSwitch.svelte";
+    import { getProgress, makeShortTip } from "./CollectionProgress.svelte";
 
     /**
      * The initial sett to select
@@ -228,13 +246,15 @@
 
     const dispatch = createEventDispatcher();
 
-    const RARITIES: rarityCss[] = ["common", "uncommon", "rare", "veryRare", "extraRare", "chase", "variant", "legendary"];
+    const RARITIES: rarityCss[] = [
+        "common", "uncommon", "rare", "veryRare", "extraRare", "chase", "variant", "legendary",
+    ];
 
     // ID of the user in another list
     const oppositeOwnerId = isItYou ? actors.partner.id : actors.you.id;
 
     const defaultFilters = {
-        collection: [0, Infinity],
+        collection: [0, Number.POSITIVE_INFINITY],
 
         shared: false,
         incompleteSetts: false,
@@ -259,25 +279,27 @@
         variant: false,
         legendary: false,
 
-        oppositeOwns: [0, Infinity],
-        holderOwns: [1, Infinity],
-        cardCount: [1, Infinity],
+        oppositeOwns: [0, Number.POSITIVE_INFINITY],
+        holderOwns: [1, Number.POSITIVE_INFINITY],
+        cardCount: [1, Number.POSITIVE_INFINITY],
 
         notOwned: false,
         duplicatesOnly: false,
         hiddenSetts: [],
     } as Filters;
-    const holderOwnsNumbers = [1,2,3,4,5,10,20,50,100,Infinity];
-    const oppositeOwnsNumbers = [0,...holderOwnsNumbers];
-    const cardCountNumbers = [1,10,50,100,250,500,750,1e3,1.5e3,2e3,3e3,4e3,5e3,7.5e3,1e4,1.5e4,2e4,3e4,4e4,5e4,7.5e4,1e5,Infinity];
-    const collectionNumbers = [0,1,2,3,4,5,6,7,8,9,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,110,120,130,140,150,160,170,180,190,200,Infinity];
+    const holderOwnsNumbers = [1, 2, 3, 4, 5, 10, 20, 50, 100, Number.POSITIVE_INFINITY];
+    const oppositeOwnsNumbers = [0, ...holderOwnsNumbers];
+    // eslint-disable-next-line max-len, comma-spacing
+    const cardCountNumbers = [1,10,50,100,250,500,750,1e3,1.5e3,2e3,3e3,4e3,5e3,7.5e3,1e4,1.5e4,2e4,3e4,4e4,5e4,7.5e4,1e5,Number.POSITIVE_INFINITY];
+    // eslint-disable-next-line max-len, comma-spacing
+    const collectionNumbers = [0,1,2,3,4,5,6,7,8,9,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,110,120,130,140,150,160,170,180,190,200,Number.POSITIVE_INFINITY];
 
     $: defaultFilters.sett = sett;
 
     let filterSet = $filterSetList.find(({ name }) => name.toLowerCase() === "default") ?? null;
     let filters: Filters = filterSet
-        ? {...defaultFilters, ...filterSet.filters, sett}
-        : {...defaultFilters, sett};
+        ? { ...defaultFilters, ...filterSet.filters, sett }
+        : { ...defaultFilters, sett };
     // try to unset filterSet when the filters changes
     $: if (filterSet && !isEqualToFilterSet(filters, filterSet)) {
         filterSet = null;
@@ -293,65 +315,70 @@
             // whether a filter has value other than default one
             const value = filters[prop];
             const defValue = defaultFilters[prop];
-            if (Array.isArray(defValue) && defValue.length === 2) {
-                return (value as number[])[0] !== defValue[0] || (value as number[])[1] !== defValue[1];
+            if (isRange(value) && isRange(defValue)) {
+                return areRangesEqual(value, defValue);
             }
             return value !== defValue;
         },
-        ownKeys (_) {
-            return Reflect.ownKeys(defaultFilters).filter(key => this.get!(filters, key, filters));
+        ownKeys () {
+            return Reflect.ownKeys(defaultFilters)
+                .filter((key) => this.get!(filters, key, filters));
         },
     }) as Record<keyof Filters, boolean>;
 
     /**
      * Merges active filters with the same prefix into one
-     * @param filters - the array with the filters
+     * @param afilters - the array with the filters
      * @param prefix - which filters to merge
      * @param newPrefix - the new prefix, by default used the old one
      * @returns - the array with merged filters
      */
-    function mergeActiveFilters (filters: ActiveFilter[], prefix: string, newPrefix = prefix) {
-        const afs = filters.filter((af) => af.prefix === prefix);
-        if (afs.length === 0) return filters;
+    function mergeActiveFilters (afilters: ActiveFilter[], prefix: string, newPrefix = prefix) {
+        const afs = afilters.filter((af) => af.prefix === prefix);
+        if (afs.length === 0) return afilters;
         if (afs.length === 1) {
             afs[0].prefix = newPrefix;
-            return filters;
+            return afilters;
         }
-        const pos = filters.indexOf(afs[0]);
-        filters = filters.filter((af) => !afs.includes(af));
+        const pos = afilters.indexOf(afs[0]);
+        afilters = afilters.filter((af) => !afs.includes(af));
         const af: ActiveFilter = {
             prefix: newPrefix,
-            icons: afs.flatMap(({ icons = [] }, i) => i > 0 ? ["pipe", ...icons] : icons),
-            text: afs.find((af) => af.text)?.text,
-            tip: afs.map(af => af.tip).join(", ").replaceAll(" cards,", ","),
+            icons: afs.flatMap(({ icons = [] }, i) => (i > 0 ? ["pipe", ...icons] : icons)),
+            text: afs.find(({ text }) => text)?.text,
+            tip: afs.map(({ tip }) => tip).join(", ").replaceAll(" cards,", ","),
         };
-        filters.splice(pos, 0, af);
-        return filters;
+        afilters.splice(pos, 0, af);
+        return afilters;
     }
 
     // re-filter the series list when these filters get changed
     let seriesListKey = [filters.shared, filters.collection].toString();
     // keep filters conformed and synced with the exported variables
     $: filters, conformFilters();
-    function conformFilters() {
+    function conformFilters () {
         if (filters.duplicatesOnly !== filters.holderOwns[0] > 1) {
             filters.duplicatesOnly = filters.holderOwns[0] > 1;
         }
         if (filters.notOwned !== (filters.oppositeOwns[1] === 0)) {
-            filters.notOwned = filters.oppositeOwns[1] === 0
+            filters.notOwned = filters.oppositeOwns[1] === 0;
         }
         if (filters.notOwned && !filters.incompleteSetts) {
             filters.incompleteSetts = true;
         }
 
-        if ($isSettSelected != (filters.sett !== null)) {
+        if ($isSettSelected !== (filters.sett !== null)) {
             $isSettSelected = filters.sett !== null;
             $hiddenSetts = $isSettSelected
                 ? filters.hiddenSetts
                 : [];
         }
         // re-filter the series list when these filters get changed
-        let newSeriesListKey = [filters.shared, filters.incompleteSetts, filters.collection].toString();
+        const newSeriesListKey = [
+            filters.shared,
+            filters.incompleteSetts,
+            filters.collection,
+        ].toString();
         if (seriesListKey !== newSeriesListKey) {
             seriesListKey = newSeriesListKey;
             updateSeriesList();
@@ -362,7 +389,7 @@
             newActiveFilters.push({
                 prefix: "FS",
                 text: filterSet.name,
-                tip: `Filter set "${filterSet.name}"`
+                tip: `Filter set "${filterSet.name}"`,
             });
             if (!filterSet.filters.sett && filters.sett) {
                 newActiveFilters.push(getFilterLabel("sett")!);
@@ -401,9 +428,9 @@
         }
         let newCollections = ownerCollections.getCollections();
         if (filters.shared) {
-            let collections = oppositeCollections.getCollections();
+            const { find } = oppositeCollections.getCollections();
             newCollections = newCollections
-                .filter(({ id }) => collections.find(coll => id === coll.id));
+                .filter(({ id }) => find((coll) => id === coll.id));
         }
         if (filters.incompleteSetts) {
             newCollections = newCollections.filter((coll) => {
@@ -418,17 +445,18 @@
             });
         }
         collections = newCollections
-            .sort((a, b) => a.name.replace(/^(the)? /i, "").localeCompare(b.name.replace(/^(the)? /i, "")));
+            .sort((a, b) => a.name.replace(/^(the)? /i, "")
+                .localeCompare(b.name.replace(/^(the)? /i, "")));
     }
 
     /**
      * Apply the current filter set
      */
-    async function setFilters() {
+    async function setFilters () {
         if (!filterSet) return;
 
         const oldSett = filters.sett;
-        filters = {...defaultFilters, ...filterSet.filters};
+        filters = { ...defaultFilters, ...filterSet.filters };
         if (!filterSet.includeSett) {
             filters.sett = oldSett;
         }
@@ -436,8 +464,10 @@
 
         // update tips of the hidden setts
         if (filters.hiddenSetts.length > 0) {
-            let hSetts = [] as typeof filters.hiddenSetts;
+            const hSetts = [] as typeof filters.hiddenSetts;
+            // eslint-disable-next-line no-shadow
             for (const sett of filters.hiddenSetts) {
+                // eslint-disable-next-line no-await-in-loop
                 const [yourProgress, partnerProgress] = await Promise.all([
                     getProgress(actors.you.id, sett.id),
                     getProgress(actors.partner.id, sett.id),
@@ -456,14 +486,14 @@
     /**
      * Save the current filters
      */
-    async function saveNewFilterSet() {
+    async function saveNewFilterSet () {
         filterSet = await saveFilterSet(filters);
         if (filterSet) conformFilters();
     }
     /**
      * Delete the current filter set
      */
-    async function deleteCurrentFilterSet() {
+    async function deleteCurrentFilterSet () {
         if (!filterSet) return;
         if (await deleteFilterSet(filterSet)) {
             filterSet = null;
@@ -525,7 +555,7 @@
      * @param devRange - default values of the range
      * @returns object with short and long representation of the range
      */
-    function rangeToString ([start, end]: [number, number], [defStart, defEnd]: [number, number]) {
+    function rangeToString ([start, end]: Range, [defStart, defEnd]: Range) {
         let short: string;
         if (start === end) {
             short = num2text(start);
@@ -536,7 +566,7 @@
         } else {
             short = `${num2text(start)}-${num2text(end)}`;
         }
-        let full = start === end
+        const full = start === end
             ? num2text(start)
             : `${num2text(start)} to ${num2text(end)}`;
         return { short, full };
@@ -544,11 +574,12 @@
     /**
      * Get a data about the filter for displaying
      */
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     function getFilterLabel (name: keyof Filters): ActiveFilter | null {
         const tip = getHint(name);
-        const range = Array.isArray(filters[name]) && name !== "hiddenSetts"
-            ? rangeToString(filters[name] as [number,number], defaultFilters[name] as [number,number])
-            : { short:"", full:"" }
+        const range = isRange(filters[name]) && name !== "hiddenSetts"
+            ? rangeToString(filters[name] as Range, defaultFilters[name] as Range)
+            : { short: "", full: "" };
         switch (name) {
             case "shared": return {
                 prefix: "S",
@@ -584,7 +615,7 @@
                 prefix: "S",
                 icons: ["unownedCard"],
                 tip,
-            }
+            };
             case "oopSetts": return {
                 prefix: "ST",
                 icons: ["oop"],
@@ -613,7 +644,7 @@
             case "collection": return {
                 prefix: isItYou ? "P'S" : "U'S",
                 text: range.short,
-                tip: `${isItYou ? actors.partner.first_name+"'s" : "Your"} series with ${range.full} collected cards`,
+                tip: `${possName(actors.partner, true)} series with ${range.full} collected cards`,
             };
             case "cardCount": return {
                 prefix: "CC",
@@ -623,23 +654,25 @@
             case "holderOwns": return {
                 prefix: isItYou ? "U'C" : "P'C",
                 text: range.short,
-                tip: `${isItYou ? "Your" : actors.partner.first_name+"'s"} cards with ${range.full} copies`,
+                tip: `${possName(actors.partner, true)} cards with ${range.full} copies`,
             };
             case "oppositeOwns": return {
                 prefix: isItYou ? "P'C" : "U'C",
                 text: range.short,
-                tip: `${isItYou ? actors.partner.first_name+"'s" : "Your"} cards with ${range.full} copies`,
+                tip: `${possName(actors.partner, true)} cards with ${range.full} copies`,
             };
             case "cardName": return {
                 prefix: "C",
                 text: filters.cardName,
                 tip: `Cards which names includes "${filters.cardName}"`,
             };
-            case "sett": return filters.sett ? {
+            case "sett": return filters?.sett
+                ? {
                     prefix: "S",
                     text: filters.sett.name,
                     tip: `Cards only from the series "${filters.sett.name}"`,
-                } : null;
+                }
+                : null;
             case "hiddenSetts": return null;
             default:
                 error("Unimplemented filter label", name);
@@ -650,7 +683,7 @@
     /**
      * Get the search filters
      */
-    export function getQueryFilters() {
+    export function getQueryFilters () {
         return {
             cardId: null,
             cardName: filters.cardName || null,
@@ -670,9 +703,6 @@
         };
     }
 
-    function inRange(value: number, [start, end]: [number, number]) {
-        return start <= value && value <= end;
-    }
     const holdersCards = new OwnedCards(cardOwner.id);
     const oppositesCards = new OwnedCards(oppositeOwnerId);
     onDestroy(() => {
@@ -685,18 +715,27 @@
      * @param offer - the prints to exclude
      * @param output - a store for filtered prints
      */
-    export async function applyFilters(prints: NM.PrintInTrade[], offer: NM.PrintInTrade[], output: Writable<NM.PrintInTrade[]>) {
+    // eslint-disable-next-line sonarjs/cognitive-complexity
+    export async function applyFilters (
+        prints: NM.PrintInTrade[],
+        offer: NM.PrintInTrade[],
+        output: Writable<NM.PrintInTrade[]>,
+    ) {
         // hide the chosen prints
-        prints = prints.filter((print) => !offer.find((p) => p.id === print.id))
+        prints = prints.filter((print) => !offer.some((p) => p.id === print.id));
         // hide cards from hidden series
         if (isFilterActive.hiddenSetts) {
-            prints = prints.filter(({ sett_id }) => filters.hiddenSetts.every(({ id }) => id !== sett_id));
+            prints = prints.filter(({ sett_id: sid }) => (
+                filters.hiddenSetts.every(({ id }) => id !== sid)
+            ));
         }
         // hide cards involved in other trades
         if (isFilterActive.notInTrades) {
-            prints = prints.filter((print) => {
-                return !isTrading(print, isItYou ? "give" : "receive", isItYou ? "print" : "card");
-            });
+            prints = prints.filter((print) => !isTrading(
+                print,
+                isItYou ? "give" : "receive",
+                isItYou ? "print" : "card",
+            ));
         }
         // card hiding based on card owner's number of owned copies
         if (isFilterActive.holderOwns) {
@@ -706,7 +745,7 @@
             prints = prints.filter((print) => {
                 const count = holdersCards.getPrintCount(print.id);
                 return inRange(count, filters.holderOwns);
-            })
+            });
         }
         // card hiding based on opposite user's number of owned copies
         if (isFilterActive.oppositeOwns) {
@@ -716,17 +755,17 @@
             prints = prints.filter((print) => {
                 const count = oppositesCards.getPrintCount(print.id);
                 return inRange(count, filters.oppositeOwns);
-            })
+            });
         }
         // card hiding based on the total card count
         if (isFilterActive.cardCount) {
             prints = prints.filter((print) => {
                 const count = print.num_prints_total;
                 if (count === "unlimited") {
-                    return filters.cardCount[1] === Infinity;
+                    return filters.cardCount[1] === Number.POSITIVE_INFINITY;
                 }
                 return inRange(count, filters.cardCount);
-            })
+            });
         }
         // card hiding based on collection progress
         if (isFilterActive.collection
@@ -749,6 +788,7 @@
                 .filter((print) => !(print.sett_id in settType))
                 .map((print) => getSettType(print.sett_id));
             if (missingInfo.length > 0) await Promise.all(missingInfo);
+            // eslint-disable-next-line array-callback-return
             prints = prints.filter((print) => {
                 switch (settType[print.sett_id]) {
                     case "oop": return filters.oopSetts;
@@ -756,8 +796,9 @@
                     case "limFree": return filters.limFreebieSetts;
                     case "unlim": return filters.unlimSetts;
                     case "rie": return filters.rieSetts;
+                    default: return true;
                 }
-            })
+            });
         }
 
         output.update((arr) => arr.concat(prints));
@@ -790,7 +831,7 @@
                 tip: `You: ${yourTip}, ${actors.partner.first_name}: ${partnerTip}`,
             },
         ];
-        filters.hiddenSetts.sort((a,b) => a.name.localeCompare(b.name));
+        filters.hiddenSetts.sort((a, b) => a.name.localeCompare(b.name));
         $hiddenSetts = filters.hiddenSetts;
     }
     /**
@@ -799,6 +840,23 @@
     export function showSett (settId: number) {
         filters.hiddenSetts = filters.hiddenSetts.filter(({ id }) => id !== settId);
         $hiddenSetts = filters.hiddenSetts;
+    }
+
+    /**
+     * Percent of collected cards of the series core
+     */
+    function collectionCore (coll: Progress | null) {
+        return coll ? coll.core.owned / coll.core.count : 0;
+    }
+
+    /**
+     * Percent of collected cards of special rarities
+     */
+    function collectionSpecial (coll: Progress | null) {
+        return coll
+            ? (coll.chase.owned + coll.variant.owned + coll.legendary.owned)
+                / (coll.chase.count + coll.variant.count + coll.legendary.count)
+            : 0;
     }
 </script>
 
@@ -820,12 +878,25 @@
 
     <h1 class="small-caps">Series</h1>
     <span class="row">
-        <DoubleRange list={collectionNumbers} bind:value={filters.collection} title="{isItYou ? actors.partner.first_name : "You"} collected"/>
-        <Icon icon="reload" size="12px" on:click={() => filters.collection = defaultFilters.collection}/>
+        <DoubleRange
+            list={collectionNumbers}
+            bind:value={filters.collection}
+            title="{isItYou ? actors.partner.first_name : "You"} collected"
+        />
+        <Icon icon="reload" size="12px"
+            on:click={() => { filters.collection = defaultFilters.collection; }}
+        />
     </span>
     <span class="row">
-        <PushSwitch bind:value={filters.shared} icon="commonSeries" hint={getHint("shared")}/>
-        <PushSwitch bind:value={filters.incompleteSetts} icon="unownedCard" hint={getHint("incompleteSetts")}
+        <PushSwitch
+            bind:value={filters.shared}
+            icon="commonSeries"
+            hint={getHint("shared")}
+        />
+        <PushSwitch
+            bind:value={filters.incompleteSetts}
+            icon="unownedCard"
+            hint={getHint("incompleteSetts")}
             on:change={() => {
                 if (filters.incompleteSetts && filters.notOwned) {
                     filters.oppositeOwns = defaultFilters.oppositeOwns;
@@ -834,7 +905,7 @@
             }}
         />
         <Dropdown list={collections} bind:value={filters.sett} let:item
-            hint={collections.length ? "Choose a Series" : "Loading series..."}
+            hint={collections.length > 0 ? "Choose a Series" : "Loading series..."}
         >
             <!-- if collections list is loaded then user collections loaded too -->
             {@const coll1 = (isItYou ? oppositeCollections : ownerCollections).getProgress(item.id)}
@@ -842,34 +913,67 @@
             <div class="collection">
                 <div class="name">{item.name}</div>
                 <div class="progress"
-                    style:--left={coll1 ? coll1.core.owned/coll1.core.count : 0}
-                    style:--right={coll2 ? coll2.core.owned/coll2.core.count : 0}
+                    style:--left={collectionCore(coll1)}
+                    style:--right={collectionCore(coll2)}
                 />
                 {#if (coll1 ?? coll2)?.core.count !== (coll1 ?? coll2)?.total.count}
                     <div class="progress"
-                        style:--left={coll1 ? (coll1.chase.owned+coll1.variant.owned+coll1.legendary.owned)/(coll1.chase.count+coll1.variant.count+coll1.legendary.count) : 0}
-                        style:--right={coll2 ? (coll2.chase.owned+coll2.variant.owned+coll2.legendary.owned)/(coll2.chase.count+coll2.variant.count+coll2.legendary.count) : 0}
+                        style:--left={collectionSpecial(coll1)}
+                        style:--right={collectionSpecial(coll2)}
                     />
                 {/if}
             </div>
         </Dropdown>
-        <Icon icon="reload" size="12px" on:click={() => filters.sett = null}/>
+        <Icon icon="reload" size="12px" on:click={() => { filters.sett = null; }}/>
     </span>
     <span class="row multi-switch">
-        <PushSwitch bind:value={filters.oopSetts} text="OoP" hint={getHint("oopSetts")}/>
-        <PushSwitch bind:value={filters.limCreditSetts} icon={["limited", "credit"]} hint={getHint("limCreditSetts")}/>
-        <PushSwitch bind:value={filters.limFreebieSetts} icon={["limited", "freebie"]} hint={getHint("limFreebieSetts")}/>
-        <PushSwitch bind:value={filters.unlimSetts} icon="unlimited" hint={getHint("unlimSetts")}/>
-        <PushSwitch bind:value={filters.rieSetts} text="RIE" hint={getHint("rieSetts")}/>
+        <PushSwitch
+            bind:value={filters.oopSetts}
+            text="OoP"
+            hint={getHint("oopSetts")}
+        />
+        <PushSwitch
+            bind:value={filters.limCreditSetts}
+            icon={["limited", "credit"]}
+            hint={getHint("limCreditSetts")}
+        />
+        <PushSwitch
+            bind:value={filters.limFreebieSetts}
+            icon={["limited", "freebie"]}
+            hint={getHint("limFreebieSetts")}
+        />
+        <PushSwitch
+            bind:value={filters.unlimSetts}
+            icon="unlimited"
+            hint={getHint("unlimSetts")}
+        />
+        <PushSwitch
+            bind:value={filters.rieSetts}
+            text="RIE"
+            hint={getHint("rieSetts")}
+        />
     </span>
 
     <h1 class="small-caps">Cards</h1>
     <span class="row">
-        <PushSwitch bind:value={filters.wishlisted} icon="wishlist" activeIcon="wishlisted" hint={getHint("wishlisted")}/>
-        <!-- <Toggle bind:value={filters.shared} icon="icon-im-common-series" hint={getHint("shared")}/> -->
-        <PushSwitch bind:value={filters.notInTrades} icon="trade" hint={getHint("notInTrades")}/>
-        <input type=search class="search small search-card" placeholder="Search by card name" bind:value={filters.cardName}>
-        <Icon icon="reload" size="12px" on:click={() => filters.cardName = ""}/>
+        <PushSwitch
+            bind:value={filters.wishlisted}
+            icon="wishlist"
+            activeIcon="wishlisted"
+            hint={getHint("wishlisted")}
+        />
+        <PushSwitch
+            bind:value={filters.notInTrades}
+            icon="trade"
+            hint={getHint("notInTrades")}
+        />
+        <input
+            type=search
+            class="search small search-card"
+            placeholder="Search by card name"
+            bind:value={filters.cardName}
+        >
+        <Icon icon="reload" size="12px" on:click={() => { filters.cardName = ""; }}/>
     </span>
     <span class="row multi-switch rarities">
         {#each RARITIES as rarity}
@@ -877,20 +981,48 @@
         {/each}
     </span>
     <span class="row">
-        <DoubleRange list={holderOwnsNumbers} bind:value={filters.holderOwns} title={isItYou ? "You own" : `${actors.partner.first_name} owns`}/>
-        <PushSwitch value={filters.duplicatesOnly} text="2+" hint={getHint("duplicatesOnly")}
-            on:change={() => filters.holderOwns = filters.duplicatesOnly ? defaultFilters.holderOwns : [2, Infinity]}
+        <DoubleRange
+            list={holderOwnsNumbers}
+            bind:value={filters.holderOwns}
+            title={isItYou ? "You own" : `${actors.partner.first_name} owns`}
+        />
+        <PushSwitch
+            value={filters.duplicatesOnly}
+            text="2+" hint={getHint("duplicatesOnly")}
+            on:change={() => {
+                filters.holderOwns = filters.duplicatesOnly
+                    ? defaultFilters.holderOwns
+                    : [2, Number.POSITIVE_INFINITY];
+            }}
         />
     </span>
     <span class="row">
-        <DoubleRange list={oppositeOwnsNumbers} bind:value={filters.oppositeOwns} title={isItYou ? `${actors.partner.first_name} owns` : "You own"}/>
-        <PushSwitch value={filters.notOwned} icon="unowned" hint={getHint("notOwned")}
-            on:change={() => filters.oppositeOwns = filters.notOwned ? defaultFilters.oppositeOwns : [0, 0]}
+        <DoubleRange
+            list={oppositeOwnsNumbers}
+            bind:value={filters.oppositeOwns}
+            title={isItYou ? `${actors.partner.first_name} owns` : "You own"}
+        />
+        <PushSwitch
+            value={filters.notOwned}
+            icon="unowned"
+            hint={getHint("notOwned")}
+            on:change={() => {
+                filters.oppositeOwns = filters.notOwned
+                    ? defaultFilters.oppositeOwns
+                    : [0, 0];
+            }}
         />
     </span>
     <span class="row">
-        <DoubleRange list={cardCountNumbers} bind:value={filters.cardCount} title="Card count"/>
-        <Icon icon="reload" size="12px" on:click={() => filters.cardCount = defaultFilters.cardCount}/>
+        <DoubleRange
+            list={cardCountNumbers}
+            bind:value={filters.cardCount}
+            title="Card count"
+        />
+        <Icon
+            icon="reload" size="12px"
+            on:click={() => { filters.cardCount = defaultFilters.cardCount; }}
+        />
     </span>
 </article>
 

@@ -1,8 +1,8 @@
 import type Services from "../utils/NMServices";
 import type NM from "../utils/NMTypes";
 
-import addPatches from "../utils/patchAngular";
 import NMApi from "../utils/NMApi";
+import addPatches from "../utils/patchAngular";
 
 type ParentScope = {
     profileLinks: Services.ArtConfig["profileLinks"],
@@ -157,13 +157,13 @@ addPatches(() => {
             document.body.prepend(div);
 
             // toggle favorites in five threads
-            Promise.allSettled(Array(5).fill(0).map(async function toggle(): Promise<any> {
+            Promise.allSettled([1, 2, 3, 4, 5].map(async function toggle (): Promise<void> {
                 const star = stars.shift();
                 if (!star) return;
                 star.card.favorite = await NMApi.card.toggleFavorite(star.card.id);
                 star.elem.className = wishlistMode ? "icon-liked" : "icon-like";
                 // recursively toggle the next card
-                return toggle();
+                await toggle();
             })).finally(() => {
                 // to show the wishlisting of the last star
                 setTimeout(() => {
@@ -171,7 +171,6 @@ addPatches(() => {
                     div.remove();
                 }, 500);
             });
-
         };
     }]);
 }, {

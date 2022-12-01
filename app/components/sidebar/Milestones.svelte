@@ -1,6 +1,6 @@
 <script lang="ts">
-    import config from "../../../services/config";
-    import { liveListProvider } from "../../../utils/NMLiveApi";
+    import config from "../../services/config";
+    import { liveListProvider } from "../../utils/NMLiveApi";
     import Header from "./Header.svelte";
     import List from "./List.svelte";
     import Milestone from "./Milestone.svelte";
@@ -16,20 +16,22 @@
     const completed = liveListProvider(config.MILESTONE_COMPLETED_KEY);
     const {
         store: completedMilestones,
-        loading: completedLoading
+        loading: completedLoading,
     } = completed;
     // the milestones do not receive updates, so do this to
     // get the actual completed milestones at the next time
     completed.on("init", () => {
         completed.stopListening();
-    })
+    });
 
     $: loading = $recentLoading || $suggestedLoading || $completedLoading;
-    $: empty = !$recentMilestones.length && !$suggestedMilestones.length && !$completedMilestones.length;
+    $: empty = $recentMilestones.length === 0
+        && $suggestedMilestones.length === 0
+        && $completedMilestones.length === 0;
 </script>
 
 <List icon="badge" emptyMessage="No Milestones"
-    show={loading ? "loading" : empty ? "empty" : "content"}
+    show={loading ? "loading" : (empty ? "empty" : "content")}
 >
     {#if $recentMilestones.length > 0}
         <Header>

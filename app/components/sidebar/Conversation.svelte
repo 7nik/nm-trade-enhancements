@@ -1,20 +1,20 @@
 <script lang="ts">
-    import type NM from "../../../utils/NMTypes";
+    import type NM from "../../utils/NMTypes";
 
-    import { blockedUsers, firstName, friendList } from "../../../services/user";
-    import currentUser from "../../../services/currentUser";
-    import Avatar from "../../elements/Avatar.svelte";
-    import Button from "../../elements/Button.svelte";
-    import Message from "./Message.svelte";
-    import { getUserStatus, liveListProvider } from "../../../utils/NMLiveApi";
-    import NMApi from "../../../utils/NMApi";
     import { afterUpdate, getContext, onDestroy } from "svelte";
-    import config from "../../../services/config";
-    import { timestampNow } from "../../../utils/date";
-    import Icon from "../../elements/Icon.svelte";
+    import config from "../../services/config";
+    import currentUser from "../../services/currentUser";
+    import { blockedUsers, firstName, friendList } from "../../services/user";
+    import { timestampNow } from "../../utils/date";
+    import NMApi from "../../utils/NMApi";
+    import { getUserStatus, liveListProvider } from "../../utils/NMLiveApi";
+    import Avatar from "../elements/Avatar.svelte";
+    import Button from "../elements/Button.svelte";
+    import Icon from "../elements/Icon.svelte";
     import List from "./List.svelte";
+    import Message from "./Message.svelte";
 
-    const MESSAGE_LINK_MAX_MS = 5*60_000;
+    const MESSAGE_LINK_MAX_MS = 5 * 60_000;
     const MESSAGE_MAX_SIZE = 1000;
 
     /**
@@ -86,10 +86,10 @@
         if (isScrolledDown) scrollDown();
     });
 
-    function sendMessage() {
+    function sendMessage () {
         if (!text.trim()) return;
         isScrolledDown = true;
-        const msg/*: NM.Message*/ = {
+        const msg/*: NM.Message */ = {
             // id: null,
             comment: text.trim(),
             created: timestampNow(),
@@ -104,7 +104,7 @@
     }
 
     let messageListElem: HTMLElement;
-    function updateScroll() {
+    function updateScroll () {
         if (!messageListElem) return;
         const scrolled = messageListElem.offsetHeight + messageListElem.scrollTop;
         isScrolledDown = messageListElem.scrollHeight - scrolled <= 5;
@@ -116,12 +116,12 @@
             unreadMessageCount = 0;
         }
     }
-    function scrollDown() {
+    function scrollDown () {
         isScrolledDown = true;
         messageListElem?.scrollTo({ top: messageListElem.scrollHeight });
         updateScroll();
     }
-    function handleKeypress(ev: KeyboardEvent) {
+    function handleKeypress (ev: KeyboardEvent) {
         if (ev.code === "Enter" && !ev.shiftKey && text.trim()) {
             ev.preventDefault();
             ev.stopPropagation();
@@ -167,7 +167,7 @@
     <menu>
         {#if canTrade}
             <Button type="subdued-light" icon="trade" size="mini"
-                on:click={() => openTrade({...collocutor, last_name: ""})}
+                on:click={() => openTrade({ ...collocutor, last_name: "" })}
             >Trade</Button>
         {/if}
         {#if !$isFriend && !isBlocked && canFriend}
@@ -188,7 +188,7 @@
         {/if}
     </menu>
     <List icon="chat" emptyMessage="Type a message to {collocutor.name} to get this conversation started"
-        show={$messages.length > 0 ? "content" : $messagesLoading ? "loading" : "empty"}
+        show={$messages.length > 0 ? "content" : ($messagesLoading ? "loading" : "empty")}
     >
         <ul bind:this={messageListElem} on:scroll={updateScroll}>
             {#if remainingMessagesCount > 0}
@@ -203,12 +203,12 @@
                             <Icon icon="more"></Icon>
                         </div>
                         Show {remainingMessagesCount} previous
-                        comment{remainingMessagesCount>1 ? "s" : ""}
+                        comment{remainingMessagesCount > 1 ? "s" : ""}
                     {/if}
                 </li>
             {/if}
             {#each $messages as message, i (message.id)}
-                {@const prevMsg = $messages[i-1]}
+                {@const prevMsg = $messages[i - 1]}
                 {@const isCondensed = prevMsg
                     && !message.attachment
                     && message.user_id === prevMsg.user_id
@@ -232,7 +232,7 @@
         <div class="unread" on:click={scrollDown}>
             <span>
                 You have {unreadMessageCount} unread
-                message{unreadMessageCount>1 ? "s" : ""}
+                message{unreadMessageCount > 1 ? "s" : ""}
             </span>
         </div>
     {/if}

@@ -1,15 +1,16 @@
-import type { SvelteComponent } from "svelte";
+/* eslint-disable sonarjs/no-duplicate-string */
 import type Services from "../utils/NMServices";
 import type NM from "../utils/NMTypes";
+import type { SvelteComponent } from "svelte";
 // https://github.com/sveltejs/svelte/issues/5817
 // import type { InitialData } from "../components/TradeWindow.svelte";
 
 import TradeWindow from "../components/TradeWindow.svelte";
-import addPatches from "../utils/patchAngular";
-import NMApi from "../utils/NMApi";
-import currentUser from "../services/currentUser";
-import { debug } from "../utils/utils";
 import config from "../services/config";
+import currentUser from "../services/currentUser";
+import NMApi from "../utils/NMApi";
+import addPatches from "../utils/patchAngular";
+import { debug } from "../utils/utils";
 
 addPatches(() => {
     angular.module("nm.trades").run([
@@ -30,6 +31,7 @@ addPatches(() => {
             artSubscriptionService: Services.ArtSubscriptionService,
             artUser: Services.ArtUser,
             artConfirm: Services.ArtConfirm,
+        // eslint-disable-next-line sonarjs/cognitive-complexity
         ) => {
             let tradeWindow: SvelteComponent;
 
@@ -38,13 +40,13 @@ addPatches(() => {
              * @param userId - the partner ID of conversation
              * @param show - show or hide
              */
-            function showConversation(userId: number, show: boolean) {
+            function showConversation (userId: number, show: boolean) {
                 // to prevent error about still being in $digest
                 setTimeout(() => $scope.$apply(() => {
                     if (show) {
                         artNotificationCenter.show("conversation", {
                             recipient: userId,
-                            conversationNavState: "trade"
+                            conversationNavState: "trade",
                         });
                     } else {
                         artNotificationCenter.hide();
@@ -56,20 +58,27 @@ addPatches(() => {
              * Updates various user info and triggers showing or badges and other stuff
              * @param backOrTrade - completed trade or flag about returning to previous window
              */
-            async function closeTrade(backOrTrade: boolean | NM.Trade, overlayName = "", overlayData?: object) {
+            async function closeTrade (
+                backOrTrade: boolean | NM.Trade,
+                overlayName = "",
+                overlayData?: object,
+            ) {
                 tradeWindow.$destroy();
                 // remove the query string
-                history.pushState(null, "", location.pathname);
+                window.history.pushState(null, "", window.location.pathname);
 
                 $scope.$apply(() => {
                     if (overlayName && backOrTrade === true) {
-                        artOverlay.show(overlayName, overlayData, true, 'theme-light');
+                        artOverlay.show(overlayName, overlayData, true, "theme-light");
                     } else {
                         artOverlay.hide();
                     }
 
                     if (!artNotificationCenter.getState()) return;
-                    if (artNotificationCenter.getNotificationsByType(config.TRADES_KEY).length > 0) {
+                    if (artNotificationCenter
+                        .getNotificationsByType(config.TRADES_KEY)
+                        .length > 0
+                    ) {
                         artNotificationCenter.show(config.MESSAGES_KEY);
                     } else {
                         artNotificationCenter.hide();
@@ -81,7 +90,7 @@ addPatches(() => {
 
                 // _showBadges
                 if (trade.badges && trade.badges.length > 0) {
-                    for (let badge of trade.badges) {
+                    for (const badge of trade.badges) {
                         if (badge.type === "all_pieces") {
                             badge.type = "all_rarity";
                         }
@@ -95,23 +104,26 @@ addPatches(() => {
                 if (trade.level_ups && trade.level_ups.length > 0) {
                     artUser.updateUserLevel(trade.level_ups[0]);
                     // _prepareLevelUpModelData
-                    rewards = trade.level_ups.map((level) => artUser.areFeaturesGated() && level.new_features.length
-                        ? {
-                            rewardType: "gated-level-up",
-                            message: "Congratulations",
-                            okText: "FIND A SERIES",
-                            data: level,
-                            parentClass: "series-complete-reward",
-                            hasCloseBtn: true,
-                        } : {
-                            rewardType: "level-up",
-                            message: "Level Up!",
-                            okText: "GREAT!",
-                            data: level,
-                            parentClass: "series-complete-reward",
-                        });
+                    rewards = trade.level_ups.map((level) => (
+                        artUser.areFeaturesGated() && level.new_features.length > 0
+                            ? {
+                                rewardType: "gated-level-up",
+                                message: "Congratulations",
+                                okText: "FIND A SERIES",
+                                data: level,
+                                parentClass: "series-complete-reward",
+                                hasCloseBtn: true,
+                            }
+                            : {
+                                rewardType: "level-up",
+                                message: "Level Up!",
+                                okText: "GREAT!",
+                                data: level,
+                                parentClass: "series-complete-reward",
+                            }));
                     // _showLevelUpModel
-                    const gatedLevelUp = rewards.find((reward) => reward.rewardType === "gated-level-up");
+                    const gatedLevelUp = rewards
+                        .find((reward) => reward.rewardType === "gated-level-up");
                     if (gatedLevelUp) {
                         artConfirm.showEarnedStatus(gatedLevelUp);
                     }
@@ -124,11 +136,21 @@ addPatches(() => {
 
                 // _showMilestoneRewardModal
                 if (!trade.rewards?.length) return;
-                const setts = await NMApi.user.suggestedSetts(currentUser.id, trade.rewards[0].sett.id);
+                const setts = await NMApi.user.suggestedSetts(
+                    currentUser.id,
+                    trade.rewards[0].sett.id,
+                );
                 // _processSuggestionSet
                 //   _prepareRewards
-                trade.rewards.forEach((reward) => {
-                    if (!artUser.areFeaturesGated()) {
+                for (const reward of trade.rewards) {
+                    if (artUser.areFeaturesGated()) {
+                        rewards.push({
+                            rewardType: "series-complete-beginner",
+                            message: "Awesome Job!",
+                            okText: "GREAT!",
+                            data: reward,
+                        });
+                    } else {
                         rewards.push({
                             rewardType: "series-complete",
                             message: "Series Completed",
@@ -145,15 +167,8 @@ addPatches(() => {
                                 suggestedSett: setts,
                             },
                         });
-                    } else {
-                        rewards.push({
-                            rewardType: "series-complete-beginner",
-                            message: "Awesome Job!",
-                            okText: "GREAT!",
-                            data: reward,
-                        });
                     }
-                });
+                }
                 if (rewards.length > 0) {
                     const [reward, ...rewardQueue] = rewards;
                     reward.messageQueue = rewardQueue;
@@ -172,7 +187,7 @@ addPatches(() => {
                         initialData: { tradeId: +id },
                         showConversation,
                         closeTrade,
-                    }
+                    },
                 });
                 artOverlay.show("trade-modal");
             };
@@ -182,8 +197,12 @@ addPatches(() => {
                 const div = document.querySelector(".nm-overlay-content")!;
 
                 const pieceData = pieceTraderClickTracker.getPieceData();
-                const backButtonText = pieceData.need ? "seekers" : pieceData.need === false ? "owners" : null;
-                const overlayName = pieceData.need ? "show-needers" : pieceData.need === false ? "show-owners" : "";
+                const backButtonText = pieceData.need
+                    ? "seekers"
+                    : (pieceData.need === false ? "owners" : null);
+                const overlayName = pieceData.need
+                    ? "show-needers"
+                    : (pieceData.need === false ? "show-owners" : "");
 
                 const youAreBidder = currentUser.id === bidder.id;
                 const actors = {
@@ -194,14 +213,16 @@ addPatches(() => {
                     partner: youAreBidder ? responder : bidder,
                 };
 
-                let initialData = initialCardData ? {
-                    actors,
-                    side: initialCardData.offerType === "bidder_offer" ? "bidder" : "responder",
-                    card: pieceData.piece,
-                    sett: pieceData.piece && "set" in pieceData.piece ? pieceData.piece.set : pieceData.sett!,
-                } : {
-                    actors
-                }
+                const initialData = initialCardData
+                    ? {
+                        actors,
+                        side: initialCardData.offerType === "bidder_offer" ? "bidder" : "responder",
+                        card: pieceData.piece,
+                        sett: pieceData.piece && "set" in pieceData.piece
+                            ? pieceData.piece.set
+                            : pieceData.sett!,
+                    }
+                    : { actors };
 
                 tradeWindow = new TradeWindow({
                     target: div,
@@ -213,13 +234,14 @@ addPatches(() => {
                         closeTrade (backOrTrade: boolean | NM.Trade) {
                             closeTrade(backOrTrade, overlayName, pieceData);
                         },
-                    }
+                    },
                 });
                 artOverlay.show("trade-modal");
             };
 
             debug("new trade window injected");
-    }]);
+        },
+    ]);
 }, {
     // there will be Svelte component so remove everything
     names: ["/static/common/trades/partial/trade-modal.html"],

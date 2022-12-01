@@ -1,3 +1,6 @@
+/* eslint-disable import/order */
+/* eslint-disable import/first */
+
 /**
  * Doing the various data initializing in a separate module because
  * stupid webpack moves all imports to the module's top and
@@ -12,24 +15,24 @@ import { debug, error } from "../utils/utils";
  * @param container - the parent node
  * @param check - function that check if it is that node
  */
- export function waitForChild(container: Element, check: (node: Node) => boolean) {
+function waitForChild (container: Element, check: (elem: Node) => boolean) {
     return new Promise<Element>((resolve) => {
-        const node = [...container.children].find(check);
-        if (node) {
-            resolve(node);
+        const elem = [...container.children].find(check);
+        if (elem) {
+            resolve(elem);
             return;
         }
 
         new MutationObserver((mutations, observer) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
                     if (check(node)) {
                         observer.disconnect();
                         resolve(node as Element);
                         return;
                     }
-                });
-            });
+                }
+            }
         }).observe(container, { childList: true });
     });
 }
@@ -39,20 +42,23 @@ import { debug, error } from "../utils/utils";
  */
 import { createDialog } from "../components/dialogs/modals";
 import Login from "../components/dialogs/Login.svelte";
+
 let authorizing: Promise<null> | null = null;
-function auth() {
+function auth () {
     if (authorizing) return authorizing;
     const promise = createDialog(Login, {});
     authorizing = promise;
     promise.finally(() => { authorizing = null; });
     return promise;
 }
+
 initValue("auth", auth);
 
 /**
  * Initialize sockets
  */
 import type { io as IO } from "socket.io-client";
+
 declare global {
     // NM uses socket-io@1.3.5 but the minimal typed one is v3
     var io: typeof IO;
@@ -77,17 +83,16 @@ if (typeof io === "undefined") {
 
 // the followings inits depends on data in <body>
 
-await waitForChild(document.documentElement, (node) => {
-    // for some reason multiple <body> appears here
-    return node === document.body;
-});
+// for some reason multiple <body> appears here
+await waitForChild(document.documentElement, (node) => node === document.body);
 
 /**
  * Initialize configs
  */
-async function initConfigs() {
+async function initConfigs () {
     let script: Element;
     do {
+        // eslint-disable-next-line no-await-in-loop
         script = await waitForChild(document.body, (node) => {
             if (!(node instanceof HTMLScriptElement)) return false;
             if (node.textContent?.includes("artModule.value")) return true;
@@ -95,47 +100,54 @@ async function initConfigs() {
             return node.type === "text/javascript" && !node.src && !node.textContent;
         });
         // so add delay to get its content or try again to retrieve it
-        if (!script.textContent) await new Promise((res) => setTimeout(res));
+        // eslint-disable-next-line no-await-in-loop
+        if (!script.textContent) await new Promise((res) => { setTimeout(res); });
         if (!script.textContent) script.remove();
-    } while(!script.textContent?.includes("artModule.value"));
+    } while (!script.textContent?.includes("artModule.value"));
 
     debug("config found");
-    const config = {
-        ...[...script.textContent!.matchAll(/artModule.value\("\w+",\s*(\{[^;]*\})\);/g)]
+    const config = Object.assign(
+        {},
+        // extract and parse all the configs
+        ...[...script.textContent!.matchAll(/artModule.value\("\w+",\s*({[^;]*})\);/g)]
             // .map(([_, json]) => eval(json))
-            .map(([_, json]) => JSON.parse(json
+            .map(([, json]) => json
                 // remove comments
-                .replaceAll(/\n\s+\/\/.*\n/g,"")
+                .replaceAll(/\n\s+\/\/.*\n/g, "")
                 // wrap all identifiers into double quotes
-                .replaceAll(/'?([\w_-]+)'?(:[\s\w({["'])/g,(_,$0,$1) => `"${$0}"${$1}`)
+                .replaceAll(/'?([\w-]+)'?(:[\s\w"'([{])/g, (_, $0, $1) => `"${$0}"${$1}`)
                 // replace single-quoted strings wind double-quoted ones
-                .replaceAll(/:\s*'(.*)'\s*([,}])/g,(_,$0,$1) => `:"${$0}"${$1}`)
+                .replaceAll(/:\s*'(.*)'\s*([,}])/g, (_, $0, $1) => `:"${$0}"${$1}`)
                 // remove trailing commas
-                .replaceAll(/,\s*}/g,"}")
-            // merge objects
-            )).reduce((a,b) => ({...a,...b})),
-    }
+                .replaceAll(/,\s*}/g, "}"))
+            .map((json) => JSON.parse(json)),
+    );
     initValue("config", config);
 }
+
+// eslint-disable-next-line unicorn/prefer-top-level-await
 initConfigs();
 
 /**
  * Initialize the current user
  */
-async function initCurrentUser() {
+async function initCurrentUser () {
     let found = false;
     // fallback
     document.addEventListener("DOMContentLoaded", () => {
         if (found) return;
-        if (location.pathname.startsWith("/redeem/")) return;
+        if (window.location.pathname.startsWith("/redeem/")) return;
         error("couldn't load the user info");
-        auth().then(() => { location.reload(); });
+        auth().then(() => { window.location.reload(); });
     });
 
-    const script = await waitForChild(document.body, (node) => {
-        return node instanceof HTMLInputElement && node.id === "user-json";
-    }) as HTMLInputElement;
+    const script = await waitForChild(
+        document.body,
+        (node) => node instanceof HTMLInputElement && node.id === "user-json",
+    ) as HTMLInputElement;
     found = true;
     initValue("user", JSON.parse(script.value));
 }
+
+// eslint-disable-next-line unicorn/prefer-top-level-await
 initCurrentUser();

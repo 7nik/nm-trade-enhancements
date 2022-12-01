@@ -4,9 +4,9 @@
 <script lang="ts">
     import type { IconName } from "../elements/Icon.svelte";
 
-    import DialogWindow from "./DialogWindow.svelte";
     import Button from "../elements/Button.svelte";
     import Icon from "../elements/Icon.svelte";
+    import DialogWindow from "./DialogWindow.svelte";
 
     /**
      * The title of the message
@@ -31,6 +31,7 @@
 
     let close: (reason: string | null) => void;
 
+    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
     interface $$Events {
         closed: CustomEvent<string | null>
     }

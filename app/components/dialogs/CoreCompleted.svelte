@@ -4,14 +4,13 @@
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
 
-    import RewardWindow from "./RewardWindow.svelte";;
-    import Icon from "../elements/Icon.svelte";
-    // import SettAsset from "../parts/SettAsset.svelte";
-    import NMApi from "../../utils/NMApi";
     import currentUser from "../../services/currentUser";
-    import EarnedCarats from "../parts/EarnedCarats.svelte";
+    import NMApi from "../../utils/NMApi";
     import { ordinal } from "../../utils/utils";
+    import Icon from "../elements/Icon.svelte";
+    import EarnedCarats from "../parts/EarnedCarats.svelte";
     import ImgAsset from "../parts/ImgAsset.svelte";
+    import RewardWindow from "./RewardWindow.svelte";
 
     /**
      * The reward data
@@ -25,7 +24,7 @@
 
     let frame = 1;
 
-    function showSecondFrame(ev: Event) {
+    function showSecondFrame (ev: Event) {
         if (frame === 1) {
             frame = 2;
             // cancel closing
@@ -46,7 +45,6 @@
             {data.sett.name}
         </p>
         <a target="_self" href={data.sett.public_url}>
-            <!-- <SettAsset sett={data.sett} size="small" /> -->
             <ImgAsset image={data.sett.sett_assets.small.url}
                 alt="{data.sett.name}'s cover"
                 icon={data.sett.difficulty.class_name}
@@ -80,7 +78,6 @@
             <div>
                 {#each suggestions as sett}
                     <a target="_self" href={data.sett.public_url}>
-                        <!-- <SettAsset {sett} /> -->
                         <ImgAsset image={sett.sett_assets.small.url}
                             alt="{sett.name}'s cover"
                             icon={sett.difficulty.class_name}

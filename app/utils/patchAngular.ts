@@ -1,5 +1,5 @@
-import type Angular from "angular";
 import type Services from "./NMServices";
+import type Angular from "angular";
 
 import { debug, error } from "./utils";
 
@@ -14,6 +14,8 @@ type TemplatePatch = {
     }[],
 }
 
+/* global angular */
+
 const patchers: ((angular: Angular.IAngularStatic) => void)[] = [];
 const templatePatchList: TemplatePatch[] = [];
 
@@ -21,45 +23,50 @@ const templatePatchList: TemplatePatch[] = [];
  * Patch the given object with templates;
  * @param  {$cacheFactory.Cache} $templateCache - map of templates
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function patchTemplates ($templateCache: angular.ITemplateCacheService) {
-    templatePatchList.forEach(({ names, patches, pages }) => names.forEach((name) => {
-        // if set to apply the patch only on certain pages
-        if (pages && pages.every((page) => !window.location.pathname.startsWith(page))) {
-            return;
-        }
-        let template = $templateCache.get<string>(name)!;
-        let fromCache = true;
-        if (!template) {
-            template = document.getElementById(name)?.textContent!;
-            fromCache = false;
-        }
-        if (!template) {
-            error(`Couldn't get template ${name}`);
-            return;
-        }
-        // eslint-disable-next-line object-curly-newline
-        patches.forEach(({ target, prepend, replace, append }) => {
-            let newTemplate = "";
-            if (typeof replace === "string") {
-                newTemplate = template.replaceAll(target, replace);
-            } else if (replace) { // is function
-                newTemplate = template.replaceAll(target, replace);
-            } else if (prepend) {
-                newTemplate = template.replaceAll(target, prepend.concat(target.toString()));
-            } else if (append) {
-                newTemplate = template.replaceAll(target, target.toString().concat(append));
+    for (const { names, patches, pages } of templatePatchList) {
+        for (const name of names) {
+            // if set to apply the patch only on certain pages
+            if (pages && pages.every((page) => !window.location.pathname.startsWith(page))) {
+                continue;
             }
-            if (newTemplate === template) {
-                error("Useless template patch found!", { name, target, prepend, replace, append })
+            let template = $templateCache.get<string>(name)!;
+            let fromCache = true;
+            if (!template) {
+                template = document.getElementById(name)!.textContent!;
+                fromCache = false;
             }
-            template = newTemplate;
-        });
-        if (fromCache) {
-            $templateCache.put(name, template);
-        } else {
-            document.getElementById(name)!.textContent = template;
+            if (!template) {
+                error(`Couldn't get template ${name}`);
+                continue;
+            }
+            // eslint-disable-next-line object-curly-newline
+            for (const { target, prepend, replace, append } of patches) {
+                let newTemplate = "";
+                if (typeof replace === "string") {
+                    newTemplate = template.replaceAll(target, replace);
+                } else if (replace) { // is function
+                    newTemplate = template.replaceAll(target, replace);
+                } else if (prepend) {
+                    newTemplate = template.replaceAll(target, prepend.concat(target.toString()));
+                } else if (append) {
+                    newTemplate = template.replaceAll(target, target.toString().concat(append));
+                }
+                if (newTemplate === template) {
+                    error("Useless template patch found!", {
+                        name, target, prepend, replace, append,
+                    });
+                }
+                template = newTemplate;
+            }
+            if (fromCache) {
+                $templateCache.put(name, template);
+            } else {
+                document.getElementById(name)!.textContent = template;
+            }
         }
-    }));
+    }
     debug("templates patched");
 }
 
@@ -105,30 +112,33 @@ function applyPatches () {
         },
     ];
 
-    patchers.forEach(patch => patch(angular));
+    for (const patch of patchers) patch(angular);
     angular.module("nmApp").run(patcher);
 
     // sometimes, when userscript is loaded via a proxy script,
     // it gets executed too late, so reload the page once
     window.addEventListener("load", () => {
         if (applied) return;
-        if (location.hash === "#reloaded") return;
-        location.hash = "#reloaded";
-        location.reload();
+        if (window.location.hash === "#reloaded") return;
+        window.location.hash = "#reloaded";
+        window.location.reload();
     });
 }
 
-export default function addPatches(patcher: ((angular: Angular.IAngularStatic)=>void) | null, ...templatePatches: TemplatePatch[]) {
+export default function addPatches (
+    patcher: ((angular: Angular.IAngularStatic)=>void) | null,
+    ...templatePatches: TemplatePatch[]
+) {
     if (patcher) patchers.push(patcher);
     templatePatchList.push(...templatePatches);
 }
 
-if (location.pathname.startsWith("/redeem/")) {
+if (window.location.pathname.startsWith("/redeem/")) {
     // nothing to patch on this page
 } else if (document.readyState === "complete") {
-    if (location.hash !== "#reloaded") {
-        location.hash = "#reloaded";
-        location.reload();
+    if (window.location.hash !== "#reloaded") {
+        window.location.hash = "#reloaded";
+        window.location.reload();
     }
 } else {
     document.addEventListener("readystatechange", applyPatches, { once: true });

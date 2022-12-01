@@ -14,9 +14,9 @@ function click (selector: string) {
  * Allows you to confirm/decline a confirm message and close a trade by keyboard.
  * @param {Event} ev - keyup event
  */
- function addHotkeys (ev: KeyboardEvent) {
+function addHotkeys (ev: KeyboardEvent) {
     // do not trigger hotkeys when user types a text
-    const typing = ["TEXTAREA", "INPUT"].includes(document.activeElement?.tagName!);
+    const typing = ["TEXTAREA", "INPUT"].includes(document.activeElement?.tagName as string);
 
     if (!typing && ["Enter", "NumpadEnter", "Space"].includes(ev.code)
         && click("#message.show #confirm-btn, #message.show #ok-btn, #alert.show #alert-btn")
@@ -25,11 +25,8 @@ function click (selector: string) {
         ev.stopPropagation();
     }
     if (ev.code === "Escape") {
-        // if a confirm message is shown
-        if (click("#message.show")) {
-            ev.stopPropagation();
-        // if a trade window is open
-        } else if (click(".nm-modal--actionbar--left span")) {
+        // if a confirm message is shown or trade window is open
+        if (click("#message.show") || click(".nm-modal--actionbar--left span")) {
             ev.stopPropagation();
         }
         // remove tippy tips

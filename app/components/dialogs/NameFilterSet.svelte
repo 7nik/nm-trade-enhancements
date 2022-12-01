@@ -7,12 +7,14 @@
     import Slider from "../elements/ToggleSwitch.svelte";
     import DialogWindow from "./DialogWindow.svelte";
 
+    type Data = { name:string, includeSett:boolean } | null;
+
     let includeSett = true;
     let name = "";
 
-    let close: (data: {name:string,includeSett:boolean}|null) => void;
+    let close: (data: Data) => void;
 
-    function save() {
+    function save () {
         if (!name.trim()) return;
 
         close({
@@ -21,8 +23,9 @@
         });
     }
 
+    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
     interface $$Events {
-        closed: CustomEvent<{name:string,includeSett:boolean} | null>
+        closed: CustomEvent<Data>
     }
 </script>
 
@@ -45,7 +48,6 @@
         </menu>
     </form>
 </DialogWindow>
-
 
 <style>
     form {

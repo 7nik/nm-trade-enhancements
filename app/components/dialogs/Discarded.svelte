@@ -2,8 +2,8 @@
     A window to display the reward for card discarding
  -->
 <script lang="ts">
-    import RewardWindow from "./RewardWindow.svelte";
     import EarnedCarats from "../parts/EarnedCarats.svelte";
+    import RewardWindow from "./RewardWindow.svelte";
 
     /**
      * Number of earned carats

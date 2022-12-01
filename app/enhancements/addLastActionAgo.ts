@@ -6,27 +6,27 @@ type Scope = angular.IScope & {
     lastActionAgo: string,
 }
 
-function setLastActionAgo(scope: Scope) {
+function setLastActionAgo (scope: Scope) {
     scope.lastActionAgo = "...";
     NMApi.user.activityFeed(scope.userId).then((actions) => {
         const lastActionAgo = actions[0]?.created ?? "one eternity ago";
-        scope.$apply(() => scope.lastActionAgo = lastActionAgo);
-    }); 
+        scope.$apply(() => { scope.lastActionAgo = lastActionAgo; });
+    });
 }
 
 addPatches(() => {
     angular.module("Art").directive("lastAction", [() => ({
-        scope: { userId: "=lastAction"},
+        scope: { userId: "=lastAction" },
         link: (scope: Scope) => {
             setLastActionAgo(scope);
             scope.$watch("userId", () => setLastActionAgo(scope));
         },
-        template: "last action: <i>{{lastActionAgo}}</i>"
+        template: "last action: <i>{{lastActionAgo}}</i>",
     })]);
 }, {
     names: ["partials/art/notifications/conversation.partial.html"],
     patches: [{
         target: "</h3>",
         prepend: `<div class="last-action" last-action="recipient.id"></div>`,
-    }]
+    }],
 });

@@ -1,14 +1,14 @@
 <script lang="ts">
-    import type NM from "../../../utils/NMTypes";
+    import type NM from "../../utils/NMTypes";
 
-    import { friendList } from "../../../services/user";
-    import currentUser from "../../../services/currentUser";
-    import Avatar from "../../elements/Avatar.svelte";
-    import { readable } from "svelte/store";
-    import { getUserStatus } from "../../../utils/NMLiveApi";
-    import Icon from "../../elements/Icon.svelte";
-    import Button from "../../elements/Button.svelte";
     import { getContext } from "svelte";
+    import { readable } from "svelte/store";
+    import currentUser from "../../services/currentUser";
+    import { friendList } from "../../services/user";
+    import { getUserStatus } from "../../utils/NMLiveApi";
+    import Avatar from "../elements/Avatar.svelte";
+    import Button from "../elements/Button.svelte";
+    import Icon from "../elements/Icon.svelte";
 
     /**
      * The person's data
@@ -24,7 +24,7 @@
     const isOnline = showStatus ? readable(false) : getUserStatus(friend.id);
     const isFriend = friendList.isFriend(friend.id);
 
-    const isVerified = currentUser.isVerified;
+    const { isVerified } = currentUser;
     const showFriends = currentUser.canDo("friends");
 </script>
 

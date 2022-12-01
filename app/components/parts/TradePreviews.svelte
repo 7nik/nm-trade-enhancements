@@ -4,8 +4,8 @@
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
 
-    import { firstName } from "../../services/user";
     import currentUser from "../../services/currentUser";
+    import { firstName } from "../../services/user";
     import Button from "../elements/Button.svelte";
     import ImgAsset from "./ImgAsset.svelte";
 
@@ -31,7 +31,7 @@
 
     let pos = 0;
     const switchPreview = (change: 1|-1) => {
-        if (pos+change >= 0 && pos+change < trades.length) {
+        if (pos + change >= 0 && pos + change < trades.length) {
             pos += change;
         }
     };
@@ -44,9 +44,13 @@
 
 {#if trades.length > 1}
     <nav>
-        <span class:off={pos===0} on:click|stopPropagation={() => switchPreview(-1)}>&lt;</span>
+        <span class:off={pos === 0}
+            on:click|stopPropagation={() => switchPreview(-1)}
+        >&lt;</span>
         trade with {partnerName}
-        <span class:off={pos===trades.length-1} on:click|stopPropagation={() => switchPreview(+1)}>&gt;</span>
+        <span class:off={pos === trades.length - 1}
+            on:click|stopPropagation={() => switchPreview(+1)}
+        >&gt;</span>
     </nav>
 {/if}
 

@@ -2,7 +2,9 @@
     A dropdown list with ability to search and select the element
  -->
 <script lang="ts">
+    // eslint-disable-next-line no-undef
     type T = $$Generic<{ name: string }>;
+    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
     interface $$Slots {
         default: {
             item: T,
@@ -14,7 +16,7 @@
     /**
      * The placeholder text on the input field
      */
-    export let hint: string = "";
+    export let hint = "";
     /**
      * The list of the values
      */
@@ -29,7 +31,7 @@
 
     $: text = value?.name ?? "";
     $: lowText = text.toLowerCase();
-    function updateValue() {
+    function updateValue () {
         if (text === "") {
             value = null;
         } else {
@@ -46,7 +48,7 @@
     <div class="list">
         {#each list as item (item)}
             {#if item.name.toLowerCase().includes(lowText)}
-                <div class="item" on:click={() => value = item}>
+                <div class="item" on:click={() => { value = item; }}>
                     <slot {item}>{item.name}</slot>
                 </div>
             {/if}

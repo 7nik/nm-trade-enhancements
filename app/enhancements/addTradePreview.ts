@@ -1,8 +1,8 @@
 import type NM from "../utils/NMTypes";
 
+import { tradePreview, sharedTradePreview } from "../components/actions/tradePreviews";
 import { getTrades } from "../services/tradingCards";
 import addPatches from "../utils/patchAngular";
-import { tradePreview, sharedTradePreview } from "../components/actions/tradePreviews";
 
 type CardScope = angular.IScope & {
     piece: NM.PrintInTrade,
@@ -46,7 +46,7 @@ addPatches(() => {
             if ((scope.notification ?? scope.trade)?.object.type !== "trade-event") return;
             const tradeId = (scope.notification ?? scope.trade)!.object.id;
             sharedTradePreview($elem[0], tradeId);
-        }
+        },
     ]);
 }, {
     // insert card usage on collection page
@@ -73,10 +73,10 @@ addPatches(() => {
     patches: [{
         // add trade preview for notifications
         target: "art-notification=",
-        prepend: `data-ng-controller="tradePreview" `
+        prepend: `data-ng-controller="tradePreview" `,
     }, {
         // add trade preview for active trades
         target: `ng-repeat="trade in state.trades track by trade.id"`,
-        append: ` data-ng-controller="tradePreview"`
+        append: ` data-ng-controller="tradePreview"`,
     }],
 });

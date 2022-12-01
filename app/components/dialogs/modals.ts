@@ -15,8 +15,11 @@ let dialog: SvelteComponent | null = null;
  * @returns the name of the pressed button or `null`
  */
 // export function createDialog<T extends SvelteComponentTyped<any, { closed: CustomEvent<any> }>>
-export function createDialog<T extends SvelteComponentTyped<any, { closed: CustomEvent<any> }>> (
-    Comp: AConstructorTypeOf<T>, props: T["$$prop_def"],
+export function createDialog<
+    T extends SvelteComponentTyped<any, { closed: CustomEvent<any> }>
+> (
+    Comp: AConstructorTypeOf<T>,
+    props: T["$$prop_def"],
 ): Promise<T["$$events_def"]["closed"]["detail"]> {
     return new Promise((resolve) => {
         dialog?.$destroy();
@@ -28,7 +31,7 @@ export function createDialog<T extends SvelteComponentTyped<any, { closed: Custo
             dialog!.$destroy();
             dialog = null;
             resolve(ev.detail);
-        })
+        });
     });
 }
 
@@ -54,7 +57,8 @@ export async function alert (title: string, text = "") {
 // artMessage.showAlertWithCancel + showConfirm
 export async function confirm (title: string, text = "") {
     const button = await createDialog(Message, {
-        title, text,
+        title,
+        text,
         buttons: ["OK", "Cancel"],
     });
     return button === "OK";

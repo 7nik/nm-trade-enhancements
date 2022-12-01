@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
-    import { loadValue } from "../../utils/storage";
-    import OwnedCards from "../../services/ownedCards";
     import currentUser from "../../services/currentUser";
+    import OwnedCards from "../../services/ownedCards";
+    import { loadValue } from "../../utils/storage";
 
     type SIZES = "small" | "medium" | "large" | "large-promo" | "xlarge" | "original";
     type VIDEO_SIZES = "medium" | "large" | "original";
@@ -14,14 +14,12 @@
             type: "image",
             ...print.piece_assets.image[size],
         };
-        if (print.piece_assets.video) {
-            if (size in print.piece_assets.video) {
-                data = {
-                    type: "video",
-                    url: data.url, // preview
-                    ...print.piece_assets.video[size as VIDEO_SIZES],
-                };
-            }
+        if (print.piece_assets.video && size in print.piece_assets.video) {
+            data = {
+                type: "video",
+                url: data.url, // preview
+                ...print.piece_assets.video[size as VIDEO_SIZES],
+            };
         }
         return data;
     }
@@ -32,7 +30,11 @@
      * @param maxWidth
      * @param maxHeight
      */
-    function getDimensionSize (data: { width: number, height: number }, maxWidth = 0, maxHeight = 0) {
+    function getDimensionSize (
+        data: { width: number, height: number },
+        maxWidth = 0,
+        maxHeight = 0,
+    ) {
         const ratio = data.width / data.height;
         let height;
         let width;
@@ -60,9 +62,9 @@
         height = Math.min(height, data.height);
 
         return {
-            width: width+"px",
-            height: height+"px",
-            ratio: width/height,
+            width: `${width}px`,
+            height: `${height}px`,
+            ratio: width / height,
         };
     }
 
@@ -73,15 +75,15 @@
     function stopHiddenVideo (video: HTMLVideoElement) {
         let isPaused = false;
         const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
+            for (const entry of entries) {
                 if (entry.intersectionRatio < 0.1 && !video.paused) {
                     video.pause();
                     isPaused = true;
                 } else if (isPaused) {
                     video.play();
-                    isPaused = false
+                    isPaused = false;
                 }
-            });
+            }
         }, {
             root: video.closest("ul"),
             threshold: 0.1,
@@ -99,8 +101,8 @@
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
 
-    import tip from "../actions/tip";
     import config from "../../services/config";
+    import tip from "../actions/tip";
     import Icon from "../elements/Icon.svelte";
 
     /**
@@ -133,7 +135,7 @@
     export let setSize = true;
     // export let showLoading = false;
 
-    let ownsPrint = ownedCards.hasPrint(print.id, true);
+    const ownsPrint = ownedCards.hasPrint(print.id, true);
     $: grayOut = !isPublic && !$ownsPrint;
 
     // show max quality of the video if user owns the print
@@ -141,28 +143,25 @@
     // image["original"] is still a gif (seems just a copy of the original)
     // so the original gets played as a video poster
     if (print.asset_type === "video" && size === "xlarge") {
-        if (!isPublic && $ownsPrint) {
-            size = "original";
-        } else {
-            size = "large";
-        }
+        size = !isPublic && $ownsPrint ? "original" : "large";
     }
 
     const data = getPrintData(print, size);
+    // eslint-disable-next-line prefer-const
     let { width, height, ratio } = getDimensionSize(data, maxWidth, maxHeight);
     if (!setSize) {
         width = "";
         height = "";
     }
     const showReplica = !hideIcons && "is_replica" in print && print.is_replica;
-    const showLimited = !hideIcons && "version" in print && print.version === 3 /* lim sett */;
+    const showLimited = !hideIcons && "version" in print && print.version === /* lim sett */ 3;
 
     /**
      * Allows to see the colored (and animated) asset during pressing on it
      */
     function makePeekable (elem: HTMLElement) {
         // if no need to peek
-        if (!grayOut) return;
+        if (!grayOut) return {};
         elem.addEventListener("mousedown", () => {
             grayOut = false;
         });
@@ -175,7 +174,6 @@
 </script>
 
 <svelte:options immutable/>
-
 
 <div style:width style:height style:aspect-ratio={ratio} use:makePeekable >
     {#if data.type === "video" && data.sources && !grayOut}

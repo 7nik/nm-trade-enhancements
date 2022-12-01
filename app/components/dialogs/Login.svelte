@@ -9,21 +9,22 @@
     }
 
     import { debug, getCookie } from "../../utils/utils";
-    import { alert } from "./modals";
-    import DialogWindow from "./DialogWindow.svelte";
     import Button from "../elements/Button.svelte";
     import LabeledInput from "../elements/LabeledInput.svelte";
+    import DialogWindow from "./DialogWindow.svelte";
+    import { alert } from "./modals";
 
     let close: (reason: null) => void;
 
-    let username = "", password = "";
-    let errors = {
+    let username = "";
+    let password = "";
+    const errors = {
         username: false,
-        password: false
+        password: false,
     };
     let shaking = false;
 
-    async function submit(firstTry = true) {
+    async function submit (firstTry = true) {
         const resp = await fetch("/api/signin/", {
             method: "POST",
             headers: {
@@ -47,11 +48,13 @@
             errors.username = true;
             errors.password = true;
             shaking = true;
-            setTimeout(() => shaking = false, 1200);
+            setTimeout(() => { shaking = false; }, 1200);
         } else {
             alert(data.detail);
         }
     }
+
+    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
     interface $$Events {
         closed: CustomEvent<null>
     }

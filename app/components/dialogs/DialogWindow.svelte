@@ -33,14 +33,15 @@
             const style = document.createElement("style");
             style.textContent = `dialog.c-${klass}::backdrop{--bg:${blurry};}`;
             dialog.append(style);
-            dialog.classList.add("c-"+klass);
+            dialog.classList.add(`c-${klass}`);
         }
         opened = true;
         dialog.showModal();
     });
     onDestroy(() => {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
         if (opened) close(null);
-    })
+    });
 
     /**
      * Closes the dialog window
@@ -53,7 +54,7 @@
             dialog?.close();
             dispatch("closed", reason);
         }, 200);
-    }
+    };
 
     function backdropClick (ev: MouseEvent) {
         if (!opened || !closeable) return;

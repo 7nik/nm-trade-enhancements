@@ -2,14 +2,16 @@
     A general window for displaying the rewards
  -->
 <script lang="ts">
-    import DialogWindow from "./DialogWindow.svelte";
-    import Button from "../elements/Button.svelte";
     import { createEventDispatcher } from "svelte";
+    import Button from "../elements/Button.svelte";
+    import DialogWindow from "./DialogWindow.svelte";
+
     export let title: string;
     export let button: string;
 
     let close: (reason: null) => void;
 
+    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
     interface $$Events {
         closed: CustomEvent<null>,
         closing: CustomEvent<null>,
@@ -17,7 +19,7 @@
 
     const dispatch = createEventDispatcher();
 
-    function click() {
+    function click () {
         if (dispatch("closing", null, { cancelable: true })) {
             close(null);
         }

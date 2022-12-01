@@ -1,11 +1,11 @@
-import type NM from "../utils/NMTypes";
 import type Services from "../utils/NMServices";
+import type NM from "../utils/NMTypes";
 
 import addPatches from "../utils/patchAngular";
 import { loadValue, saveValue } from "../utils/storage";
 import { getCookie, debug } from "../utils/utils";
 
-if (window.location.pathname.startsWith("/redeem/") 
+if (window.location.pathname.startsWith("/redeem/")
     // if auto opening of promo packs disabled
     && !loadValue("openPromo", true)
 ) {
@@ -45,19 +45,21 @@ addPatches(() => {
         "artConfig",
         "$http",
         (
-            poRoute: Services.PoRoute, 
-            artOverlay: Services.ArtOverlay, 
-            artMessage: Services.ArtMessage, 
-            poPackSelect: Services.PoPackSelect, 
-            poMilestones: Services.PoMilestones, 
-            artConfig: Services.ArtConfig, 
+            poRoute: Services.PoRoute,
+            artOverlay: Services.ArtOverlay,
+            artMessage: Services.ArtMessage,
+            poPackSelect: Services.PoPackSelect,
+            poMilestones: Services.PoMilestones,
+            artConfig: Services.ArtConfig,
             $http: angular.IHttpService,
         ) => ({
             scope: {
                 sett: "=nmPromoPackBtn",
             },
             link: (scope: Scope, $elem) => {
-                const { promoCode, settId } = loadValue<{promoCode?:string, settId?:string}>("promoCode", {});
+                const { promoCode, settId } = loadValue<
+                    { promoCode?:string, settId?:string }
+                >("promoCode", {});
                 if (!promoCode || Number(settId) !== scope.sett.id) {
                     $elem.remove();
                     return;
@@ -72,10 +74,13 @@ addPatches(() => {
                     try {
                         await poMilestones.initPoMilestones();
                         await poPackSelect.fetchSett();
-                        const resp = await $http.post<RedeemPack>(artConfig.api["api-promo-codes-redeem"], {
-                            code: promoCode,
-                            store_signup_sett: false,
-                        });
+                        const resp = await $http.post<RedeemPack>(
+                            artConfig.api["api-promo-codes-redeem"],
+                            {
+                                code: promoCode,
+                                store_signup_sett: false,
+                            },
+                        );
                         await poRoute.openPack(resp.data.pack);
                     // @ ts-ignore
                     } catch (ex: any) {

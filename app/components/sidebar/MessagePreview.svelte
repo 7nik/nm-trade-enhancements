@@ -1,12 +1,12 @@
 <script lang="ts">
-    import type NM from "../../../utils/NMTypes";
+    import type NM from "../../utils/NMTypes";
 
-    import { firstName } from "../../../services/user";
-    import currentUser from "../../../services/currentUser";
-    import Avatar from "../../elements/Avatar.svelte";
-    import { liveListProvider } from "../../../utils/NMLiveApi";
     import { getContext } from "svelte";
-    import Time from "../../elements/Time.svelte";
+    import currentUser from "../../services/currentUser";
+    import { firstName } from "../../services/user";
+    import { liveListProvider } from "../../utils/NMLiveApi";
+    import Avatar from "../elements/Avatar.svelte";
+    import Time from "../elements/Time.svelte";
 
     /**
      * The message data
@@ -17,7 +17,7 @@
 
     const recipient = message.object.users.find((user) => user.id !== currentUser.id)!;
 
-    function messageClick() {
+    function messageClick () {
         if (!message.read) {
             liveListProvider("messages").markRead(message.id);
         }

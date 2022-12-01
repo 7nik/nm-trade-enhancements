@@ -1,11 +1,10 @@
 import type NM from "../utils/NMTypes";
 import type { Unsubscriber } from "svelte/store";
 
-import NMApi from "../utils/NMApi";
 import { derived, readable, writable } from "svelte/store";
+import NMApi from "../utils/NMApi";
 import { getUserStatus } from "../utils/NMLiveApi";
 import currentUser from "./currentUser";
-
 
 /**
  * Returns the user's first name either username
@@ -19,12 +18,14 @@ export function firstName (user: NM.UserMinimal) {
 
 /**
  * Returns the user's first name either username if possessive form
+ * @param user - The user
+ * @param capital - Whether to capitalize "your", default - no
  */
-export function firstNamePossessive (user: NM.UserMinimal) {
+export function firstNamePossessive (user: NM.UserMinimal, capital = false) {
     if (user.id === currentUser.id) {
-        return "your";
+        return capital ? "Your" : "your";
     }
-    return firstName(user) + "'s";
+    return `${firstName(user)}'s`;
 }
 
 export const friendList = {
@@ -37,31 +38,32 @@ export const friendList = {
     /**
      * Whether the user is in the friend list
      */
-    isFriend(userId: number) {
-        return derived(friendList.list, (list) => !!list.find(({ id }) => id === userId));
+    isFriend (userId: number) {
+        return derived(friendList.list, (list) => list.some(({ id }) => id === userId));
     },
     /**
      * Add user to the friend list
      */
-    async startFriendship(userId: number) {
+    async startFriendship (userId: number) {
         const friend = await NMApi.user.addFriend(userId);
         friendList.list.update((list) => [...list, friend]);
     },
     /**
      * Remove user from the friend list
      */
-    async endFriendship(userId: number) {
+    async endFriendship (userId: number) {
         await NMApi.user.removeFriend(userId);
         friendList.list.update((list) => list.filter(({ id }) => id !== userId));
     },
     /**
      * Get live number of online friends
      */
-    getOnlineNumber() {
+    getOnlineNumber () {
         return readable(0, (setNumber) => {
-            function countOnline(statuses: boolean[]) {
+            function countOnline (statuses: boolean[]) {
                 return statuses.reduce((num, online) => num + (online ? 1 : 0), 0);
             }
+
             let unsubscribe1: Unsubscriber;
             const unsubscribe2 = friendList.list.subscribe((list) => {
                 // first subscribe to new values and then unsubscribe from the old ones
@@ -74,7 +76,7 @@ export const friendList = {
             return () => {
                 unsubscribe1();
                 unsubscribe2();
-            }
+            };
         });
     },
 };
@@ -90,9 +92,9 @@ export const blockedUsers = {
      * Whether the user is blocked or the current user is blocked by this user
      * @returns whether blocked and who has blocked
      */
-    isBlocked(userId: number) {
+    isBlocked (userId: number) {
         return derived(blockedUsers.list, (list, set) => {
-            if (list.find(({ id }) => id === userId)) {
+            if (list.some(({ id }) => id === userId)) {
                 set({
                     isBlocked: true,
                     isBlockedByUser: true,
@@ -102,7 +104,7 @@ export const blockedUsers = {
                     set({
                         isBlocked: data.is_blocked,
                         isBlockedByUser: data.user_initiated,
-                    })
+                    });
                 });
             }
         }, {
@@ -113,7 +115,7 @@ export const blockedUsers = {
     /**
      * Block the user
      */
-    async blockUser(userId: number) {
+    async blockUser (userId: number) {
         friendList.endFriendship(userId);
         const user = await NMApi.user.blockUser(userId);
         blockedUsers.list.update((list) => [...list, user]);
@@ -121,7 +123,7 @@ export const blockedUsers = {
     /**
      * Unblock the user
      */
-    async unblockUser(userId: number) {
+    async unblockUser (userId: number) {
         await NMApi.user.unblockUser(userId);
         blockedUsers.list.update((list) => list.filter(({ id }) => id !== userId));
     },

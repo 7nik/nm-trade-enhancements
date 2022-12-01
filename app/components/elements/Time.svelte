@@ -12,29 +12,30 @@
     const steps = [
         1000, // 1s
         60_000, // 1m
-        3600_000, // 1h
-        72*3600_000, // 3d
-        Infinity,
-    ]
+        3_600_000, // 1h
+        72 * 3_600_000, // 3d
+        Number.POSITIVE_INFINITY,
+    ];
 
     const d = date(stamp);
     const diff = d.diff(Date.now());
 
-    function getTime() {
+    function getTime () {
         const time = diff < 0 ? d.fromNow() : d.toNow();
         const aDiff = Math.abs(diff);
-        const next = steps.find((_, i, arr) => arr[i+1] > aDiff)! / 3;
+        const next = steps.find((_, i, arr) => arr[i + 1] > aDiff)! / 3;
         return [time, next] as const;
     }
     let [time, next] = getTime();
 
     onMount(() => {
         // do not update dates that are further then 1 day from now
-        if (next > 86400_000) return;
-        let timer = setTimeout(function fn() {
+        if (next > 86_400_000) return;
+        let timer = setTimeout(function fn () {
             [time, next] = getTime();
             timer = setTimeout(fn, next);
         }, next);
+        // eslint-disable-next-line consistent-return
         return () => clearTimeout(timer);
     });
 </script>

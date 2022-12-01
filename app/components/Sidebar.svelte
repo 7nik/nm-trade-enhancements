@@ -1,21 +1,21 @@
 <script lang="ts">
-    import type NM from "../../../utils/NMTypes";
+    import type NM from "../utils/NMTypes";
     import type { ComponentProps, ComponentType, SvelteComponentTyped } from "svelte";
 
-    import { derived } from "svelte/store";
-    import { friendList } from "../../../services/user";
-    import currentUser from "../../../services/currentUser";
-    import { liveListProvider } from "../../../utils/NMLiveApi";
-    import FlagCounter from "../../elements/FlagCounter.svelte";
-    import Conversation from "./Conversation.svelte";
-    import Friends from "./Friends.svelte";
-    import Milestones from "./Milestones.svelte";
-    import Notifications from "./Notifications.svelte";
-    import TradeMessages from "./TradeMessages.svelte";
-    import NMApi from "../../../utils/NMApi";
     import { setContext } from "svelte";
-    import Icon from "../../elements/Icon.svelte";
-    import { alert } from "../../dialogs/modals";
+    import { derived } from "svelte/store";
+    import currentUser from "../services/currentUser";
+    import { friendList } from "../services/user";
+    import NMApi from "../utils/NMApi";
+    import { liveListProvider } from "../utils/NMLiveApi";
+    import { alert } from "./dialogs/modals";
+    import FlagCounter from "./elements/FlagCounter.svelte";
+    import Icon from "./elements/Icon.svelte";
+    import Conversation from "./sidebar/Conversation.svelte";
+    import Friends from "./sidebar/Friends.svelte";
+    import Milestones from "./sidebar/Milestones.svelte";
+    import Notifications from "./sidebar/Notifications.svelte";
+    import TradeMessages from "./sidebar/TradeMessages.svelte";
 
     /**
      * A method to open an existing trade or start a new one
@@ -25,20 +25,20 @@
     let hidden = true;
     let state: "none"|"milestone"|"friends"|"messages"|"notifications"|"conversation" = "none";
 
-    let beginner = currentUser.areFeaturesGated;
-    let showFriends = currentUser.canDo("friend");
-    let canTrade = currentUser.canDo("trade");
+    const beginner = currentUser.areFeaturesGated;
+    const showFriends = currentUser.canDo("friend");
+    const canTrade = currentUser.canDo("trade");
 
     const unreadMessageAndTradeCount = derived(
         [liveListProvider("messages").store, liveListProvider("trades").store],
-        ([messages, trades]) => {
-            return messages.filter((msg) => !msg.read).length
-                + trades.filter((trade) => trade.actor.id !== currentUser.id).length;
-        },
+        ([messages, trades]) => (
+            messages.filter((msg) => !msg.read).length
+            + trades.filter((trade) => trade.actor.id !== currentUser.id).length
+        ),
     );
     const unreadNotificationCount = derived(
         liveListProvider("notifications").store,
-        (notifications) => notifications.filter((n) => !n.read).length
+        (notifications) => notifications.filter((n) => !n.read).length,
     );
     const friendsOnline = friendList.getOnlineNumber();
 
@@ -54,10 +54,10 @@
      * Show a conversation tab
      * @param data - the collocutor's ID or the conversation's data
      */
-    export async function openConversation(
+    export async function openConversation (
         data: NM.ConversationInfo | number,
         canClose = true,
-        oldState: typeof state | null = state
+        oldState: typeof state | null = state,
     ) {
         const canBack = oldState === "messages"
             || oldState === "friends"
@@ -68,7 +68,7 @@
             if (data === collocutorId) {
                 conversationData.canClose = canClose;
                 conversationData.canBack = canBack;
-                conversationData.onClose = onClose
+                conversationData.onClose = onClose;
                 showTab("conversation");
                 return;
             }
@@ -97,7 +97,7 @@
      * To show conversation, use `openConversation` method.
      * @param tab - the tab to show
      */
-    export function showTab(tab: typeof state | null) {
+    export function showTab (tab: typeof state | null) {
         if (tab === null) {
             hidden = true;
         } else {
@@ -116,7 +116,9 @@
      * @param comp - the new content
      * @param props - optional, the content component props
      */
-    export function showOverlay<T extends SvelteComponentTyped>(comp: ComponentType<T> | null, props?: ComponentProps<T>) {
+    export function showOverlay<
+        T extends SvelteComponentTyped
+    > (comp: ComponentType<T> | null, props?: ComponentProps<T>) {
         component = comp;
         componentProps = props ?? {};
     }

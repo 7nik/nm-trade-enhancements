@@ -1,10 +1,9 @@
 import type NM from "../utils/NMTypes";
-import type { CurrentUser } from "../utils/NMTypes";
 
 import { debug } from "../utils/utils";
 import { getInitValue } from "./init";
 
-const user = await getInitValue<CurrentUser>("user");
+const user = await getInitValue("user");
 
 const currentUser = {
     id: user?.id ?? 0,
@@ -22,7 +21,7 @@ const currentUser = {
         bio: user?.bio ?? "",
         last_name: "",
         links: user?.links ?? {},
-        trader_score: user?.trader_score ?? 7
+        trader_score: user?.trader_score ?? 7,
     } as NM.UserFriend & NM.User,
     /**
      * Is the user limited in the available features
@@ -43,24 +42,24 @@ const currentUser = {
     /**
      * The user level's data
      */
-    get level() {
+    get level () {
         return user.level;
     },
-    set level(level: NM.UserLevel) {
+    set level (level: NM.UserLevel) {
         user.level = level;
     },
     /**
      * Whether the user able to use the named feature
      * @param feature - name of the feature
      */
-    canDo(feature: string) {
+    canDo (feature: string) {
         if (!user) return false;
         // if no limitations
         if (user.accessible_features.length === 0) return true;
         return user.accessible_features.includes(feature);
     },
-}
+};
 
 export default currentUser;
 
-debug("user info loaded")
+debug("user info loaded");

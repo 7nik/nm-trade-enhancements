@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { liveListProvider } from "../../../utils/NMLiveApi";
+    import { liveListProvider } from "../../utils/NMLiveApi";
     import AlertNotification from "./AlertNotification.svelte";
     import Header from "./Header.svelte";
     import List from "./List.svelte";
@@ -10,13 +10,13 @@
         loading,
     } = notificationList;
 
-    function markAllRead() {
+    function markAllRead () {
         notificationList.markRead();
     }
 </script>
 
 <List icon="notifications" emptyMessage="No notifications"
-    show={$loading ? "loading" : $notifications.length > 0 ? "content" : "empty"}
+    show={$loading ? "loading" : ($notifications.length > 0 ? "content" : "empty")}
 >
     {#if $notifications.some(({ read }) => !read)}
         <Header>

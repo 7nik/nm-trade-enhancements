@@ -1,6 +1,6 @@
-import TradePreviews from "../parts/TradePreviews.svelte";
 import NMApi from "../../utils/NMApi";
 import tooltip from "../../utils/tooltip";
+import TradePreviews from "../parts/TradePreviews.svelte";
 
 import "./tradePreviews.css";
 
@@ -49,7 +49,7 @@ const sharedTradePreview = tooltip("element", {
         target: preview,
         props: {
             trades: [trade],
-            showButton: false
+            showButton: false,
         },
     });
     return preview;

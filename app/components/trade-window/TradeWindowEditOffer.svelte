@@ -2,20 +2,20 @@
     A component to search and add prints to an offer
 -->
 <script lang="ts">
-    import type { Actors } from "../TradeWindow.svelte";
-    import type { Writable } from "svelte/store";
     import type { Paginator } from "../../utils/NMApi";
     import type NM from "../../utils/NMTypes";
+    import type { Actors } from "../TradeWindow.svelte";
+    import type { Writable } from "svelte/store";
 
-    import NMApi from "../../utils/NMApi";
     import { onDestroy, createEventDispatcher, getContext } from "svelte";
     import { writable } from "svelte/store";
+    import NMApi from "../../utils/NMApi";
+    import tip from "../actions/tip";
     import Avatar from "../elements/Avatar.svelte";
     import Button from "../elements/Button.svelte";
-    import PrintDetails from './PrintDetails.svelte';
-    import FiltersMenu from "./FiltersMenu.svelte";
     import Icon from "../elements/Icon.svelte";
-    import tip from "../actions/tip";
+    import FiltersMenu from "./FiltersMenu.svelte";
+    import PrintDetails from "./PrintDetails.svelte";
 
     /**
      * Prints the card owner will give
@@ -35,7 +35,6 @@
         close: void,
     }>();
 
-
     let filtersMenu: FiltersMenu;
     $: ({ hiddenSetts, isSettSelected, activeFilters } = filtersMenu ?? {});
 
@@ -43,11 +42,11 @@
     let filteredPrints: Writable<NM.PrintInTrade[]> = writable([]);
     let loading = false;
     // cache of search results
-    let cache = {} as Record<string, Paginator<NM.PrintInTrade>>;
+    const cache = {} as Record<string, Paginator<NM.PrintInTrade>>;
 
     // refilter prints when the offer get changed
     $: offer, refilterPrints();
-    function refilterPrints() {
+    function refilterPrints () {
         filtersMenu?.applyFilters(prints.list, offer, filteredPrints = writable([]));
     }
 
@@ -62,7 +61,7 @@
     });
 
     $: if (filtersMenu) loadPrints();
-    async function loadPrints() {
+    async function loadPrints () {
         loading = true;
         // stop loadMorePrints() and prevent next runs
         loadMorePrintsKey = -Math.abs(loadMorePrintsKey);
@@ -91,7 +90,7 @@
     }
 
     let viewport: HTMLElement;
-    async function loadMorePrints() {
+    async function loadMorePrints () {
         // if disabled
         if (loadMorePrintsKey < 0) return;
         if (prints?.isLoading) return;
@@ -119,25 +118,26 @@
         loadMorePrints();
     }
 
-    function addPrint(print: NM.PrintInTrade) {
-        $filteredPrints = $filteredPrints.filter(p => p !== print);
+    function addPrint (print: NM.PrintInTrade) {
+        $filteredPrints = $filteredPrints.filter((p) => p !== print);
         dispatch("add", print);
     }
 
     let filterMenuBtn: HTMLElement;
-    function updateFilterMenuPosition() {
+    function updateFilterMenuPosition () {
         const button = filterMenuBtn.firstElementChild as HTMLElement;
         const filterContainer = filterMenuBtn.lastElementChild as HTMLElement;
         const buttonWidth = button.offsetWidth;
         const menuWidth = filterContainer.offsetWidth;
-        let left = 0, top = 0;
+        let left = 0;
+        let top = 0;
         let parent = button;
         do {
             left += parent.offsetLeft;
             top += parent.offsetTop;
             parent = parent.offsetParent as HTMLElement;
         } while (parent);
-        left = left + buttonWidth/2 - menuWidth/2;
+        left = left + buttonWidth / 2 - menuWidth / 2;
         if (left < 5) left = 5;
         top = top - button.offsetTop + 5;
         filterMenuBtn.style.setProperty("--left", `${left}px`);
@@ -200,10 +200,12 @@
     {#if $hiddenSetts?.length > 0}
         <section class="hidden-series">
             <span>Hidden series: </span>
-                {#each $hiddenSetts as sett, i (sett.id)}
+                {#each $hiddenSetts as hiddenSett, i (hiddenSett.id)}
                     {#if i},{/if}
-                    <span use:tip={sett.tip}>{sett.name}</span>
-                    <span use:tip={"Show series"} on:click={() => filtersMenu.showSett(sett.id)}>✕</span>
+                    <span use:tip={hiddenSett.tip}>{hiddenSett.name}</span>
+                    <span use:tip={"Show series"}
+                        on:click={() => filtersMenu.showSett(hiddenSett.id)}
+                    >✕</span>
                 {/each}
             </section>
     {/if}

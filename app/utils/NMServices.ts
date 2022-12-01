@@ -71,7 +71,7 @@ declare namespace Services {
             hasCloseBtn?: boolean,
             parentClass?: string,
             messageQueue?: any[],
-            callback?: (canceled: boolean) => void, 
+            callback?: (canceled: boolean) => void,
         }, callback?: (canceled: boolean) => void) => void,
         close: ArtMessage["close"],
     }
@@ -92,7 +92,7 @@ declare namespace Services {
             signup: absoluteURL,
             "home-signin": absoluteURL,
             signout: absoluteURL,
-        },    
+        },
         profileLinks?: {
             "profile-creator": absoluteURL,
             "profile-collection": absoluteURL,
@@ -360,7 +360,7 @@ declare namespace Services {
         hasRewards: () => boolean,
         updateCredits: (balance: number) => void,
     }
-    
+
     type ArtWebSocket = {
         connect: (namespace: string) => Socket,
         connectSortedList: (namespace: string, options: {

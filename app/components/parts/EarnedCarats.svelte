@@ -12,11 +12,11 @@
     /**
      * The additional carats for being Pro
      */
-    export let proBonus: number = 0;
+    export let proBonus = 0;
     /**
      * The additional carats for series difficulty
      */
-    export let difficultyBonus: number = 0;
+    export let difficultyBonus = 0;
     /**
      * The new total number of the carats
      */

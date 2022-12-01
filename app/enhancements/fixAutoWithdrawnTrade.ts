@@ -11,14 +11,14 @@ const hiddenTrades = new Collection<NM.TradeNotification>("hiddenTrades");
 
 const notifications = liveListProvider("notifications")
     .on("init", (items) => {
-        const minTime = items.length
+        const minTime = items.length > 0
             ? new Date(items[items.length - 1].actor.time).getTime()
             : 0;
         // remove trades that go after the last notification
         hiddenTrades.remove((trade) => new Date(trade.actor.time).getTime() < minTime);
         if (hiddenTrades.count > 0) {
             // add the trade to notifications
-            hiddenTrades.forEach((trade) => notifications.forceAddItem(trade));
+            for (const trade of hiddenTrades) notifications.forceAddItem(trade);
         }
     });
 
@@ -39,8 +39,10 @@ window.addEventListener("click", ({ target }) => {
     if (!target) return;
     // when clicked the notification
     const notifElem = (target as Element).closest("li.nm-notifications-feed--item");
-    if (notifElem?.querySelector("[ng-bind-html='getVerbPhrase()']")?.textContent?.startsWith("auto-withdrew")) {
-        const id = notifElem.firstElementChild!.id.replace("notification-","");
+    if (notifElem?.querySelector("[ng-bind-html='getVerbPhrase()']")
+        ?.textContent?.startsWith("auto-withdrew")
+    ) {
+        const id = notifElem.firstElementChild!.id.replace("notification-", "");
         const notification = hiddenTrades.find(id);
         if (notification && !notification.read) {
             // replace trade with read copy to avoid side-effect and save
@@ -49,19 +51,21 @@ window.addEventListener("click", ({ target }) => {
     // when clicked "Mark all read"
     } else if ((target as Element).matches("a.text-link")) {
         // replace trades with read copies to avoid side-effect and save
-        hiddenTrades.forEach((trade) => {
+        for (const trade of hiddenTrades) {
             if (!trade.read) hiddenTrades.add({ ...trade, read: true });
-        });
+        }
     }
 }, true);
 
 liveListProvider("trades")
     .on("init", (trades) => {
         pendingTrades.remove(trades);
-        pendingTrades.forEach(async (trade) => {
-            trade.verb_phrase = (await NMApi.trade.get(trade.object.id, false)).state;
-            addAutoWithdrawnNotification(trade);
-        });
+        for (const trade of pendingTrades) {
+            NMApi.trade.get(trade.object.id, false).then(({ state }) => {
+                trade.verb_phrase = state;
+                addAutoWithdrawnNotification(trade);
+            });
+        }
         pendingTrades = new Collection("pendingTrades", trades);
     })
     .on("add", (trade) => {

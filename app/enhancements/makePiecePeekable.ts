@@ -1,8 +1,8 @@
-import type NM from "../utils/NMTypes";
 import type Services from "../utils/NMServices";
+import type NM from "../utils/NMTypes";
 
-import addPatches from "../utils/patchAngular";
 import PrintAsset from "../components/parts/PrintAsset.svelte";
+import addPatches from "../utils/patchAngular";
 import { error } from "../utils/utils";
 
 type Scope = angular.IScope & {
@@ -36,10 +36,9 @@ addPatches(() => {
             "$scope",
             "$element",
             (
-                $scope: Scope, 
+                $scope: Scope,
                 $elem: angular.IAugmentedJQuery,
             ) => {
-
                 if ($scope.showLoading) {
                     error("showLoading option is on");
                 }
@@ -69,9 +68,9 @@ addPatches(() => {
         "artPieceService",
         "ImageService",
         (artPieceService: Services.ArtPieceService, ImageService: Services.ImageService) => {
-            artPieceService.preloadImages = function (user, pieces, size) {
-                return ImageService.preloadAll(this.getImageUrls(user, pieces, size, true))
-            }
+            artPieceService.preloadImages = function preloadImages (user, pieces, size) {
+                return ImageService.preloadAll(this.getImageUrls(user, pieces, size, true));
+            };
         },
     ]);
 }, {

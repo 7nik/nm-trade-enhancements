@@ -1,13 +1,13 @@
 <script context="module" lang="ts">
     import type { Readable } from "svelte/store";
 
-    import OwnedCards from "../../services/ownedCards";
     import { derived } from "svelte/store";
+    import OwnedCards from "../../services/ownedCards";
 
     const cardInfo = new Map<number, OwnedCards>();
     const cardInfoUsage: Record<number, number> = {};
 
-    function getPrintCount(userId: number, cardId: number, defCount: number | null = null) {
+    function getPrintCount (userId: number, cardId: number, defCount: number | null = null) {
         if (!cardInfo.has(userId)) {
             cardInfo.set(userId, new OwnedCards(userId));
         }
@@ -25,17 +25,17 @@
     import type NM from "../../utils/NMTypes";
     import type { Actors } from "../TradeWindow.svelte";
 
+    import { getContext, onDestroy } from "svelte";
+    import { getTrades, isTrading } from "../../services/tradingCards";
+    import NMApi from "../../utils/NMApi";
+    import { num2text } from "../../utils/utils";
+    import tip from "../actions/tip";
+    import { tradePreview } from "../actions/tradePreviews";
+    import { alert } from "../dialogs/modals";
+    import Icon from "../elements/Icon.svelte";
+    import RarityText from "../elements/RarityText.svelte";
     import PrintAsset from "../parts/PrintAsset.svelte";
     import CollectionProgress from "./CollectionProgress.svelte";
-    import NMApi from "../../utils/NMApi";
-    import { getTrades, isTrading } from "../../services/tradingCards";
-    import { tradePreview } from "../actions/tradePreviews";
-    import { getContext, onDestroy } from "svelte";
-    import { num2text } from "../../utils/utils";
-    import Icon from "../elements/Icon.svelte";
-    import tip from "../actions/tip";
-    import RarityText from "../elements/RarityText.svelte";
-    import { alert } from "../dialogs/modals";
 
     /**
      * The print to display, can be replaced
@@ -50,7 +50,6 @@
     const direction = getContext<boolean>("isItYou") ? "give" : "receive";
     const tradeId = getContext<Readable<number|null>>("tradeId");
 
-
     $: total = print.num_prints_total === "unlimited" ? "∞" : num2text(print.num_prints_total);
 
     let printChooserState: "off" | "view" | "loading" | "select";
@@ -63,14 +62,14 @@
         printChooserState = "loading";
         try {
             const details = await NMApi.user.ownedPrints(actors.you.id, print.id);
-            prints = details.prints.map((p) => ({
-                ...print,
-                print_num: p.print_num,
-                print_id: p.id,
-            })).reduce((map, p) => {
-                map[p.print_num] = p;
-                return map;
-            }, {} as Record<number, NM.PrintInTrade>);
+            prints = {};
+            for (const p of details.prints) {
+                prints[p.print_num] = {
+                    ...print,
+                    print_id: p.id,
+                    print_num: p.print_num,
+                };
+            }
             printChooserState = "select";
         } catch (reason) {
             alert(String(reason));
@@ -88,16 +87,15 @@
     );
     // update the list when trades changes
     $: if (printChooserState === "select") {
-        for (let num in prints) {
-            let trading = isTrading(prints[num], direction, direction === "give" ? "print" : "card");
-            if (prints[num].trading !== trading) {
-                prints[num] = {
-                    ...prints[num],
-                    trading,
-                }
+        for (const p of Object.values(prints)) {
+            const trading = isTrading(
+                p,
+                direction,
+                direction === "give" ? "print" : "card",
+            );
+            if (p.trading !== trading) {
+                p.trading = trading;
             }
-            print = Object.values(prints)
-                .find(({ print_id }) => print.print_id === print_id)!;
         }
     }
     // the number of copies, init with data from the trade, if available,
@@ -172,7 +170,7 @@
                 </span>
             {:else if printChooserState === "select"}
                 <select class="print-chooser"
-                    disabled={Object.keys(prints).length == 1}
+                    disabled={Object.keys(prints).length === 1}
                     bind:value={print}
                 >
                     {#each Object.keys(prints) as num}

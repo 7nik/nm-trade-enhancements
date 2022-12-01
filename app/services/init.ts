@@ -1,19 +1,37 @@
-type Data = { set: (value: any) => void } | { value: any };
-type Names = "io" | "user" | "config" | "auth";
-// for simplicity won't define/export value types
+import type Services from "../utils/NMServices";
+import type { CurrentUser } from "../utils/NMTypes";
+import type { io as IO } from "socket.io-client";
 
-const map: Record<string, Data> = {};
+type Config = Services.ArtConfig
+    & Services.ArtConstants
+    & Services.ArtContentTypes;
+
+type Field<T> = { set?: (value: T) => void, value?: T };
+
+type Data = {
+    auth: () => Promise<null>,
+    config: Config,
+    io: typeof IO,
+    user: CurrentUser,
+}
+
+type Names = keyof Data;
+
+const map: Partial<{
+    [P in Names]: Field<Data[P]>
+}> = {};
 
 /**
  * Initialize a value
  * @param name - the value's name
  * @param value - the value's data
  */
-export function initValue (name: Names, value: any) {
-    const data = map[name]
+export function initValue<T extends Names> (name: T, value: Data[T]) {
+    const data = map[name];
     if (data && "set" in data) {
-        data.set(value);
+        data.set!(value);
     }
+    // @ts-ignore - ts is baka
     map[name] = { value };
 }
 
@@ -22,10 +40,11 @@ export function initValue (name: Names, value: any) {
  * @param name - the value's name
  * @returns value's data or promise of this data
  */
-export function getInitValue<T>(name: Names): T | Promise<T> {
+export function getInitValue<T extends Names> (name: T): Data[T] | Promise<Data[T]> {
     const data = map[name];
-    if (data && "value" in data) return data.value;
+    if (data && "value" in data) return data.value!;
     return new Promise((set) => {
+        // @ts-ignore - ts is baka
         map[name] = { set };
     });
 }

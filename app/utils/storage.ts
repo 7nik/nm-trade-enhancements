@@ -4,7 +4,7 @@
  * @param  {?any} defValue - Default value of the value
  * @return {any} Saved or default value
  */
- export function loadValue<T> (name: string, defValue: T): T {
+export function loadValue<T> (name: string, defValue: T): T {
     const fullName = "NM_trade_enhancements_".concat(name);
     if (fullName in localStorage) {
         return JSON.parse(localStorage[fullName]);

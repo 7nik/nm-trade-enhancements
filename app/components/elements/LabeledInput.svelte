@@ -13,11 +13,11 @@
     /**
      * The name field
      */
-    export let name: string = "";
+    export let name = "";
     /**
      * The autocomplete field
      */
-    export let autocomplete: string = "";
+    export let autocomplete = "";
     /**
      * Mark the label as error
      */
@@ -25,7 +25,6 @@
 
 </script>
 
-<!-- svelte-ignore a11y-label-has-associated-control -->
 <label>
     {#if type === "password"}
         <input type="password" required bind:value {name} {autocomplete}>

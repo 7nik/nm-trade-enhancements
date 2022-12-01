@@ -1,23 +1,24 @@
 <script lang="ts">
-    import type NM from "../../../utils/NMTypes";
+    import type NM from "../../utils/NMTypes";
 
+    import { friendList } from "../../services/user";
+    import NMApi from "../../utils/NMApi";
+    import Icon from "../elements/Icon.svelte";
     import Friend from "./Friend.svelte";
-    import NMApi from "../../../utils/NMApi";
-    import { friendList } from "../../../services/user";
-    import Icon from "../../elements/Icon.svelte";
     import Header from "./Header.svelte";
     import List from "./List.svelte";
 
     const MAX_SEARCH_RESULTS = 10;
 
-    let allFriends = friendList.list;
+    const allFriends = friendList.list;
     let searchTerm = "";
     let friends: NM.UserFriend[];
     $: {
         const regexp = new RegExp(searchTerm.replace("*", ".*"), "i");
+        // eslint-disable-next-line prefer-const
         friends = $allFriends
             .filter((user) => regexp.test(user.name) || regexp.test(user.username))
-            .sort((a,b) => b.first_name.localeCompare(a.first_name));
+            .sort((a, b) => b.first_name.localeCompare(a.first_name));
     }
     let people: NM.UserFriend[] = [];
 
@@ -27,12 +28,14 @@
     $: {
         searchTitle = people.length === 0
             ? "No Search Result"
-            : `Top ${Math.min(MAX_SEARCH_RESULTS, people.length)} Search Result${people.length > 1 ? "s" : ""}`;
+            : `Top ${
+                Math.min(MAX_SEARCH_RESULTS, people.length)
+            } Search Result${people.length > 1 ? "s" : ""}`;
     }
 
     $: if (isSearching) searchPeople(searchTerm);
     let searchPeopleTimer: NodeJS.Timeout;
-    function searchPeople(query: string) {
+    function searchPeople (query: string) {
         clearTimeout(searchPeopleTimer);
         if (query.trim().length < 3) {
             people = [];
@@ -58,12 +61,14 @@
         placeholder="Search for friends" autocomplete="off"
         bind:value={searchTerm}
     >
-    <label for="friend-search" on:click={() => searchTerm = ""} >
+    <label for="friend-search" on:click={() => { searchTerm = ""; }} >
         <Icon icon={isSearching ? "close" : "search"} size="15px" />
     </label>
 </div>
 
-<List icon="owners" emptyMessage="Your friends list is empty\nJust click the add a friend button on a person's profile"
+<List icon="owners"
+    emptyTitle="Your friends list is empty"
+    emptyMessage="Just click the add a friend button on a person's profile"
     show={friends.length === 0 && !isSearching ? "empty" : "content"}
 >
     <Header>

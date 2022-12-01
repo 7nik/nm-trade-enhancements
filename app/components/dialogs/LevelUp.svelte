@@ -6,12 +6,12 @@
     import type { IconName } from "../elements/Icon.svelte";
 
     import { fade } from "svelte/transition";
-    import RewardWindow from "./RewardWindow.svelte";
-    import Icon from "../elements/Icon.svelte";
-    import animate from "../actions/animate";
-    import currentUser from "../../services/currentUser";
     import config from "../../services/config";
+    import currentUser from "../../services/currentUser";
+    import animate from "../actions/animate";
+    import Icon from "../elements/Icon.svelte";
     import EarnedCarats from "../parts/EarnedCarats.svelte";
+    import RewardWindow from "./RewardWindow.svelte";
 
     /**
      * The level up data
@@ -24,9 +24,9 @@
     let levelName = data.previous_level_name;
     let animating = false;
 
-    const src = `${config["po-animation-assets"]}/levels/${data.level-1}.json`;
+    const src = `${config["po-animation-assets"]}/levels/${data.level - 1}.json`;
 
-    function onCompleted() {
+    function onCompleted () {
         animating = true;
         level = data.level;
         levelName = data.name;
@@ -35,14 +35,16 @@
     }
 </script>
 
-<RewardWindow on:closed on:closed={() => location.reload()}
+<RewardWindow on:closed on:closed={() => { window.location.reload(); }}
     title="Level Up!" button="Great!"
 >
     <h2>
         Level
         <div class:animating>
             {#key level}
-                <span transition:fade={{ duration:630 }} on:outroend={() => animating = false}>
+                <span transition:fade={{ duration: 630 }}
+                    on:outroend={() => { animating = false; }}
+                >
                     {level}
                 </span>
             {/key}
@@ -57,7 +59,7 @@
     <h3>
         <div class:animating>
             {#key levelName}
-                <span transition:fade={{ duration:630 }} style:color={iconColor}>
+                <span transition:fade={{ duration: 630 }} style:color={iconColor}>
                     {levelName}
                 </span>
             {/key}

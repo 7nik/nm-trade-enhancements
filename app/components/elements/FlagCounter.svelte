@@ -13,10 +13,10 @@
 
     let jumping = true;
     $: jump(value);
-    function jump(v: number) {
+    function jump (v: number) {
         if (v < 1) return;
         jumping = true;
-        setTimeout(() => jumping = false, 500);
+        setTimeout(() => { jumping = false; }, 500);
     }
 </script>
 

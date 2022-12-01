@@ -115,10 +115,35 @@
         filterUnowned: "\uE955",
     } as const;
     const IMG_ICONS = [
-        "carat", "card-trading", "credit", "loader", "notifications", "pro", "save", "LE", "RE",
-        "common", "uncommon", "rare", "veryRare", "extraRare", "core", "chase", "variant", "legendary",
-        "difficulty-0", "difficulty-1", "difficulty-2", "difficulty-3", "difficulty-4",
-        "difficulty-5", "difficulty-6", "difficulty-7", "difficulty-8",
+        "carat",
+        "card-trading",
+        "credit",
+        "loader",
+        "notifications",
+        "pro",
+        "save",
+        "LE",
+        "RE",
+
+        "common",
+        "uncommon",
+        "rare",
+        "veryRare",
+        "extraRare",
+        "core",
+        "chase",
+        "variant",
+        "legendary",
+
+        "difficulty-0",
+        "difficulty-1",
+        "difficulty-2",
+        "difficulty-3",
+        "difficulty-4",
+        "difficulty-5",
+        "difficulty-6",
+        "difficulty-7",
+        "difficulty-8",
     ] as const;
 
     type IconName = keyof typeof GLYPHTER_ICONS
@@ -166,11 +191,11 @@
     */
     export let hint = "";
 
-    $: type =
-        icon in GLYPHTER_ICONS ? "glyphter" :
-        icon in ICOMOON_ICONS ? "icomoon" :
-        IMG_ICONS.includes(icon as typeof IMG_ICONS[number]) ? `img ${icon}` :
-        "";
+    /* eslint-disable multiline-ternary, unicorn/no-nested-ternary */
+    $: type = icon in GLYPHTER_ICONS ? "glyphter"
+        : icon in ICOMOON_ICONS ? "icomoon"
+        : IMG_ICONS.includes(icon as typeof IMG_ICONS[number]) ? `img ${icon}`
+        : "";
     $: symbol = GLYPHTER_ICONS[icon as keyof typeof GLYPHTER_ICONS]
         ?? ICOMOON_ICONS[icon as keyof typeof ICOMOON_ICONS]
         ?? "";

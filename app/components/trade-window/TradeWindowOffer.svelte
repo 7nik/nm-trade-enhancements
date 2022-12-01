@@ -5,14 +5,14 @@
     import type NM from "../../utils/NMTypes";
     import type { Actors } from "../TradeWindow.svelte";
 
+    import { getContext, setContext } from "svelte";
+    import { linky } from "../../utils/utils";
     import Avatar from "../elements/Avatar.svelte";
     import Button from "../elements/Button.svelte";
-    import PrintDetails from './PrintDetails.svelte';
-    import TradeGrade from "../elements/TradeGrade.svelte";
-    import TradeWindowEditOffer from "./TradeWindowEditOffer.svelte";
-    import { linky } from "../../utils/utils";
     import Icon from "../elements/Icon.svelte";
-    import { getContext, setContext } from "svelte";
+    import TradeGrade from "../elements/TradeGrade.svelte";
+    import PrintDetails from "./PrintDetails.svelte";
+    import TradeWindowEditOffer from "./TradeWindowEditOffer.svelte";
 
     /**
      * Whose side is it
@@ -47,8 +47,8 @@
         state = "offer";
         if (!sett && offer.length > 0 && updateSett) {
             // if all cards in the offer are from the same sett
-            const settIds = offer.map(p => p.sett_id);
-            if (settIds.every(id => id === settIds[0])) {
+            const settIds = offer.map((p) => p.sett_id);
+            if (settIds.every((id) => id === settIds[0])) {
                 sett = {
                     id: offer[0].sett_id,
                     name: offer[0].sett_name,
@@ -56,15 +56,14 @@
             }
         }
     }
-
-    function toggleBio() {
+    function toggleBio () {
         state = state === "bio" ? "offer" : "bio";
     }
 
-    function removePrint(print: NM.PrintInTrade) {
+    function removePrint (print: NM.PrintInTrade) {
         offer = offer.filter((pr) => pr !== print);
     }
-    function addPrint(print: NM.PrintInTrade) {
+    function addPrint (print: NM.PrintInTrade) {
         offer = [...offer, print];
     }
 </script>
@@ -92,7 +91,7 @@
                 {#if canEdit}
                     <Button icon={canAddItems ? "add" : ""} size="mini"
                         disabled={!canAddItems}
-                        on:click={() => state = "search"}
+                        on:click={() => { state = "search"; }}
                     >
                         {canAddItems ? "Add" : "5 max"}
                     </Button>
@@ -141,7 +140,7 @@
             {#if state === "bio"}
                 <div class=full-bio>
                     {#each linky(cardOwner.bio) as text, i}
-                        {#if i%2}
+                        {#if i % 2}
                             <a target="_blank" href={text}>{text}</a>
                         {:else}
                             {text}
@@ -168,7 +167,7 @@
         <TradeWindowEditOffer
             {sett}
             {offer}
-            on:close = {() => state = "offer"}
+            on:close = {() => { state = "offer"; }}
             on:add = {(ev) => { addPrint(ev.detail); state = "offer"; }}
         />
     </section>

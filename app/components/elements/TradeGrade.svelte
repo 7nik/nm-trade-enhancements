@@ -2,7 +2,7 @@
     Renders a user trade grade icon
  -->
 <script context="module" lang="ts">
-    const GRADES = ['F', 'F+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+'];
+    const GRADES = ["F", "F+", "D-", "D", "D+", "C-", "C", "C+", "B-", "B", "B+", "A-", "A", "A+"];
     /**
      * Converts grade number to the grade name
      * @param grade - the grade number
@@ -19,15 +19,15 @@
     export function getLetterGradeClass (grade: number) {
         return GRADES[grade][0];
     }
-    const EXTRA = "Not responding to trade offers brings down your Trader Grade, \
-        while responding brings it up. You can also propose trades to help improve your grade.";
+    const EXTRA = `Not responding to trade offers brings down your Trader Grade,
+        while responding brings it up. You can also propose trades to help improve your grade.`;
 </script>
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
 
     import currentUser from "../../services/currentUser";
-    import { error } from "../../utils/utils";
     import { firstNamePossessive } from "../../services/user";
+    import { error } from "../../utils/utils";
     import tip from "../actions/tip";
 
     export let user: NM.User;

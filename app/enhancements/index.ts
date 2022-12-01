@@ -17,7 +17,7 @@ import "./sortCardsInTradePreview";
 // hide all tips after clicking
 window.addEventListener("click", (ev) => {
     if ((ev.target as HTMLElement).closest(".tip")) {
-        for (let el of document.querySelectorAll("body>.tooltip")) {
+        for (const el of document.querySelectorAll("body>.tooltip")) {
             el.remove();
         }
     }
@@ -27,8 +27,8 @@ window.addEventListener("click", (ev) => {
 const midnight = new Date();
 midnight.setDate(midnight.getDate() + 1);
 midnight.setHours(0, 0, 0, 0);
-setTimeout(function reset() {
+setTimeout(function reset () {
     NM.you.attributes.todays_freebies_count = {};
     // reset at the next midnight
-    setTimeout(reset, 24*60*60*1000);
+    setTimeout(reset, 86_400_000);
 }, midnight.getTime() - Date.now());

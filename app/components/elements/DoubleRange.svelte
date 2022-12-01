@@ -16,7 +16,7 @@
     /**
      * Maximum allowed value
      */
-    export let max = list ? list[list.length-1] : 100;
+    export let max = list ? list[list.length - 1] : 100;
     /**
      * The current range
      */
@@ -29,12 +29,12 @@
     const dispatch = createEventDispatcher();
     $: dispatch("change", value);
 
-    const steps = list ? list.length-1 : (max - min);
+    const steps = list ? list.length - 1 : (max - min);
     if (list) {
         // ensure the range consist of values from the list
         value = [
-            list.find(x => x>=value[0]) ?? list[steps],
-            list.find(x => x>=value[1]) ?? list[steps],
+            list.find((x) => x >= value[0]) ?? list[steps],
+            list.find((x) => x >= value[1]) ?? list[steps],
         ];
     }
     // 0-1
@@ -43,33 +43,39 @@
         : lim(0, 1, (value[0] - min) / steps);
     // 0-1
     $: end = list
-        ? lim(start, steps, list.indexOf(value[1])/steps)
+        ? lim(start, steps, list.indexOf(value[1]) / steps)
         : lim(0, 1, (value[1] - min) / steps);
 
     // limit the value by minimum and maximum
-    function lim(min: number, max: number, val: number) {
+    // eslint-disable-next-line no-shadow
+    function lim (min: number, max: number, val: number) {
         return Math.max(min, Math.min(max, val));
     }
     // convert 0-1 range to output value
-    function toStep(val: number) {
+    function toStep (val: number) {
         return list
-            ? list[Math.floor(lim(0, steps, val * (steps+1)))]
+            ? list[Math.floor(lim(0, steps, val * (steps + 1)))]
             : Math.floor(lim(min, max, val * steps));
     }
 
-    function startDrag(ev: MouseEvent, isLeft: boolean) {
+    function startDrag (ev: MouseEvent, isLeft: boolean) {
         ev.preventDefault();
-        const { left,  width } = (ev.target as HTMLElement).closest(".slider")!.getBoundingClientRect();
+        const { left,  width } = (ev.target as HTMLElement)
+            .closest(".slider")!.getBoundingClientRect();
         window.addEventListener("mousemove", move);
-        window.addEventListener("mouseup", () => window.removeEventListener("mousemove", move), { once: true });
-        function move (ev: MouseEvent) {
+        window.addEventListener(
+            "mouseup",
+            () => window.removeEventListener("mousemove", move),
+            { once: true },
+        );
+        function move ({ clientX: x }: MouseEvent) {
             if (isLeft) {
-                const newValue = toStep(Math.round(lim(0, end, (ev.clientX - left) / width) * steps) / steps);
+                const newValue = toStep(Math.round(lim(0, end, (x - left) / width) * steps) / steps);
                 if (newValue !== value[0]) {
                     value = [newValue, value[1]];
                 }
             } else {
-                const newValue = toStep(Math.round(lim(start, 1, (ev.clientX - left) / width) * steps) / steps);
+                const newValue = toStep(Math.round(lim(start, 1, (x - left) / width) * steps) / steps);
                 if (newValue !== value[1]) {
                     value = [value[0], newValue];
                 }
@@ -78,28 +84,26 @@
     }
 
     // try to locate the title at the center of the slider but without intersecting the labels
-    let titleWidth = 0.4, titlePos = 0.5;
+    let titleWidth = 0.4;
+    let  titlePos = 0.5;
     $: {
-        let left = 0.5 - titleWidth/2, right = 0.5 + titleWidth/2;
+        const left = 0.5 - titleWidth / 2;
+        const right = 0.5 + titleWidth / 2;
         if (start < left && right < end || end < left || right < start) {
             titlePos = 0.5;
-        } else if (start < 0.5 && 0.5 < end && end - start > titleWidth) {
-            if (end - 0.5 < 0.5 - start) {
-                titlePos = end - titleWidth/2;
-            } else {
-                titlePos = start + titleWidth/2;
-            }
+        } else if (start < 0.5 && end > 0.5 && end - start > titleWidth) {
+            titlePos = end - 0.5 < 0.5 - start
+                ? end - titleWidth / 2
+                : start + titleWidth / 2;
         } else {
-            if (start > 1-end) {
-                titlePos = start - titleWidth/2;
-            } else {
-                titlePos = end + titleWidth/2;
-            }
+            titlePos = start > 1 - end
+                ? start - titleWidth / 2
+                : end + titleWidth / 2;
         }
     }
 
-    function getWidth(elem: HTMLElement, _title: string) {
-        function calculateWidth() {
+    function getWidth (elem: HTMLElement) {
+        function calculateWidth () {
             const { width: elemWidth } = elem.getBoundingClientRect();
             const { width: totalWidth } = elem.closest(".slider")!.getBoundingClientRect();
             // assume that labels are 30px or less
@@ -111,6 +115,7 @@
             titleWidth = width;
             return true;
         }
+
         if (!calculateWidth()) {
             // recalculate width when the elements became "visible" and measurable
             new IntersectionObserver(async (entries, observer) => {
@@ -124,7 +129,7 @@
 
 <svelte:options immutable />
 
-<span class="slider" style:--start="{start*100}%" style:--end="{end*100}%">
+<span class="slider" style:--start="{start * 100}%" style:--end="{end * 100}%">
     <div class="range"></div>
     <div class="handles">
         <div class="handle" on:mousedown={(ev) => startDrag(ev, true)}>
@@ -135,7 +140,7 @@
                 <div class="label">{num2text(value[1])}</div>
             </div>
         {/if}
-        <div class="title" style:--title-pos="{titlePos*100}%" use:getWidth={title}>{title}</div>
+        <div class="title" style:--title-pos="{titlePos * 100}%" use:getWidth>{title}</div>
     </div>
 </span>
 

@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type NM from "../../../utils/NMTypes";
+    import type NM from "../../utils/NMTypes";
 
-    import { firstName } from "../../../services/user";
-    import Avatar from "../../elements/Avatar.svelte";
-    import { sharedTradePreview } from "../../tradePreviews";
     import { getContext } from "svelte";
-    import Time from "../../elements/Time.svelte";
+    import { firstName } from "../../services/user";
+    import { sharedTradePreview } from "../actions/tradePreviews";
+    import Avatar from "../elements/Avatar.svelte";
+    import Time from "../elements/Time.svelte";
 
     /**
      * The trade data

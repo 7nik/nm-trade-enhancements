@@ -14,10 +14,14 @@
         }
         const promise = getInfo(userId);
         loading.set(userId, promise);
-        return promise.then((data) => data.userCollections);
+        return promise.then((data) => {
+            collections.set(userId, data.userCollections);
+            return data.userCollections;
+        });
     }
     async function unloadCollectionInfo (userId: number) {
         if (!loading.has(userId)) return;
+        // eslint-disable-next-line unicorn/no-await-expression-member
         (await loading.get(userId))?.freeData();
         loading.delete(userId);
         collections.delete(userId);
@@ -30,12 +34,11 @@
         return collection.getProgress(settId);
     }
     function makeLongTip (progress: Progress) {
-        const types = ["core", "chase", "variant", "legendary"] as ("core"|"chase"|"variant"|"legendary")[];
-        const data = types.map((rarity) =>
-            progress[rarity].count
-                ? `${progress[rarity].owned}/${progress[rarity].count}&nbsp;<i class="i ${rarity}"></i>`
-                : ""
-        ).filter(s => s);
+        const types = ["core", "chase", "variant", "legendary"] as const;
+        const data = types.map((rarity) => (progress[rarity].count
+            ? `${progress[rarity].owned}/${progress[rarity].count}&nbsp;<i class="i ${rarity}"></i>`
+            : ""
+        )).filter(Boolean);
         let html = data.join(`<i class="pipe"></i>`);
         // if here are all 4 types then locate them in 2 rows
         if (data.length === 4) {
@@ -61,8 +64,8 @@
 <script lang="ts">
     import type NM from "../../utils/NMTypes";
 
-    import { htmlTip } from "../actions/tip";
     import { onDestroy } from "svelte";
+    import { htmlTip } from "../actions/tip";
 
     export let user: NM.User;
     /**
@@ -70,19 +73,21 @@
      */
     export let settId: number;
 
+    const progress = getProgress(user.id, settId);
     let ready = false;
-    let progress = getProgress(user.id, settId);
     let shortTip: string;
     let longTip: string;
     let link: string;
 
-    function setTips(progress: Progress | null) {
-        if (!progress) {
-            shortTip = longTip = link = "";
+    function setTips (p: Progress | null) {
+        if (p) {
+            shortTip = makeShortTip(p);
+            longTip = makeLongTip(p);
+            link = `${p.permalink}/user${user.links.profile}/cards/`;
         } else {
-            shortTip = makeShortTip(progress);
-            longTip = makeLongTip(progress);
-            link = `${progress.permalink}/user${user.links.profile}/cards/`
+            shortTip = "";
+            longTip = "";
+            link = "";
         }
         ready = true;
     }
