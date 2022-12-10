@@ -1,0 +1,38 @@
+/* base styling of tooltips */
+#nmte-tips > div {
+    position: absolute;
+    z-index: 1200;
+    background: var(--bg, #FBF8CF);
+    max-width: 250px;
+    color: #2c2830;
+    filter: drop-shadow(0 1px 2px #0002);
+    text-align: center;
+    font-size: 13px;
+}
+#nmte-tips > div > .arrow {
+    width: 18px;
+    height: 6px;
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+}
+#nmte-tips > div > .arrow svg {
+    display: block;
+    width: 100%;
+    fill: var(--bg, #FBF8CF);
+}
+#nmte-tips > div[data-placement=bottom] .arrow {
+    bottom: auto;
+    top: -6px
+}
+#nmte-tips > div[data-placement=bottom] .arrow svg {
+    transform: scaleY(-1);
+}
+#nmte-tips > div[data-placement=left] .arrow {
+    right: -12px;
+    left: auto;
+    top: 50%;
+}
+#nmte-tips > div[data-placement=left] .arrow svg {
+    transform: rotate(-90deg);
+}

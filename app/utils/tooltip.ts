@@ -1,14 +1,18 @@
-import type { Placement } from "@popperjs/core";
-import type { Instance } from "@popperjs/core/lib/popper-lite";
+import "./tooltip.css";
+
+import type { Placement } from "@floating-ui/dom";
 import type { Action } from "svelte/action";
 
 import {
-    flip, offset, arrow, preventOverflow,
-} from "@popperjs/core/lib/modifiers";
-import { createPopper } from "@popperjs/core/lib/popper-lite";
-import { error } from "./utils";
+    autoUpdate,
+    computePosition,
+    offset,
+    shift,
+    flip,
+    arrow,
+} from "@floating-ui/dom";
 
-type Params = {
+type TooltipParams = {
     placement?: Placement,
     showDelay?: number,
     hideDelay?: number,
@@ -16,7 +20,7 @@ type Params = {
     singleton?: boolean,
     className: string,
 };
-const defaultParams: Params = {
+const defaultParams: TooltipParams = {
     placement: "top",
     showDelay: 0,
     hideDelay: 0,
@@ -29,28 +33,42 @@ type ContentType = "text" | "html" | "element";
 type Content<C extends ContentType> = (C extends "element" ? HTMLElement : string) | null;
 type ContentProvider<C extends ContentType> = Content<C> | (() => Content<C> | Promise<Content<C>>);
 
+const ARROW = `<svg viewBox="0 0 6 2">
+<path d="M3 2c.3 0 .6-.1.8-.3L4.9.6C5.2.3 5.6 0 6 0H0c.4 0 .8.3 1.1.6l1.1 1c.2.3.5.4.7.4H3z">
+</path>
+</svg>`;
+
+let container: HTMLElement;
+function attachTip (tip: HTMLElement) {
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "nmte-tips";
+        document.body.append(container);
+    }
+    container.append(tip);
+}
+
 function delay (ms: number) {
     return new Promise((res) => { setTimeout(res, ms); });
 }
 
-function tooltip<C extends ContentType> (type: C, params: Params) {
+function tooltip<C extends ContentType> (type: C, params: TooltipParams) {
     const fullParams = { ...defaultParams, ...params };
 
+    const arrowElem = document.createElement("div");
+    arrowElem.className = "arrow";
+    arrowElem.innerHTML = ARROW;
+
     let tip: HTMLElement | null = null;
-    let instance: Instance | null = null;
+    // let instance: Instance | null = null;
     let closing: NodeJS.Timeout | null = null;
+    let stopListeners: (() => void) | null = null;
 
     function hide () {
         tip?.remove();
         tip = null;
-        if (instance) {
-            const elem = instance.state.elements.reference as Element;
-            elem.removeEventListener("mouseleave", startHiding);
-            elem.removeEventListener("mouseenter", cancelHiding);
-            elem.removeEventListener("click", hide);
-            instance?.destroy();
-            instance = null;
-        }
+        stopListeners?.();
+        stopListeners = null;
         closing = null;
     }
 
@@ -68,54 +86,46 @@ function tooltip<C extends ContentType> (type: C, params: Params) {
         closing = null;
     }
 
-    let key = 0;
-    // eslint-disable-next-line sonarjs/cognitive-complexity
-    async function show (elem: HTMLElement, content: ContentProvider<C>) {
-        key += 1;
-        const localKey = key;
+    async function startShowing (elem: HTMLElement, contentProvider: ContentProvider<C>) {
         if (fullParams.singleton) {
             cancelHiding();
         } else {
             // hide and clean up previous tip
             hide();
         }
+        let canceled = false;
         // do delay if needed
-        if (fullParams.showDelay && !(fullParams.singleton && instance)) {
-            let canceled = false;
+        if (fullParams.showDelay && !(fullParams.singleton && tip)) {
             elem.addEventListener("mouseleave", () => { canceled = true; }, { once: true });
             await delay(fullParams.showDelay);
             if (canceled) return;
         }
-        // get tooltip content
-        if (typeof content === "function") {
-            let cont = content();
-            if (cont instanceof Promise) cont = await cont;
-            content = cont;
-        }
-        if (content === null) {
-            // if singleton is shown
-            if (instance) hide();
-            return;
-        }
+        const content = typeof contentProvider === "function"
+            ? (await contentProvider())
+            : contentProvider;
+        if (canceled) return;
         // ensure the tooltip still need to be shown
-        if (localKey !== key) return;
+        if (content && document.contains(elem)) {
+            show(elem, content);
+        } else if (tip) {
+            // if singleton is shown
+            hide();
+        }
+    }
+
+    function show (elem: HTMLElement, content: HTMLElement | string) {
         // create the tooltip and add the content
-        if (!tip) {
+        if (tip) {
+            stopListeners?.();
+        } else {
             tip = document.createElement("div");
             tip.className = fullParams.className;
         }
-        let arrowElem = tip.firstElementChild;
-        if (!arrowElem) {
-            arrowElem = document.createElement("div");
-            arrowElem.className = "arrow";
-            arrowElem.innerHTML = `<svg viewBox="0 0 6 2"><path d="M3 2c.3 0 .6-.1.8-.3L4.9.6C5.2.3 5.6 0 6 0H0c.4 0 .8.3 1.1.6l1.1 1c.2.3.5.4.7.4H3z"></path></svg>`;
-        }
-        tip.innerHTML = "";
-        switch (type) {
-            case "text": tip.textContent = content as string; break;
-            case "html": tip.innerHTML = content as string; break;
-            case "element": tip.append(content); break;
-            default: error("unknown content type", type);
+        if (type === "html" && typeof content === "string") {
+            tip.innerHTML = content;
+        } else {
+            tip.innerHTML = "";
+            tip.append(content);
         }
         tip.prepend(arrowElem);
         if (fullParams.interactive) {
@@ -123,43 +133,61 @@ function tooltip<C extends ContentType> (type: C, params: Params) {
             tip.addEventListener("mouseenter", cancelHiding);
             tip.addEventListener("click", hide);
         }
-        document.body.append(tip);
+        attachTip(tip);
+
         // display to tooltip
-        if (instance) {
-            const prevElem = instance.state.elements.reference as Element;
-            prevElem.removeEventListener("mouseleave", startHiding);
-            prevElem.removeEventListener("mouseenter", cancelHiding);
-            instance.state.elements.reference = elem;
-            instance.update();
-        } else {
-            instance = createPopper(elem, tip, {
+        const stopTip = autoUpdate(elem, tip, () => {
+            if (!tip || !document.contains(elem)) {
+                hide();
+                return;
+            }
+            computePosition(elem, tip, {
                 placement: fullParams.placement,
-                modifiers: [
-                    flip,
-                    preventOverflow,
-                    offset,
-                    { name: "offset", options: { offset: [0, 8] } },
-                    arrow,
-                    { name: "arrow", options: { element: arrowElem } },
+                middleware: [
+                    offset(8),
+                    shift(),
+                    flip(),
+                    arrow({ element: arrowElem }),
                 ],
+            }).then(({
+                x, y, placement, middlewareData,
+            }) => {
+                if (tip) {
+                    tip.style.left = `${x}px`;
+                    tip.style.top = `${y}px`;
+                    tip.dataset.placement = placement;
+                }
+                if (middlewareData.arrow) {
+                    arrowElem.style.left = `${middlewareData.arrow.x}px`;
+                    arrowElem.style.top = `${middlewareData.arrow.y}px`;
+                }
             });
-        }
+        });
+        // Listeners to hide the tooltip
         elem.addEventListener("mouseleave", startHiding);
         elem.addEventListener("mouseenter", cancelHiding);
         elem.addEventListener("click", hide);
+        stopListeners = () => {
+            elem.removeEventListener("mouseleave", startHiding);
+            elem.removeEventListener("mouseenter", cancelHiding);
+            elem.removeEventListener("click", hide);
+            stopTip();
+        };
     }
 
-    return [show, hide] as const;
+    return [startShowing, hide] as const;
 }
 
 type ContentGenerator<T, C extends ContentType> =
     Content<C> | ((arg: T) => Content<C> | Promise<Content<C>>);
 
-export default <P, C extends ContentType>(
-    type: C, params: Params, provider: ContentGenerator<P, C>,
-): Action<HTMLElement, P> => {
+export default <Params, C extends ContentType>(
+    type: C,
+    params: TooltipParams,
+    provider: ContentGenerator<Params, C>,
+): Action<HTMLElement, Params> => {
     const [showTooltip, hideTooltip] = tooltip(type, params);
-    return (elem: HTMLElement, param?: P) => {
+    return (elem: HTMLElement, param?: Params) => {
         elem.addEventListener("mouseenter", () => {
             if (!param) return;
             showTooltip(elem, typeof provider === "function" ? () => provider(param!) : provider);

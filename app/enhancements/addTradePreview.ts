@@ -25,8 +25,9 @@ addPatches(() => {
             $scope.trading = false;
 
             let initialized = false;
+            let hideTip: (() => void) | undefined;
             const unsubscribe = getTrades($scope.piece, "both", "card").subscribe((tradeIds) => {
-                tradePreview($elem[0], { tradeIds, cardId: $scope.piece.id });
+                hideTip = tradePreview($elem[0], { tradeIds, cardId: $scope.piece.id })?.destroy;
                 if (initialized) {
                     // to notify angular about changes
                     $scope.$apply(() => { $scope.trading = !!tradeIds; });
@@ -35,7 +36,10 @@ addPatches(() => {
                     $scope.trading = !!tradeIds;
                 }
             });
-            $scope.$on("$destroy", unsubscribe);
+            $scope.$on("$destroy", () => {
+                unsubscribe();
+                hideTip?.();
+            });
             initialized = true;
         },
     ]);
