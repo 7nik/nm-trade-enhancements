@@ -65,11 +65,12 @@ declare global {
 }
 
 if (typeof io === "undefined") {
-    Object.defineProperty(unsafeWindow, "io", {
+    // const w = typeof unsafeWindow === "undefined" ? window : unsafeWindow;
+    Object.defineProperty(window, "io", {
         configurable: true,
         set (io) {
             initValue("io", io);
-            Object.defineProperty(unsafeWindow, "io", {
+            Object.defineProperty(window, "io", {
                 value: io,
                 configurable: true,
                 enumerable: true,

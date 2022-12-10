@@ -26,9 +26,7 @@
       "https://www.neonmob.com/login*",
       "https://www.neonmob.com/"
     ],
-    "grant": [
-      "GM_addStyle"
-    ],
+    "grant": "none",
     "run-at": "document-start"
   },
   "devDependencies": {
