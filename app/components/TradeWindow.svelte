@@ -142,8 +142,6 @@
                 you: youAreBidder ? trade.bidder : trade.responder,
                 partner: youAreBidder ? trade.responder : trade.bidder,
             };
-            // to simplify the child markup
-            // actors.you.name = actors.you.first_name = "You";
             yourOffer = trade[youAreBidder ? "bidder_offer" : "responder_offer"].prints;
             partnersOffer = trade[youAreBidder ? "responder_offer" : "bidder_offer"].prints;
 
@@ -158,9 +156,6 @@
         if (!actors) {
             throw new Error("Actors aren't provided!");
         }
-        // to simplify the child markup
-        // actors.you = {...actors.you, name: "You", first_name: "You"};
-        // actors[actors.youAreBidder ? "bidder" : "responder"] = actors.you;
         // to speed up showing the window,
         // at first show a print that lack some unused data
         if (initialData.card) {

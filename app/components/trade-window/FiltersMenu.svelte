@@ -316,7 +316,7 @@
             const value = filters[prop];
             const defValue = defaultFilters[prop];
             if (isRange(value) && isRange(defValue)) {
-                return areRangesEqual(value, defValue);
+                return !areRangesEqual(value, defValue);
             }
             return value !== defValue;
         },
@@ -353,7 +353,7 @@
     }
 
     // re-filter the series list when these filters get changed
-    let seriesListKey = [filters.shared, filters.collection].toString();
+    let seriesListKey = "";
     // keep filters conformed and synced with the exported variables
     $: filters, conformFilters();
     function conformFilters () {
@@ -428,9 +428,9 @@
         }
         let newCollections = ownerCollections.getCollections();
         if (filters.shared) {
-            const { find } = oppositeCollections.getCollections();
+            const colls = oppositeCollections.getCollections();
             newCollections = newCollections
-                .filter(({ id }) => find((coll) => id === coll.id));
+                .filter(({ id }) => colls.find((coll) => id === coll.id));
         }
         if (filters.incompleteSetts) {
             newCollections = newCollections.filter((coll) => {

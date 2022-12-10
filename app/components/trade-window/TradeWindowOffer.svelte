@@ -6,6 +6,7 @@
     import type { Actors } from "../TradeWindow.svelte";
 
     import { getContext, setContext } from "svelte";
+    import { firstName } from "../../services/user";
     import { linky } from "../../utils/utils";
     import Avatar from "../elements/Avatar.svelte";
     import Button from "../elements/Button.svelte";
@@ -74,7 +75,7 @@
         <Avatar user={cardOwner} />
                 <div>
                     <TradeGrade user={cardOwner} />
-                    {cardOwner.first_name} will give
+                    {firstName(cardOwner)} will give
                     {#if cardOwner.bio || isItYou}
                         <div class="bio"
                             class:bio-shown={state === "bio"}
@@ -141,14 +142,16 @@
                 <div class=full-bio>
                     {#each linky(cardOwner.bio) as text, i}
                         {#if i % 2}
-                            <a target="_blank" href={text}>{text}</a>
+                            <a target="_blank" rel="noreferrer" href={text}>{text}</a>
                         {:else}
                             {text}
                         {/if}
                     {/each}
                     {#if isItYou}
                         <br><br>
-                        <a href="{actors.you.links.profile}/collection" target="_blank">
+                        <a href="{actors.you.links.profile}/collection"
+                            target="_blank" rel="noreferrer"
+                        >
                             <Button type="subdued-light" size="max">
                                 Edit Your Bio
                             </Button>

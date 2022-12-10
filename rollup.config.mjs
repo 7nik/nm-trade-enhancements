@@ -4,7 +4,6 @@ import resolve from "@rollup/plugin-node-resolve";
 import replace from "@rollup/plugin-replace";
 import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
-import eslint from "rollup-plugin-eslint2";
 import styles from "rollup-plugin-styles";
 import svelte from "rollup-plugin-svelte";
 import { visualizer } from "rollup-plugin-visualizer";
@@ -35,10 +34,15 @@ export default {
         banner: usHeader.toString(),
     },
     plugins: [
-        eslint(),
         svelte({
             preprocess: sveltePreprocess(),
             compilerOptions: { dev },
+            onwarn (warning, handler) {
+                if (warning.code === "a11y-click-events-have-key-events") {
+                    return;
+                }
+                handler(warning);
+            },
         }),
         replace({
             "process.env.NODE_ENV": dev ? `"development"` : `"production"`,

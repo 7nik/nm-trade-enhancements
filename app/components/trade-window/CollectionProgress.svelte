@@ -65,6 +65,7 @@
     import type NM from "../../utils/NMTypes";
 
     import { onDestroy } from "svelte";
+    import { firstName } from "../../services/user";
     import { htmlTip } from "../actions/tip";
 
     export let user: NM.User;
@@ -110,13 +111,13 @@
 <svelte:options immutable />
 
 <span class:text-warning={ready && !shortTip}>
-    {user.first_name}:
+    {firstName(user)}:
     {#if !ready}
         ?
     {:else if !shortTip}
         —
     {:else}
-        <a href={link} target="_blank"
+        <a href={link} target="_blank" rel="noreferrer"
             use:htmlTip={longTip}
         >
             {shortTip}
@@ -125,8 +126,8 @@
 </span>
 
 <style>
-    a:link, a:visited, a:hover {
-        color: #0d9ce6;
+    a {
+        color: #0d9ce6 !important;
         text-decoration: none;
     }
     .text-warning {

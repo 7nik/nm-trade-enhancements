@@ -64,11 +64,13 @@
             const details = await NMApi.user.ownedPrints(actors.you.id, print.id);
             prints = {};
             for (const p of details.prints) {
-                prints[p.print_num] = {
-                    ...print,
-                    print_id: p.id,
-                    print_num: p.print_num,
-                };
+                prints[p.print_num] = p.print_num === print.print_num
+                    ? print
+                    : {
+                        ...print,
+                        print_id: p.id,
+                        print_num: p.print_num,
+                    };
             }
             printChooserState = "select";
         } catch (reason) {
@@ -136,7 +138,7 @@
 
         <dt>Series</dt>
         <dd>
-            <a target=_blank href="/series/{print.sett_id}">{print.sett_name}</a>
+            <a target=_blank rel="noreferrer" href="/series/{print.sett_id}">{print.sett_name}</a>
             <slot name="series"/>
         </dd>
 
@@ -252,8 +254,8 @@
         line-height: 18px;
         word-break: break-word;
     }
-    a:link, a:visited, a:hover {
-        color: #0d9ce6;
+    a {
+        color: #0d9ce6 !important;
         text-decoration: none;
     }
     select {
@@ -273,7 +275,7 @@
         position: absolute;
         right: 30px;
         top: 15px;
-        opacity: 0.5;
+        opacity: 0.35;
     }
     .trade-usage.trade-print {
         opacity: 1;
