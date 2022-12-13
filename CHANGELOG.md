@@ -1,5 +1,8 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.1.4
+* Fixed breakage of the production build
+
 ## 3.1.3
 * Styles are encapsulated
 * Filter name aren't capitalized anymore
