@@ -6,8 +6,6 @@ type Config = Services.ArtConfig
     & Services.ArtConstants
     & Services.ArtContentTypes;
 
-type Field<T> = { set?: (value: T) => void, value?: T };
-
 type Data = {
     auth: () => Promise<null>,
     config: Config,
@@ -17,9 +15,10 @@ type Data = {
 
 type Names = keyof Data;
 
-const map: Partial<{
-    [P in Names]: Field<Data[P]>
-}> = {};
+const values: Partial<Data> = {};
+const setters: {
+    [k: string]:  (value: any) => void;
+} = {};
 
 /**
  * Initialize a value
@@ -27,12 +26,8 @@ const map: Partial<{
  * @param value - the value's data
  */
 export function initValue<T extends Names> (name: T, value: Data[T]) {
-    const data = map[name];
-    if (data && "set" in data) {
-        data.set!(value);
-    }
-    // @ts-ignore - ts is baka
-    map[name] = { value };
+    setters[name]?.(value);
+    values[name] = value;
 }
 
 /**
@@ -40,11 +35,8 @@ export function initValue<T extends Names> (name: T, value: Data[T]) {
  * @param name - the value's name
  * @returns value's data or promise of this data
  */
-export function getInitValue<T extends Names> (name: T): Data[T] | Promise<Data[T]> {
-    const data = map[name];
-    if (data && "value" in data) return data.value!;
-    return new Promise((set) => {
-        // @ts-ignore - ts is baka
-        map[name] = { set };
+export function getInitValue<T extends Names> (name: T) {
+    return values[name] ?? new Promise<Data[T]>((set) => {
+        setters[name] = set;
     });
 }
