@@ -48,7 +48,8 @@ export default {
             "process.env.NODE_ENV": dev ? `"development"` : `"production"`,
         }),
         styles({
-            mode: ["inject", { singleTag: true }],
+            // at the document-start, the head may not exist yet
+            mode: ["inject", { singleTag: true, container: "html" }],
             // attempts to minimize CSS by CSSNano or CSSO
             // was allowing to save just a few KiB
         }),
