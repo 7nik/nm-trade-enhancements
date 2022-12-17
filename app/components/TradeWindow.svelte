@@ -546,10 +546,11 @@
         gap: 1ch;
         display: flex;
     }
-    @media screen and (max-width: 960px) {
+    @media (max-width: 960px) {
         article.trade-window {
             padding: 10px;
             border-radius: 6px;
+            margin-right: 30px;
         }
         header {
             padding: 10px;
@@ -565,6 +566,11 @@
         }
         footer {
             padding: 10px;
+        }
+    }
+    @media (max-width: 640px) {
+        article.trade-window {
+            margin-right: 0;
         }
     }
 </style>

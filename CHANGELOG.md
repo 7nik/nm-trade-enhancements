@@ -1,5 +1,8 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.1.5
+* Fixed position of the filter menu on "small" screens
+
 ## 3.1.4
 * Fixed breakage of the production build
 

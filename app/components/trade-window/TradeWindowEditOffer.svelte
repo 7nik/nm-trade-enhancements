@@ -137,9 +137,14 @@
             top += parent.offsetTop;
             parent = parent.offsetParent as HTMLElement;
         } while (parent);
-        left = left + buttonWidth / 2 - menuWidth / 2;
-        if (left < 5) left = 5;
         top = top - button.offsetTop + 5;
+        left = left + buttonWidth / 2 - menuWidth / 2;
+        const windowWidth = window.innerWidth;
+        const sidebarWidth = windowWidth < 640 ? 0 : 360;
+        if (left > windowWidth - menuWidth - sidebarWidth) {
+            left = windowWidth - menuWidth - sidebarWidth - 5;
+        }
+        if (left < 5) left = 5;
         filterMenuBtn.style.setProperty("--left", `${left}px`);
         filterMenuBtn.style.setProperty("--top", `${top}px`);
     }
@@ -215,7 +220,9 @@
             <ul bind:this={viewport} on:scroll={loadMorePrints}>
                 {#each $filteredPrints as print (print.id)}
                     <PrintDetails {print} >
-                        <Button size="mini" icon="add" on:click={() => addPrint(print)} hint="Add one"/>
+                        <Button size="mini" icon="add" hint="Add one"
+                            on:click={() => addPrint(print)}
+                        />
                         <span slot="series" class="card-actions">
                             {#if !$isSettSelected}
                                 <Icon icon="search" size="10px"
@@ -287,7 +294,7 @@
     }
     @media (max-height: 700px) and (min-width: 961px) {
         .filters-menu {
-            top: -63px;
+            top: 45px;
         }
     }
     .edit-filters-btn > :global(:first-child:hover + .filters-menu),
