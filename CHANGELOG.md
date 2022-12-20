@@ -1,5 +1,10 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.1.6
+* Fixed progress tooltip size
+* Fixed issue #1: crashing when trading a card from
+the Cards section on profile page
+
 ## 3.1.5
 * Fixed position of the filter menu on "small" screens
 
