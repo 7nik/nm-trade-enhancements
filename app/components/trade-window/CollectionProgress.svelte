@@ -42,7 +42,7 @@
         let html = data.join(`<i class="pipe"></i>`);
         // if here are all 4 types then locate them in 2 rows
         if (data.length === 4) {
-            html = html.replace(`"chase"></i><i class="pipe"></i>`, `"chase"></i><br>`);
+            html = html.replace(` chase"></i><i class="pipe"></i>`, ` chase"></i><br>`);
         }
         return html;
     }
