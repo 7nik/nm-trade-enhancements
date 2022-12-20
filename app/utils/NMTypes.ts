@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/no-namespace */
+
+// eslint-disable-next-line no-unused-vars
 type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
 export type XOR<T, U> = (T | U) extends object ? (Without<T, U> & U) | (Without<U, T> & T) : T | U;
 
@@ -43,6 +47,9 @@ export type CurrentUser = Omit<NM.User, "name"|"first_name"|"last_name"> & {
 export type rarity = "Common" | "Uncommon" | "Rare" | "Very rare" | "Extra Rare" | "Chase" | "Variant" | "Legendary"
 export type rarityLow = Lowercase<rarity>
 export type rarityCss = "common" | "uncommon" | "rare" | "veryRare" | "extraRare" | "chase" | "variant" | "legendary"
+export type rarityNumber = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
+
+export type difficulty = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 
 declare global {
     var NM: {
@@ -63,11 +70,11 @@ declare global {
             callbacks: {
                 save: Function[],
             },
-            changes: {},
+            changes: Record<string, unknown>,
             errors: object,
             uid: string,
         }
-    }
+    };
 }
 
 declare namespace NM {
@@ -142,7 +149,7 @@ declare namespace NM {
         rarity: {
             name: rarityLow,
             class: rarityCss,
-            value: number,
+            value: rarityNumber,
             carats: number
         },
         piece_assets: {
@@ -250,6 +257,41 @@ declare namespace NM {
         }, keyof Data> & Data,
     }
 
+    // for /api/pieces/ - Cards section on the profile page
+    type OwnedCard = Omit<Card, "rarity"> & {
+        description: string,
+        is_limited_sett: boolean,
+        num_prints_total: number | "unlimited",
+        piece_assets: {
+            image: {
+                "large-promo": Image,
+                "xlarge-gray": Image,
+                xlarge: Image,
+                "large-gray": Image,
+                large: Image,
+                "medium-gray": Image,
+                medium: Image,
+                "small-gray": Image,
+                small: Image,
+                original: Image
+            },
+            video?: {
+                medium: Video,
+                large: Video,
+                original: Video
+            }
+        },
+        public_url: fullURL,
+        rarity: {
+            name: rarity,
+            class: rarityCss,
+            rarity: rarityNumber,
+            carats: number // discard value
+        },
+        sett_id: number,
+        sett_name: string,
+    }
+
     type Pack = {
         id: number,
         default_pack_size: number,
@@ -270,7 +312,7 @@ declare namespace NM {
     }
 
     type PackTier = {
-        name: String,
+        name: string,
         pack_size: number, // card number
         price: number,
         tint: string, // #color of bg
@@ -301,38 +343,7 @@ declare namespace NM {
         cdn_cover_image?: fullURL | null,
     }
 
-    type Print = Omit<Card, "own_count"|"favorite"|"rarity"> & {
-        description: string,
-        rarity: {
-            name: rarity,
-            class: rarityCss,
-            rarity: number,
-            carats: number // discard value
-        },
-        piece_assets: {
-            image: {
-                "large-promo": Image,
-                "xlarge-gray": Image,
-                xlarge: Image,
-                "large-gray": Image,
-                large: Image,
-                "medium-gray": Image,
-                medium: Image,
-                "small-gray": Image,
-                small: Image,
-                original: Image
-            },
-            video?: {
-                medium: Video,
-                large: Video,
-                original: Video
-            }
-        },
-        public_url: fullURL,
-        num_prints_total: number | "unlimited",
-        is_limited_sett: boolean,
-        sett_id: number,
-        sett_name: string,
+    type Print = Omit<OwnedCard, "own_count"|"favorite"> & {
         sett_name_slug: string,
         /**
          * Global print id
@@ -521,10 +532,10 @@ declare namespace NM {
         favorite: boolean,
         base_completed: boolean,
         difficulty: {
-            id: number,// 1-9
+            id: Exclude<difficulty, 0> | 9,
             name: "Beginner"|"Piece of Cake"|"Very Easy"|"Easy"|"Moderate"|"Hard"|"Very Hard"|"Near Impossible"|"Quest!",
-            class_name: `difficulty-${0|1|2|3|4|5|6|7|8}`,
-            level: number // 0-8
+            class_name: `difficulty-${difficulty}`,
+            level: difficulty
         },
         replica_parent: null|number,
         notify: boolean
@@ -668,25 +679,8 @@ declare namespace NM {
             description: string,
             rarity: Rarity,
             asset_type: "image" | "video",
-            piece_assets: {
-                image: {
-                    "large-promo": NM.Image,
-                    "xlarge-gray": NM.Image,
-                    xlarge: NM.Image,
-                    "large-gray": NM.Image,
-                    large: NM.Image,
-                    "medium-gray": NM.Image,
-                    medium: NM.Image,
-                    "small-gray": NM.Image,
-                    small: NM.Image,
-                    original: NM.Image
-                },
-                video?: {
-                    medium: NM.Video,
-                    large: NM.Video,
-                    original: NM.Video
-                }
-            },
+            piece_assets: Print["piece_assets"],
+            absolute_url: absoluteURL,
             public_url: fullURL,
             num_prints_total: number | "unlimited",
             set: Sett,
@@ -711,6 +705,7 @@ declare namespace NM {
             name: rarity,
         }
 
+        // eslint-disable-next-line no-shadow
         type Sett = {
             creator: UserShort,
             discontinued: timestamp | null,
@@ -733,7 +728,7 @@ declare namespace NM {
             pro_status: 0 | 1,
             is_staff: boolean,
             twitter_username: null | string,
-            connected_accounts: {},
+            connected_accounts: Record<string, unknown>,
             is_verified: boolean,
             num_prints: number,
             num_favorites: number,

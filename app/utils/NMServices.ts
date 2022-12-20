@@ -1,6 +1,8 @@
-import type { Socket } from "socket.io-client";
+/* eslint-disable @typescript-eslint/ban-types */
+
 import type { CurrentUser } from "./NMTypes";
 import type NM from "./NMTypes";
+import type { Socket } from "socket.io-client";
 
 type fullURL = string
 type absoluteURL = string
@@ -12,7 +14,7 @@ type $httpConfig = Partial<{
     url: string,
     params: object,
     data: object|string,
-    headers: Record<string,string|(()=>string)>,
+    headers: Record<string, string|(()=>string)>,
     eventHandlers: Record<string, Function>,
     uploadEventHandlers: Record<string, Function>,
     xsrfHeaderName: string,
@@ -32,6 +34,7 @@ type Paginated<Data> = Data & {
     retrieveNext: () => Promise<Paginated<Data>> | null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace Services {
 
     type ArtConfirm = {
@@ -187,7 +190,7 @@ declare namespace Services {
             sett_created: "sett_created";
             modified: "modified";
         };
-        TRADE_EXPIRE_HOURS: 48.0;
+        TRADE_EXPIRE_HOURS: 48;
         SETT_VERSION_UNLIMITED: 2;
         SETT_VERSION_LIMITED: 3;
         BONUS_PACK_FREQUENCY: 0.14;
@@ -277,7 +280,7 @@ declare namespace Services {
         preloadImagesSeries: (user: NM.User | ArtUser, pieces: NM.Print[], size: keyof NM.Print["piece_assets"]["image"], isPublic: boolean) => Promise<HTMLImageElement|void>,
         preloadImages: (user: NM.User | ArtUser, pieces: NM.Print[], size: keyof NM.Print["piece_assets"]["image"], isPublic: boolean) => Promise<HTMLImageElement[]>,
         getImageUrls: (user: NM.User | ArtUser, pieces: NM.Print[], size: keyof NM.Print["piece_assets"]["image"], isPublic: boolean) => string[],
-        toggleFavorite: (piece: NM.Card ) => void,
+        toggleFavorite: (piece: NM.Card) => void,
     }
 
     type ArtResource = {
@@ -366,7 +369,7 @@ declare namespace Services {
         connectSortedList: (namespace: string, options: {
             id?: number | null,
             sort?: (a:object, b:object)=>number,
-            onLoadInitial?: (data:{results:object[],count?:number}) => void,
+            onLoadInitial?: (data:{results:object[], count?:number}) => void,
             onLoad?: (data: object[]) => void,
             onAddItem?: (data: object) => void,
             onRemoveItem?: (data: object) => void,
@@ -432,7 +435,7 @@ declare namespace Services {
         resetData: () => void,
         setPieceData: (piece: NM.Card, sett: NM.SettMetrics | null, need: boolean) => void,
         getPieceData: () => {
-            piece: NM.Card & { print_num?: number } | NM.Unmerged.Prints,
+            piece: (NM.Card | NM.OwnedCard | NM.Unmerged.Prints) & { print_num: number, favorite: boolean },
             sett?: NM.SettMetrics,
             need: boolean | null,
         },
@@ -470,7 +473,7 @@ declare namespace Services {
         isPromoPack: () => boolean,
         isOnboardingPack: () => boolean,
         isSpecialPack: () => boolean,
-        startPackSelect: (settOrSettUrl: NM.Sett | string) => Promise<NM.Sett>,// ???
+        startPackSelect: (settOrSettUrl: NM.Sett | string) => Promise<NM.Sett>, // ???
         startPackOpen: (packOrUrl: NM.Pack | string) => Promise<NM.Pack>, // ???
         startSettSelect: (settListUrl: string) => Promise<Paginated<unknown>>, // ???
         finish: () => void,
@@ -507,4 +510,4 @@ declare namespace Services {
     }
 }
 
-export default Services
+export default Services;

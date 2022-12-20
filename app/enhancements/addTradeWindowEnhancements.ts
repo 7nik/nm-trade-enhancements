@@ -218,9 +218,14 @@ addPatches(() => {
                         actors,
                         side: initialCardData.offerType === "bidder_offer" ? "bidder" : "responder",
                         card: pieceData.piece,
-                        sett: pieceData.piece && "set" in pieceData.piece
-                            ? pieceData.piece.set
-                            : pieceData.sett!,
+                        sett: pieceData.piece && "sett_id" in pieceData.piece
+                            ? {
+                                id: pieceData.piece.sett_id,
+                                name: pieceData.piece.sett_name,
+                            }
+                            : (pieceData.piece && "set" in pieceData.piece
+                                ? pieceData.piece.set
+                                : pieceData.sett!),
                     }
                     : { actors };
 

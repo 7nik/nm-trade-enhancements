@@ -17,7 +17,7 @@
     }, {
         actors: Actors,
         side: "bidder"|"responder",
-        card: NM.Card | NM.Unmerged.Prints,
+        card: NM.Card | NM.OwnedCard | NM.Unmerged.Prints,
         sett: {
             id: number,
             name: string,
