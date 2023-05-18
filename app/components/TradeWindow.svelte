@@ -332,9 +332,11 @@
      * @param back - whether the Back button was pressed
      */
     async function cancelTrade (back = false) {
-        if ((yourOffer.length > 0 || partnersOffer.length > 0) && !await confirm(
-            "Are you sure you want to close this trade?",
-            "If you leave, you'll lose your trade in progress.",
+        if (mode === "edit"
+            && (yourOffer.length > 0 || partnersOffer.length > 0)
+            && !await confirm(
+                "Are you sure you want to close this trade?",
+                "If you leave, you'll lose your trade in progress.",
         )) return;
         closeTrade(back);
     }
