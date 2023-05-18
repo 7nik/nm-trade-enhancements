@@ -46,6 +46,7 @@ export default {
         }),
         replace({
             "process.env.NODE_ENV": dev ? `"development"` : `"production"`,
+            preventAssignment: true,
         }),
         styles({
             // at the document-start, the head may not exist yet

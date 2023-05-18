@@ -35,7 +35,7 @@ type Scope = angular.IScope & {
 /**
  * Adds a button to open a promo pack if available
  */
-addPatches(() => {
+addPatches((angular) => {
     angular.module("neonmobApp").directive("nmPromoPackBtn", [
         "poRoute",
         "artOverlay",

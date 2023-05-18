@@ -5,7 +5,9 @@ import NMApi from "../utils/NMApi";
 import { debug, LazyMap } from "../utils/utils";
 import currentUser from "./currentUser";
 
-const data = new LazyMap<number, Record<number, NM.SettMetrics>>(300_000);
+type MetricsMap = Record<number, NM.SettMetrics>;
+
+const data = new LazyMap<number, MetricsMap>(300_000);
 const loading = new Map<number, Promise<NM.SettMetrics[]>>();
 
 /**
@@ -27,7 +29,7 @@ async function loadOwnership (userId: number) {
     loading.set(userId, promise);
     try {
         const setts = await loading.get(userId)!;
-        const map = {} as Record<number, NM.SettMetrics>;
+        const map: MetricsMap = {};
         for (const sett of setts) {
             map[sett.id] = sett;
         }
@@ -74,7 +76,7 @@ type Progress = {
 }
 
 class UserCollections {
-    #collections;
+    #collections: MetricsMap;
 
     constructor (userId: number) {
         this.#collections = data.get(userId) ?? {};

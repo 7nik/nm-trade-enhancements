@@ -93,7 +93,7 @@ type Scope = angular.IScope & ParentScope & {
 /**
  * Adds a controller to wishlist or unwishlist all unowned cards according to rarity filters
  */
-addPatches(() => {
+addPatches((angular) => {
     angular.module("nm.trades").controller("wishlistCardsButton", ["$scope", ($scope: Scope) => {
         $scope.toggleWishlists = (ev: MouseEvent) => {
             // as we don't have access to the list of all cards

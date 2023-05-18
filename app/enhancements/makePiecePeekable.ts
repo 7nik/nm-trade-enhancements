@@ -20,7 +20,7 @@ type Scope = angular.IScope & {
  * Adds an alternative directive for displaying a piece which allows to see
  * the colored/animated version of a card by clicking and holding on it.
  */
-addPatches(() => {
+addPatches((angular) => {
     angular.module("Art").directive("artPeekablePieceAsset", () => ({
         scope: {
             piece: "=artPeekablePieceAsset",

@@ -1,18 +1,25 @@
 {
-  "extends": "@tsconfig/svelte/tsconfig.json",
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "sourceMap": false,
-    "inlineSources": false,
-    "strict": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "noImplicitAny": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "baseUrl": "./"
-  },
-  "include": ["app/**/*", "node_modules/@types", "declaration.d.ts"],
-  "exclude": ["dist/*", "packages/*"]
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"sourceMap": false,
+		"inlineSources": false,
+		"strict": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"noImplicitAny": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"baseUrl": "./",
+		"allowSyntheticDefaultImports": true,
+		"moduleResolution": "nodenext",
+	},
+	// Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
+
+	// If you want to overwrite includes/excludes, make sure to copy over the relevant includes/excludes
+	// from the referenced tsconfig.json - TypeScript does not merge them in
+	// "ts-node": {
+	// 	"esm": true,
+	// 	"experimentalSpecifierResolution": "node",
+	// }
 }

@@ -14,7 +14,7 @@ function setLastActionAgo (scope: Scope) {
     });
 }
 
-addPatches(() => {
+addPatches((angular) => {
     angular.module("Art").directive("lastAction", [() => ({
         scope: { userId: "=lastAction" },
         link: (scope: Scope) => {

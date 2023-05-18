@@ -12,7 +12,7 @@ import NMApi from "../utils/NMApi";
 import addPatches from "../utils/patchAngular";
 import { debug } from "../utils/utils";
 
-addPatches(() => {
+addPatches((angular) => {
     angular.module("nm.trades").run([
         "$rootScope",
         "nmTrades",
@@ -232,7 +232,6 @@ addPatches(() => {
                 tradeWindow = new TradeWindow({
                     target: div,
                     props: {
-                        actors,
                         initialData,
                         backButtonText,
                         showConversation,

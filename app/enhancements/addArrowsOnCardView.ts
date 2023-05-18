@@ -16,7 +16,7 @@ type Scope = angular.IScope & {
  * convenient navigation between cards.
  * Also, use the same order of cards as in the series checklist.
  */
-addPatches(() => {
+addPatches((angular) => {
     // Add a directive for providing cards in the same order as in the series checklist
     angular.module("neonmobApp").directive("addChecklistOrderedCards", [() => ({
         scope: { pieces: "=addChecklistOrderedCards" },

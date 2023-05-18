@@ -17,7 +17,7 @@ type NotificationScope = angular.IScope & {
 /**
  * Shows in which trades the card is used if it is
  */
-addPatches(() => {
+addPatches((angular) => {
     angular.module("Art").controller("nmUsageInTrades", [
         "$scope",
         "$element",

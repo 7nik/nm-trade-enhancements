@@ -14,7 +14,7 @@ if (window.location.pathname.startsWith("/account/")) {
     /**
      * Adds a controller for NM Trade Enhancements settings block on the account settings page
      */
-    addPatches(() => {
+    addPatches((angular) => {
         angular.module("nm.account.settings").controller("nmTradeEnhancementsSettingsController", [
             "$scope",
             ($scope: Scope) => {
@@ -71,10 +71,10 @@ if (window.location.pathname.startsWith("/account/")) {
                                 <span class=checkbox-slider--knob></span>
                             </span>
                             <label class=checkbox-slider--label for=nmte-mute>
-                                Keep animated cards muted. 
-                                <small class="text-subdued">    
+                                Keep animated cards muted.
+                                <small class="text-subdued">
                                     If you own an animated card, on the detailed view
-                                    NMTE will show you the original animation for 
+                                    NMTE will show you the original animation for
                                     better quality. But the original animation,
                                     unlike previews, may contain an audio.
                                 </small>

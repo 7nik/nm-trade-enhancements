@@ -11,7 +11,7 @@ import { error } from "../utils/utils";
 const map = new Map<number, OwnedCards>();
 
 // replace entire `artPieceService` with custom one to keep all the data synced
-addPatches(() => {
+addPatches((angular) => {
     angular.module("Art").factory("artPieceService", [
         "artSubscriptionService",
         "artUser",

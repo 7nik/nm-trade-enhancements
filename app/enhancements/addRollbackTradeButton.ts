@@ -6,7 +6,7 @@ import { debug } from "../utils/utils";
 /**
  * Patches AngularJS to show button to rollback an edited trade.
  */
-addPatches(() => {
+addPatches((angular) => {
     angular.module("nm.trades").controller("rollbackTradeButton", [
         "$scope",
         "nmTrades",

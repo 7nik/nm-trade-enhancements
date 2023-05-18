@@ -112,8 +112,8 @@ function applyPatches () {
         },
     ];
 
-    for (const patch of patchers) patch(angular);
-    angular.module("nmApp").run(patcher);
+    for (const patch of patchers) patch(window.angular);
+    window.angular.module("nmApp").run(patcher);
 
     // sometimes, when userscript is loaded via a proxy script,
     // it gets executed too late, so reload the page once

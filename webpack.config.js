@@ -6,7 +6,7 @@
 const path = require("path");
 const fs = require("fs");
 const webpack = require("webpack");
-const TerserPlugin = require('terser-webpack-plugin'); 
+const TerserPlugin = require('terser-webpack-plugin');
 const usHeader = require("userscript-header").fromPackage("./package.json");
 const sveltePreprocess = require("svelte-preprocess");
 const SvelteCheckPlugin = require("svelte-check-plugin");
@@ -25,6 +25,7 @@ fs.writeFile(
 );
 
 module.exports = {
+    target: "esnext",
     mode: dev ? "development" : "production",
     entry: path.resolve(__dirname, "app", "userscript", "userscript.ts"),
     output: {
@@ -59,8 +60,8 @@ module.exports = {
                 loader: "babel-loader",
                 exclude: /(node_modules)/
             },
-            { 
-                test: /\.css$/, 
+            {
+                test: /\.css$/,
                 loader: "css-loader",
             },
             {
