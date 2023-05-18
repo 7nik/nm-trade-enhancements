@@ -228,10 +228,6 @@
      */
     export let sett: { id: number, name: string } | null = null;
     /**
-     * filters.sett !== null
-     */
-    export const isSettSelected = writable(false);
-    /**
      * List of hidden setts
     */
     export const hiddenSetts = writable<hiddenSett[]>([]);
@@ -337,25 +333,28 @@
      * Merges active filters with the same prefix into one
      * @param afilters - the array with the filters
      * @param prefix - which filters to merge
-     * @param newPrefix - the new prefix, by default used the old one
+     * @param newPrefix - the new prefix, by default used the old one.
+     *      Empty prefix will result in removing the filters
      * @returns - the array with merged filters
      */
     function mergeActiveFilters (afilters: ActiveFilter[], prefix: string, newPrefix = prefix) {
         const afs = afilters.filter((af) => af.prefix === prefix);
         if (afs.length === 0) return afilters;
-        if (afs.length === 1) {
+        if (afs.length === 1 && newPrefix) {
             afs[0].prefix = newPrefix;
             return afilters;
         }
         const pos = afilters.indexOf(afs[0]);
         afilters = afilters.filter((af) => !afs.includes(af));
-        const af: ActiveFilter = {
-            prefix: newPrefix,
-            icons: afs.flatMap(({ icons = [] }, i) => (i > 0 ? ["pipe", ...icons] : icons)),
-            text: afs.find(({ text }) => text)?.text,
-            tip: afs.map(({ tip }) => tip).join(", ").replaceAll(" cards,", ","),
-        };
-        afilters.splice(pos, 0, af);
+        if (newPrefix) {
+            const af: ActiveFilter = {
+                prefix: newPrefix,
+                icons: afs.flatMap(({ icons = [] }, i) => (i > 0 ? ["pipe", ...icons] : icons)),
+                text: afs.find(({ text }) => text)?.text,
+                tip: afs.map(({ tip }) => tip).join(", ").replaceAll(" cards,", ","),
+            };
+            afilters.splice(pos, 0, af);
+        }
         return afilters;
     }
 
@@ -374,11 +373,8 @@
             filters.incompleteSetts = true;
         }
 
-        if ($isSettSelected !== (filters.sett !== null)) {
-            $isSettSelected = filters.sett !== null;
-            $hiddenSetts = $isSettSelected
-                ? filters.hiddenSetts
-                : [];
+        if (($hiddenSetts === filters.hiddenSetts) !== (filters.sett === null)) {
+            $hiddenSetts = filters.sett ? [] : filters.hiddenSetts;
         }
         // re-filter the series list when these filters get changed
         const newSeriesListKey = [
@@ -410,6 +406,12 @@
             newActiveFilters = mergeActiveFilters(newActiveFilters, "S");
             // join all series types into one
             newActiveFilters = mergeActiveFilters(newActiveFilters, "ST", "S");
+            if (filters.sett) {
+                newActiveFilters = mergeActiveFilters(newActiveFilters, "P'S", "");
+                newActiveFilters = mergeActiveFilters(newActiveFilters, "U'S", "");
+                newActiveFilters = mergeActiveFilters(newActiveFilters, "S", "");
+                newActiveFilters.unshift(getFilterLabel("sett")!);
+            }
             // join wishlisted, notInTrades, and cardName
             newActiveFilters = mergeActiveFilters(newActiveFilters, "C");
             // join all rarities into one
@@ -775,9 +777,9 @@
             });
         }
         // card hiding based on collection progress
-        if (isFilterActive.collection
-            || filters.incompleteSetts && !filters.notOwned
-        ) {
+        if (!filters.sett && (
+            isFilterActive.collection || filters.incompleteSetts && !filters.notOwned
+        )) {
             prints = prints.filter((print) => {
                 const settId = print.sett_id;
                 // assume `collections` already contains filtered series
@@ -785,12 +787,13 @@
             });
         }
         // card hiding based on series type
-        if (filters.oopSetts
+        if (!filters.sett && (
+            filters.oopSetts
             || filters.limCreditSetts
             || filters.limFreebieSetts
             || filters.unlimSetts
             || filters.rieSetts
-        ) {
+        )) {
             const missingInfo = prints
                 .filter((print) => !(print.sett_id in settType))
                 .map((print) => getSettType(print.sett_id));
