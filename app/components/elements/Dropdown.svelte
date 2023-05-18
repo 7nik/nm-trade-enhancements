@@ -22,9 +22,13 @@
      */
     export let list: T[];
     /**
-     * THe current value
+     * The current value
      */
     export let value: T | null;
+    /**
+     * The text to display when the list is empty
+     */
+    export let emptyListText = "";
 
     const dispatch = createEventDispatcher();
     $: dispatch("change", value);
@@ -52,6 +56,8 @@
                     <slot {item}>{item.name}</slot>
                 </div>
             {/if}
+        {:else}
+            <center>{emptyListText}</center>
         {/each}
     </div>
 </span>

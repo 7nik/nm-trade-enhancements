@@ -423,7 +423,7 @@
     // so it is ok to load this data even if it won't be displayed
     let ownerCollections: UserCollections;
     let oppositeCollections: UserCollections;
-    let collections: NM.SettMetrics[] = [];
+    let collections: NM.SettMetrics[]|null = null;
     async function updateSeriesList () {
         if (!ownerCollections) {
             ownerCollections = await ownedCollections(cardOwner.id)
@@ -781,7 +781,7 @@
             prints = prints.filter((print) => {
                 const settId = print.sett_id;
                 // assume `collections` already contains filtered series
-                return collections.find(({ id }) => id === settId);
+                return collections?.find(({ id }) => id === settId);
             });
         }
         // card hiding based on series type
@@ -911,8 +911,9 @@
                 }
             }}
         />
-        <Dropdown list={collections} bind:value={filters.sett} let:item
-            hint={collections.length > 0 ? "Choose a Series" : "Loading series..."}
+        <Dropdown list={collections ?? []} bind:value={filters.sett} let:item
+            hint={collections ? "Choose a Series" : "Loading series..."}
+            emptyListText="No series matching the filters"
         >
             <!-- if collections list is loaded then user collections loaded too -->
             {@const coll1 = (isItYou ? oppositeCollections : ownerCollections).getProgress(item.id)}
