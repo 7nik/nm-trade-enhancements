@@ -300,10 +300,6 @@
     let filters: Filters = filterSet
         ? { ...defaultFilters, ...filterSet.filters, sett }
         : { ...defaultFilters, sett };
-    // try to unset filterSet when the filters changes
-    $: if (filterSet && !isEqualToFilterSet(filters, filterSet)) {
-        filterSet = null;
-    }
     const isFilterActive = new Proxy<object>({}, {
         get (_, prop: keyof Filters) {
             if (prop === "hiddenSetts") {
@@ -325,6 +321,17 @@
                 .filter((key) => this.get!(filters, key, filters));
         },
     }) as Record<keyof Filters, boolean>;
+
+    /**
+     * Resets `filterSet` to `null` if it doesn't match the passed filters
+     * @param f - the filters to compare with
+     */
+    function resetFilterSet (f: Filters) {
+        if (filterSet && !isEqualToFilterSet(f, filterSet)) {
+            filterSet = null;
+        }
+    }
+    $: resetFilterSet(filters);
 
     /**
      * Merges active filters with the same prefix into one
@@ -1091,6 +1098,7 @@
         border-radius: 3px;
         box-shadow: inset 0 1px 2px #0001;
         outline: none;
+        appearance: textfield;
         -webkit-appearance: textfield;
     }
     .row :global(input[type=search]::-webkit-search-cancel-button) {
