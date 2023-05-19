@@ -133,8 +133,8 @@ export default function addPatches (
     templatePatchList.push(...templatePatches);
 }
 
-if (window.location.pathname.startsWith("/redeem/")) {
-    // nothing to patch on this page
+if (!document.querySelector(`body>[ng-controller="publicNavigationController"]`)) {
+    // nothing to patch on such pages
 } else if (document.readyState === "complete") {
     if (window.location.hash !== "#reloaded") {
         window.location.hash = "#reloaded";

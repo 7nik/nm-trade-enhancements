@@ -23,8 +23,8 @@
       "https://staging.neonmob.com/*"
     ],
     "exclude": [
-      "https://www.neonmob.com/login*",
-      "https://www.neonmob.com/"
+      "https://*.neonmob.com/login*",
+      "https://*.neonmob.com/"
     ],
     "grant": "none",
     "run-at": "document-start"

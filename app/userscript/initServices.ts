@@ -137,7 +137,9 @@ async function initCurrentUser () {
     // fallback
     document.addEventListener("DOMContentLoaded", () => {
         if (found) return;
-        if (window.location.pathname.startsWith("/redeem/")) return;
+        if (!document.querySelector(`body>[ng-controller="publicNavigationController"]`)) {
+            return;
+        }
         error("couldn't load the user info");
         auth().then(() => { window.location.reload(); });
     });
