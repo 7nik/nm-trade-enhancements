@@ -98,6 +98,12 @@ function patchArtResource (artResource: Services.ArtResource) {
  * Apply the patches
  */
 function applyPatches () {
+    if (!document.querySelector(`body>[ng-controller="publicNavigationController"]`)
+        || document.querySelector(".error-page")
+    ) {
+        // nothing to patch on such pages
+        return;
+    }
     let applied = false;
     const patcher = [
         "$templateCache",
@@ -133,9 +139,7 @@ export default function addPatches (
     templatePatchList.push(...templatePatches);
 }
 
-if (!document.querySelector(`body>[ng-controller="publicNavigationController"]`)) {
-    // nothing to patch on such pages
-} else if (document.readyState === "complete") {
+if (document.readyState === "complete") {
     if (window.location.hash !== "#reloaded") {
         window.location.hash = "#reloaded";
         window.location.reload();

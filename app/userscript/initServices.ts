@@ -137,7 +137,9 @@ async function initCurrentUser () {
     // fallback
     document.addEventListener("DOMContentLoaded", () => {
         if (found) return;
-        if (!document.querySelector(`body>[ng-controller="publicNavigationController"]`)) {
+        if (!document.querySelector(`body>[ng-controller="publicNavigationController"]`)
+            || document.querySelector(".error-page")
+        ) {
             return;
         }
         error("couldn't load the user info");
