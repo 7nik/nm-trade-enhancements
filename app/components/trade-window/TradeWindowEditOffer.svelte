@@ -36,7 +36,7 @@
     }>();
 
     let filtersMenu: FiltersMenu;
-    $: ({ hiddenSetts, isSettSelected, activeFilters } = filtersMenu ?? {});
+    $: ({ hiddenSetts, isSettSelected, activeFilterLabels } = filtersMenu ?? {});
 
     let prints: Paginator<NM.PrintInTrade>;
     let filteredPrints: Writable<NM.PrintInTrade[]> = writable([]);
@@ -175,8 +175,8 @@
     </header>
 
     <section class="active-filters">
-        {#if $activeFilters?.length > 0}
-            {#each $activeFilters as filter (filter.tip)}
+        {#if $activeFilterLabels?.length > 0}
+            {#each $activeFilterLabels as filter (filter.tip)}
                 {#key filter.tip}
                     <span class="active-filter" use:tip={filter.tip}>
                         <span class="prefix">{filter.prefix}</span>

@@ -31,7 +31,7 @@
  -->
  <script lang="ts">
     /* eslint-disable unicorn/consistent-destructuring, sonarjs/no-duplicate-string */
-    import { setContext } from "svelte";
+    import { onDestroy, setContext } from "svelte";
     import { writable } from "svelte/store";
     import currentUser from "../services/currentUser";
     import { firstName } from "../services/user";
@@ -39,6 +39,7 @@
     import { alert, confirm } from "./dialogs/modals";
     import Button from "./elements/Button.svelte";
     import Icon from "./elements/Icon.svelte";
+    import { loadCollectionInfo, unloadCollectionInfo } from "./trade-window/collectionProgress";
     import TradeWindowList from "./trade-window/TradeWindowOffer.svelte";
 
     /**
@@ -212,6 +213,17 @@
     setContext("tradeId", tradeId);
     $: setContext("actors", actors);
 
+    $: if (actors) {
+        loadCollectionInfo(actors.you.id);
+        loadCollectionInfo(actors.partner.id);
+    }
+    onDestroy(() => {
+        if (actors) {
+            unloadCollectionInfo(actors.you.id);
+            unloadCollectionInfo(actors.partner.id);
+        }
+    });
+
     /**
      * Start a new trade
      */
@@ -337,7 +349,8 @@
             && !await confirm(
                 "Are you sure you want to close this trade?",
                 "If you leave, you'll lose your trade in progress.",
-        )) return;
+            )
+        ) return;
         closeTrade(back);
     }
 </script>
