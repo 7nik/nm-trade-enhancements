@@ -100,7 +100,7 @@
         }
         if (viewport) {
             const offset = viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop;
-            if (offset > 1000) {
+            if (viewport.scrollHeight === 0 || offset > 1000) {
                 loading = false;
                 return;
             }
