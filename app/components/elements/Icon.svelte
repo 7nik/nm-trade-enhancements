@@ -117,6 +117,8 @@
     const IMG_ICONS = [
         "carat",
         "card-trading",
+        "no-trading",
+        "trading-only",
         "credit",
         "loader",
         "notifications",
@@ -263,11 +265,19 @@
         transform: rotate(45deg);
     }
     .card-trading::before {
-        font-family: 'glyphter nm icon font';
-        content: 'S';
         color: white;
         display: block;
         transform: rotate(-45deg);
+    }
+    .card-trading::before, .no-trading::before, .trading-only::before {
+        font-family: 'glyphter nm icon font';
+        content: 'S';
+    }
+    .no-trading::before {
+        color: red;
+    }
+    .trading-only::before {
+        color: #26e600;
     }
     .credit {
         background-image: url('https://d1ld1je540hac5.cloudfront.net/assets/svg/credit.svg');

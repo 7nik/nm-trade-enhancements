@@ -665,6 +665,17 @@ declare namespace NM {
             refs: Record<string, object>,
         }
 
+        type FavoriteCards = {
+            results: (Omit<Card, "asset_type"|"own_count"|"rarity"> & {
+                rarity: OwnedCard["rarity"],
+                sett: Pick<NM.Sett, "id"|"name"|"difficulty"|"links"|"sett_assets"> & {
+                    creator: UserMinimal,
+                },
+            })[],
+            target: UserLong,
+            viewer: UserLong,
+        }
+
         type FavoriteSetts = {
             results: Pick<NM.Sett, "id"|"name"|"difficulty"|"favorite"|"links"|"sett_assets" > & {
                 creator: UserShort,

@@ -2,18 +2,18 @@
     A component to search and add prints to an offer
 -->
 <script lang="ts">
-    import type { Paginator } from "../../utils/NMApi";
     import type NM from "../../utils/NMTypes";
     import type { Actors } from "../TradeWindow.svelte";
+    import type { Paginator } from "./cardsProvider";
     import type { Writable } from "svelte/store";
 
     import { onDestroy, createEventDispatcher, getContext } from "svelte";
     import { writable } from "svelte/store";
-    import NMApi from "../../utils/NMApi";
     import tip from "../actions/tip";
     import Avatar from "../elements/Avatar.svelte";
     import Button from "../elements/Button.svelte";
     import Icon from "../elements/Icon.svelte";
+    import cardsProvider from "./cardsProvider";
     import FiltersMenu from "./FiltersMenu.svelte";
     import PrintDetails from "./PrintDetails.svelte";
 
@@ -72,7 +72,7 @@
             prints = cache[cacheKey];
         } else {
             filteredPrints = writable([]);
-            prints = NMApi.trade.findPrints(cardOwner.id, query);
+            prints = cardsProvider(cardOwner.id, query);
             cache[cacheKey] = prints;
         }
 

@@ -342,7 +342,7 @@ async function filterPrints (
         ));
     }
     // hide cards involved in other trades
-    if (activeFilters.notInTrades) {
+    if (filters.tradingCards === 1) {
         prints = prints.filter((print) => !isTrading(
             print,
             isItYou ? "give" : "receive",

@@ -5,18 +5,24 @@ import { get, writable } from "svelte/store";
 import { loadValue, saveValue } from "../../../utils/storage";
 import { confirm, createDialog } from "../../dialogs/modals";
 import NameFilterSet from "../../dialogs/NameFilterSet.svelte";
+import { isRange } from "./filterUtils";
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 const filterSetList: Writable<FilterSet[]> = writable<FilterSet[]>([], (set) => {
     const fsets = loadValue<FilterSet[]>("filterSets", []);
     // the Infinity value cannot be stored in JSON, so
     // during serialization it gets replaced with null
     // now we need to fix it back
     for (const fset of fsets) {
+        if ("notInTrades" in fset.filters) {
+            // @ts-ignore - backward compatibility
+            fset.filters.tradingCards = +fset.filters.notInTrades;
+        }
         let prop: keyof Filters;
         for (prop in fset.filters) {
             if (prop === "hiddenSetts") continue;
             const val = fset.filters[prop];
-            if (Array.isArray(val) && (val as (number|null)[]).includes(null)) {
+            if (isRange(val) && (val as (number|null)[]).includes(null)) {
                 (fset.filters[prop] as number[]) = val
                     .map((num) => (num === null ? Number.POSITIVE_INFINITY : num));
             }

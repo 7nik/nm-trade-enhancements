@@ -319,6 +319,28 @@ const API = {
             );
             return data.payload.favorited;
         },
+        /**
+         * Get cards favorited by a user
+         * @param id - the user id
+         * @returns full list of favorited cards
+         */
+        async favoriteCards (id: number) {
+            const data = await api.get<NM.Unmerged.Container<NM.Unmerged.FavoriteCards>>(
+                `/users/${id}/favorites/`,
+            );
+            return data.payload.results;
+        },
+        /**
+         * Get cards wishlisted by a user
+         * @param id - the user id
+         * @returns full list of wishlisted cards
+         */
+        async wishlistedCards (id: number) {
+            const data = await api.get<NM.Unmerged.Container<NM.Unmerged.FavoriteCards>>(
+                `/users/${id}/favorites/?wish_list=true`,
+            );
+            return data.payload.results;
+        },
     },
     category: {
         // list: /api/categories/?page=[PAGE]

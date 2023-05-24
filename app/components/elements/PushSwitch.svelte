@@ -1,58 +1,55 @@
 <!-- @component
     A pushing button-toggler
  -->
-<script lang="ts">
+ <script lang="ts">
     import type { IconName } from "./Icon.svelte";
 
-    import { error } from "../../utils/utils";
+    import { createEventDispatcher } from "svelte";
     import tip from "../actions/tip";
     import Icon from "./Icon.svelte";
 
-    /**
+    type T = $$Generic<boolean | number>;
+    type I<TT> = TT extends number ? IconName[] : IconName | [IconName, IconName] | [];
+
+    /*
      * The current value
      */
-    export let value: boolean;
+    export let value: T;
     /**
-     * The icon name
+     * The icons for each value or one universal
      */
-    export let icon: IconName | IconName[] = [];
-    /**
-     * The icon name of the pressed switch
-     */
-    export let activeIcon: IconName | IconName[] = icon;
-    /**
-     * The text as icon
-     */
-    export let text = "";
+    export let icons: I<T> = [];
     /**
      * The tooltip text
      */
     export let hint = "";
 
-    if (Array.isArray(icon) !== Array.isArray(activeIcon)) {
-        error("Both `icon` and `activeIcon` must have the same type", icon, activeIcon);
-    } else if (Array.isArray(icon)
-        && Array.isArray(activeIcon)
-        && icon.length !== activeIcon.length
-    ) {
-        error("Provided different number of icons", icon, activeIcon);
+    const dispatch = createEventDispatcher<{ change: T }>();
+
+    $: icon = Array.isArray(icons)
+        ? icons[+value] as IconName
+        : icons as IconName;
+
+    function toggle (ev: KeyboardEvent|MouseEvent) {
+        if (ev instanceof KeyboardEvent && ev.key !== "Enter" && ev.key !== "Space") return;
+        if (typeof value === "boolean") {
+            value = !value as T;
+        } else  if (typeof value === "number") {
+            value = value >= icons.length - 1 ? 0 as T : value + 1 as T;
+        }
+        dispatch("change", value);
     }
-    $: icons = value
-        ? (Array.isArray(activeIcon) ? activeIcon : [activeIcon])
-        : (Array.isArray(icon) ? icon : [icon]);
 </script>
 
-<label class:selected={value} use:tip={hint}>
-    <input type=checkbox bind:checked={value} on:change>
-    <!-- eslint-disable-next-line no-shadow -->
-    {#each icons as icon}
-        <Icon {icon} size="1em" />
-    {/each}
-    {#if text}{text}{/if}
-</label>
+<div class="switch" class:selected={value} use:tip={hint}
+    on:click={toggle} tabindex="-1" on:keypress={toggle}
+>
+    {#if icon}<Icon {icon} size="1em" />{/if}
+    <slot/>
+</div>
 
 <style>
-    label {
+    div {
         padding: 0;
         margin: 0;
         display: flex;
@@ -66,15 +63,12 @@
         cursor: pointer;
         user-select: none;
     }
-    label.selected {
+    div.selected {
         background: #d6d6d6;
         color: #1482A1;
         box-shadow: inset 0 1px 0 0 #0002;
     }
-    label:hover {
+    /* div:hover {
         box-shadow: inset 0 0 0 1px #0004;
-    }
-    input {
-        display: none;
-    }
+    } */
 </style>

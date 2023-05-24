@@ -153,12 +153,12 @@
     <span class="row">
         <PushSwitch
             bind:value={$filters.shared}
-            icon="commonSeries"
+            icons="commonSeries"
             hint={getHint("shared")}
         />
         <PushSwitch
             bind:value={$filters.incompleteSetts}
-            icon="unownedCard"
+            icons="unownedCard"
             hint={getHint("incompleteSetts")}
             on:change={() => {
                 if ($filters.incompleteSetts && $filters.notOwned) {
@@ -194,43 +194,45 @@
     <span class="row multi-switch">
         <PushSwitch
             bind:value={$filters.oopSetts}
-            text="OoP"
             hint={getHint("oopSetts")}
-        />
+        >OoP</PushSwitch>
         <PushSwitch
             bind:value={$filters.limCreditSetts}
-            icon={["limited", "credit"]}
+            icons={"limited"}
             hint={getHint("limCreditSetts")}
-        />
+        ><Icon icon="credit" size="1em"/></PushSwitch>
         <PushSwitch
             bind:value={$filters.limFreebieSetts}
-            icon={["limited", "freebie"]}
+            icons={"limited"}
             hint={getHint("limFreebieSetts")}
-        />
+        ><Icon icon="freebie" size="1em"/></PushSwitch>
         <PushSwitch
             bind:value={$filters.unlimSetts}
-            icon="unlimited"
+            icons="unlimited"
             hint={getHint("unlimSetts")}
         />
         <PushSwitch
             bind:value={$filters.rieSetts}
-            text="RIE"
             hint={getHint("rieSetts")}
-        />
+        >RIE</PushSwitch>
     </span>
 
     <h1 class="small-caps">Cards</h1>
     <span class="row">
         <PushSwitch
             bind:value={$filters.wishlisted}
-            icon="wishlist"
-            activeIcon="wishlisted"
+            icons={["wishlist", "wishlisted"]}
             hint={getHint("wishlisted")}
         />
         <PushSwitch
-            bind:value={$filters.notInTrades}
-            icon="trade"
-            hint={getHint("notInTrades")}
+            bind:value={$filters.favorited}
+            icons={["like", "liked"]}
+            hint={getHint("favorited")}
+        />
+        <PushSwitch
+            bind:value={$filters.tradingCards}
+            icons={["trade", "no-trading", "trading-only"]}
+            hint={getHint("tradingCards")}
         />
         <input
             type=search
@@ -242,7 +244,7 @@
     </span>
     <span class="row multi-switch rarities">
         {#each RARITIES as rarity}
-            <PushSwitch bind:value={$filters[rarity]} icon={rarity} hint={getHint(rarity)} />
+            <PushSwitch bind:value={$filters[rarity]} icons={rarity} hint={getHint(rarity)} />
         {/each}
     </span>
     <span class="row">
@@ -253,13 +255,13 @@
         />
         <PushSwitch
             value={$filters.duplicatesOnly}
-            text="2+" hint={getHint("duplicatesOnly")}
+            hint={getHint("duplicatesOnly")}
             on:change={() => {
                 $filters.holderOwns = $filters.duplicatesOnly
                     ? defaultFilters.holderOwns
                     : [2, Number.POSITIVE_INFINITY];
             }}
-        />
+        >2+</PushSwitch>
     </span>
     <span class="row">
         <DoubleRange
@@ -269,7 +271,7 @@
         />
         <PushSwitch
             value={$filters.notOwned}
-            icon="unowned"
+            icons="unowned"
             hint={getHint("notOwned")}
             on:change={() => {
                 $filters.oppositeOwns = $filters.notOwned
@@ -365,7 +367,7 @@
     .row :global(.slider + /* reload icon */ span) {
         margin-top: 10px;
     }
-    .row :global(label) {
+    .row > :global(.switch) {
         width: 38px;
         height: 28px;
     }
@@ -377,12 +379,12 @@
         border: 1px solid #d6d6d6;
         border-radius: 4px;
     }
-    .row.multi-switch > :global(label) {
+    .row.multi-switch > :global(.switch) {
         box-shadow: none;
         border-right: 1px solid #d6d6d6;
         border-radius: 0;
     }
-    .row.multi-switch > :global(label:last-child) {
+    .row.multi-switch > :global(.switch:last-child) {
         border-right: none;
     }
     .rarities {

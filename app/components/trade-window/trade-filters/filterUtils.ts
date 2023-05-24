@@ -39,7 +39,6 @@ export type Filters = {
     // extra filters
     incompleteSetts: boolean,
     hiddenSetts: HiddenSett[],
-    notInTrades: boolean,
     holderOwns: Range, // the cardOwner
     oppositeOwns: Range, // the opposite user
     cardCount: Range,
@@ -49,6 +48,11 @@ export type Filters = {
     limFreebieSetts: boolean,
     unlimSetts: boolean,
     rieSetts: boolean,
+    favorited: boolean,
+    /**
+     * 0 - off, 1 - no trading cards, 2 - only trading cards
+     */
+    tradingCards: 0|1|2,
 }
 export type FilterSet = {
     name: string,
@@ -128,7 +132,8 @@ export const DEFAULT_FILTERS = {
     rieSetts: false,
 
     wishlisted: false,
-    notInTrades: false,
+    favorited: false,
+    tradingCards: 0,
     cardName: "",
 
     common: false,
@@ -201,6 +206,11 @@ export function getFilterLabel<N extends keyof Filters> (
             tip,
         };
         case "notOwned": return null;
+        case "favorited": return {
+            prefix: "C",
+            icons: ["liked"],
+            tip,
+        };
         case "wishlisted": return {
             prefix: "C",
             icons: ["wishlisted"],
@@ -220,10 +230,12 @@ export function getFilterLabel<N extends keyof Filters> (
             icons: [name],
             tip,
         };
-        case "notInTrades": return {
+        case "tradingCards": return {
             prefix: "C",
-            icons: ["trade"],
-            tip,
+            icons: [value === 1 ? "no-trading" : "trading-only"],
+            tip: value === 1
+                ? "Hide cards involved in trades"
+                : "Show only cards involved in trades",
         };
         case "incompleteSetts": return {
             prefix: "S",
@@ -337,6 +349,9 @@ export function getFilterHint (name: keyof Filters, isItYou: boolean, partner: N
         case "wishlisted": return isItYou
             ? `Cards ${partner.first_name} wishlisted`
             : "Cards you wishlisted";
+        case "favorited": return isItYou
+            ? `Cards ${partner.first_name} favorited`
+            : "Cards you favorited";
         case "duplicatesOnly": return isItYou
             ? "Cards you own multiples of"
             : `Cards ${partner.first_name} owns multiples of`;
@@ -348,7 +363,7 @@ export function getFilterHint (name: keyof Filters, isItYou: boolean, partner: N
         case "chase": return "Chase cards";
         case "variant": return "Variant cards";
         case "legendary": return "Legendary cards";
-        case "notInTrades": return "Cards not involved in your trades";
+        case "tradingCards": return "Cards involved in your trades";
         case "oopSetts": return "Out of print series";
         case "limCreditSetts": return "Limited series with credit packs only";
         case "limFreebieSetts": return "Limited series with freebie packs";
@@ -389,5 +404,8 @@ export function filters2query (filters: Filters, oppositeOwnerId: number) {
         chase: filters.chase,
         variant: filters.variant,
         legendary: filters.legendary,
+        // extra
+        favoritedBy: filters.favorited ? oppositeOwnerId : null,
+        tradingCards: filters.tradingCards === 2,
     };
 }
