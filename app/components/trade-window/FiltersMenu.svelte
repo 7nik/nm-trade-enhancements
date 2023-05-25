@@ -132,7 +132,7 @@
                 <option value={fs}>{fs.name}</option>
             {/each}
         </select>
-        {#if filterSet}
+        {#if $filterSet}
             <Icon icon="trash" size="12px" on:click={() => model.deleteFilterSet()} />
         {:else}
             <Icon icon="save" size="12px" on:click={() => model.saveFilters()} />
@@ -168,7 +168,7 @@
             }}
         />
         <Dropdown list={$collections ?? []} bind:value={$filters.sett} let:item
-            hint={collections ? "Choose a Series" : "Loading series..."}
+            hint={$collections ? "Choose a Series" : "Loading series..."}
             emptyListText="No series matching the filters"
         >
             <!-- if collections list is loaded then user collections loaded too -->
