@@ -1,5 +1,11 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.2.0
+* Trade window: added favorite cards filter
+* Trade window: added favorite series filter
+* Trade window: added ability to search by cards used in trades
+* Fixed not switching filter set in rare cases
+
 ## 3.1.6
 * Fixed progress tooltip size
 * Fixed issue #1: crashing when trading a card from

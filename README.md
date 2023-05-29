@@ -26,15 +26,16 @@ you name a filter set `default` (case doesn't matter), it will be applied at the
 
 Then goes the section with series-based filters.
 The first one defines the range of collected cards in your or your partner's
-series to show it. A resetting button follows it. In the following line, two
-toggles allow showing only series shared with the partner and series the partner
-hasn't completed yet. Finally, a series chooser show only series matching the
-filters mentioned above. It supports searching and shows core series and special
-series progress.
+series to show it. A resetting button follows it. In the following row, three
+toggles allow showing only series shared with the partner, series the partner
+hasn't completed yet, and series favorited by the partner.
+Finally, a series chooser show only series matching the filters mentioned above.
+It supports searching, shows core series and special
+series progress and whether the partner favorited it.
 
 ![](./img/series%20selector.png)
 
-The last line allows filter series by the following types:
+The last row allows filter series by the following types:
 * Out of print series;
 * Limited series with credit packs only;
 * Limited series with carat packs or freebies;
@@ -43,7 +44,8 @@ The last line allows filter series by the following types:
 
 The last section contains card-based filters. They allow:
 * Show only wishlisted cards;
-* Hide cards used in other trades;
+* Show only favorited cards;
+* Hide cards used in other trades or show such ones only;
 * Set card rarity;
 * Show only cards of which you or the partner own a certain number of copies;
 * Show only cards with the card count in a specific range.
