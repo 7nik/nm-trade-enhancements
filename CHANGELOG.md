@@ -4,7 +4,10 @@
 * Trade window: added favorite cards filter
 * Trade window: added favorite series filter
 * Trade window: added ability to search by cards used in trades
+* Trade window: added a message when no matching series
 * Fixed not switching filter set in rare cases
+* Fixed asking to log in when no need
+* Various
 
 ## 3.1.6
 * Fixed progress tooltip size
