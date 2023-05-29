@@ -8,6 +8,7 @@
     import type { Actors } from "../TradeWindow.svelte";
 
     import { createEventDispatcher, getContext, onDestroy } from "svelte";
+    import { derived } from "svelte/store";
     import DoubleRange from "../elements/DoubleRange.svelte";
     import Dropdown from "../elements/Dropdown.svelte";
     import Icon from "../elements/Icon.svelte";
@@ -43,6 +44,7 @@
             ownerCollections,
             oppositeCollections,
             collections,
+            favoriteSetts,
         },
     } = model;
     onDestroy(() => {
@@ -66,6 +68,8 @@
         activeFilterLabels,
         // eslint-disable-next-line unicorn/consistent-destructuring
     } = model.s;
+
+    export const isSettSelected = derived(filters, (f) => f.sett !== null);
 
     /**
      * Get the search filters
@@ -167,6 +171,11 @@
                 }
             }}
         />
+        <PushSwitch
+            bind:value={$filters.favoritedSetts}
+            icons={["like", "liked"]}
+            hint={getHint("favoritedSetts")}
+        />
         <Dropdown list={$collections ?? []} bind:value={$filters.sett} let:item
             hint={$collections ? "Choose a Series" : "Loading series..."}
             emptyListText="No series matching the filters"
@@ -175,7 +184,10 @@
             {@const cl = (isItYou ? $oppositeCollections : $ownerCollections).getProgress(item.id)}
             {@const cr = (isItYou ? $ownerCollections : $oppositeCollections).getProgress(item.id)}
             <div class="collection">
-                <div class="name">{item.name}</div>
+                <div class="name">
+                    {#if $favoriteSetts.has(item.id)}<Icon icon="liked" size="1em"/>{/if}
+                    {item.name}
+                </div>
                 <div class="progress"
                     style:--left={collectionCore(cl)}
                     style:--right={collectionCore(cr)}
@@ -225,9 +237,9 @@
             hint={getHint("wishlisted")}
         />
         <PushSwitch
-            bind:value={$filters.favorited}
+            bind:value={$filters.favoritedCards}
             icons={["like", "liked"]}
-            hint={getHint("favorited")}
+            hint={getHint("favoritedCards")}
         />
         <PushSwitch
             bind:value={$filters.tradingCards}
@@ -401,6 +413,9 @@
     .collection:hover .name {
         background-color: #4BBBF5;
         color: white;
+    }
+    .collection .name :global(*) {
+        float: right;
     }
     .collection .progress {
         position: relative;

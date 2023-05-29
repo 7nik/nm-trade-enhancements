@@ -677,9 +677,9 @@ declare namespace NM {
         }
 
         type FavoriteSetts = {
-            results: Pick<NM.Sett, "id"|"name"|"difficulty"|"favorite"|"links"|"sett_assets" > & {
+            results: (Pick<NM.Sett, "id"|"name"|"difficulty"|"favorite"|"links"|"sett_assets" > & {
                 creator: UserShort,
-            }[],
+            })[],
             target: UserLong,
             viewer: UserLong,
         }

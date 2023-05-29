@@ -471,6 +471,17 @@ const API = {
         packTiers (id: number) {
             return api.get<NM.PackTier[]>(`/pack-tiers/?sett_id=${id}`);
         },
+        /**
+         * Get series favorited by a user
+         * @param id - the user ID
+         * @returns array of favorited series
+         */
+        async favoriteSetts (id: number) {
+            const data = await api.get<NM.Unmerged.Container<NM.Unmerged.FavoriteSetts>>(
+                `/users/${id}/favorites/setts/`,
+            );
+            return merge(data).results;
+        },
         // activityFeed: napi /activityfeed/sett/[SET_ID]/?amount=[BETWEEN 10 AND 100]&page=[BETWEEN 1 AND 100]
         // openedPackInfo: napi /activityfeed/story/pack-opened/[ACTIVITY_ID]
         // cardsInfo: /api/sets/[SET_ID]/piece-names
@@ -524,17 +535,6 @@ const API = {
                 sett_id: settId,
             });
             return data.results;
-        },
-        /**
-         * Get series favorited by a user
-         * @param id - the user ID
-         * @returns array of favorited series
-         */
-        async favoriteSetts (id: number) {
-            const data = await api.get<NM.Unmerged.Container<NM.Unmerged.FavoriteSetts>>(
-                `/users/${id}/favorites/setts/`,
-            );
-            return merge(data).results;
         },
         /**
          * Get the current user's friends

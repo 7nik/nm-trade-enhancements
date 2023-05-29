@@ -1,28 +1,23 @@
-import type { UserCollections, Progress } from "../../services/ownedCollections";
+import type { Progress } from "../../services/ownedCollections";
 
-import getInfo from "../../services/ownedCollections";
+import OwnedCollections from "../../services/ownedCollections";
 
-const collections = new Map<number, UserCollections>();
-const loading = new Map<number, ReturnType<typeof getInfo>>();
+const collections = new Map<number, OwnedCollections>();
 
 function getCollectionInfo (userId: number) {
-    if (collections.has(userId)) return collections.get(userId)!;
-    if (loading.has(userId)) {
-        return loading.get(userId)!.then((data) => data.userCollections);
+    let collection = collections.get(userId);
+    if (!collection) {
+        collection = new OwnedCollections(userId);
+        collections.set(userId, collection);
     }
-    const promise = getInfo(userId);
-    loading.set(userId, promise);
-    return promise.then((data) => {
-        collections.set(userId, data.userCollections);
-        return data.userCollections;
-    });
+    if (!collection.isLoading) {
+        return collection;
+    }
+    return collection.waitLoading().then(() => collection!);
 }
 
 async function unloadCollectionInfo (userId: number) {
-    if (!loading.has(userId)) return;
-    // eslint-disable-next-line unicorn/no-await-expression-member
-    (await loading.get(userId))?.freeData();
-    loading.delete(userId);
+    collections.get(userId)?.freeUp();
     collections.delete(userId);
 }
 

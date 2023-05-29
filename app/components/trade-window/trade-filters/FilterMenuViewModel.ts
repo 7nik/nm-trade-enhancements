@@ -1,10 +1,10 @@
-import type { UserCollections } from "../../../services/ownedCollections";
 import type NM from "../../../utils/NMTypes";
 import type { Writable } from "svelte/store";
 
 import { writable } from "svelte/store";
+import FavoritedSetts from "../../../services/favoritedSetts";
 import OwnedCards from "../../../services/ownedCards";
-import ownedCollections from "../../../services/ownedCollections";
+import OwnedCollections from "../../../services/ownedCollections";
 import { isTrading } from "../../../services/tradingCards";
 import { getProgress, makeShortTip } from "../collectionProgress";
 import filterSetList from "./filterSetList";
@@ -78,10 +78,11 @@ export default (
             ...DEFAULT_FILTERS,
             sett,
         },
+        favoriteSetts: new FavoritedSetts(oppositeOwnerId),
         hiddenSetts: [] as HiddenSett[],
         activeFilterLabels: [] as ActiveFilterLabel[],
-        ownerCollections: null as unknown as UserCollections,
-        oppositeCollections: null as unknown as UserCollections,
+        ownerCollections: new OwnedCollections(currentOwnerId),
+        oppositeCollections: new OwnedCollections(oppositeOwnerId),
         collections: null as NM.SettMetrics[]|null,
 
         applyFilters,
@@ -95,14 +96,17 @@ export default (
         },
     });
 
-    Promise.all([ownedCollections(currentOwnerId), ownedCollections(oppositeOwnerId)])
-        .then(([current, opposite]) => {
-            data.ownerCollections = current.userCollections;
-            data.oppositeCollections = opposite.userCollections;
+    Promise.all([
+        data.ownerCollections.waitLoading(),
+        data.oppositeCollections.waitLoading(),
+        data.favoriteSetts.waitLoading(),
+    ])
+        .then(() => {
             data.collections = getCollectionList(
                 data.filters,
                 data.ownerCollections,
                 data.oppositeCollections,
+                data.favoriteSetts,
             );
         });
 
@@ -112,8 +116,10 @@ export default (
         if (data.filterSet && !isEqualToFilterSet(filters, data.filterSet)) {
             data.filterSet = null;
         }
-        if ((data.hiddenSetts === filters.hiddenSetts) !== (filters.sett === null)) {
-            data.hiddenSetts = filters.sett ? [] : filters.hiddenSetts;
+        if (filters.sett && data.hiddenSetts.length > 0) {
+            data.hiddenSetts = [];
+        } else if (!filters.sett && data.hiddenSetts !== filters.hiddenSetts) {
+            data.hiddenSetts = filters.hiddenSetts;
         }
         updateActiveFilterLabels();
 
@@ -121,6 +127,7 @@ export default (
         const newSeriesListKey = [
             filters.shared,
             filters.incompleteSetts,
+            filters.favoritedSetts,
             filters.collection,
         ].toString();
         if (seriesListKey !== newSeriesListKey) {
@@ -130,6 +137,7 @@ export default (
                     data.filters,
                     data.ownerCollections,
                     data.oppositeCollections,
+                    data.favoriteSetts,
                 );
             }
         }
@@ -292,8 +300,9 @@ function getActiveFilterLabels (
  */
 function getCollectionList (
     filters: Filters,
-    ownerCollections: UserCollections,
-    oppositeCollections: UserCollections,
+    ownerCollections: OwnedCollections,
+    oppositeCollections: OwnedCollections,
+    favoriteSetts: FavoritedSetts,
 ) {
     let collections = ownerCollections.getCollections();
     if (filters.shared) {
@@ -306,6 +315,9 @@ function getCollectionList (
             const progress = oppositeCollections.getProgress(coll.id);
             return !progress || progress.total.owned < progress.total.count;
         });
+    }
+    if (filters.favoritedSetts) {
+        collections = collections.filter((coll) => favoriteSetts.has(coll.id));
     }
     if (getActiveFilters(filters).collection) {
         collections = collections.filter((coll) => {
@@ -381,7 +393,9 @@ async function filterPrints (
     }
     // card hiding based on collection progress
     if (!filters.sett && (
-        activeFilters.collection || filters.incompleteSetts && !filters.notOwned
+        activeFilters.collection
+        || filters.incompleteSetts && !filters.notOwned
+        || filters.favoritedSetts
     )) {
         prints = prints.filter((print) => {
             const settId = print.sett_id;
@@ -397,9 +411,10 @@ async function filterPrints (
         || filters.unlimSetts
         || filters.rieSetts
     )) {
-        const settTypes = await Promise.all(
-            prints.map((print) => getSettType(print.sett_id)),
-        );
+        let settTypes = prints.map((print) => getSettType(print.sett_id));
+        if (settTypes.some((t) => t instanceof Promise)) {
+            settTypes = await Promise.all(settTypes);
+        }
         // eslint-disable-next-line array-callback-return
         prints = prints.filter((_, i) => {
             switch (settTypes[i]) {

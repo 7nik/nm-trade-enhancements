@@ -1,6 +1,6 @@
 import { get, writable } from "svelte/store";
 import OwnedCards from "../../services/ownedCards";
-import collections from "../../services/ownedCollections";
+import OwnedCollections from "../../services/ownedCollections";
 import NMApi, { Paginator } from "../../utils/NMApi";
 import { liveListProvider } from "../../utils/NMLiveApi";
 import NM, { rarityCss } from "../../utils/NMTypes";
@@ -189,13 +189,15 @@ async function filterByWishlist (ownerId: number, filters: SearchParams, cardIds
     return cardIds.filter((id) => wishlist.list.find((p) => id === p.id));
 }
 
-async function filterByShared (userId: number, filters: SearchParams, cards: NM.PrintInTrade[]) {
+async function filterByShared (ownerId: number, filters: SearchParams, cards: NM.PrintInTrade[]) {
     if (filters.settId || !filters.sharedWith || cards.length === 0) return cards;
-    const colls = await Promise.all([collections(userId), collections(filters.sharedWith)]);
-    const coll1 = new Set(colls[0].userCollections.getCollections().map(({ id }) => id));
+    const coll1 = new OwnedCollections(ownerId);
+    const coll2 = new OwnedCollections(filters.sharedWith);
+    await Promise.all([coll1.waitLoading(), coll2.waitLoading()]);
+    const setts = new Set(coll1.getCollections().map(({ id }) => id));
     const shared = new Set<number>();
-    for (const { id } of colls[1].userCollections.getCollections()) {
-        if (coll1.has(id)) shared.add(id);
+    for (const { id } of coll2.getCollections()) {
+        if (setts.has(id)) shared.add(id);
     }
     return cards.filter(({ sett_id: sid }) => shared.has(sid));
 }

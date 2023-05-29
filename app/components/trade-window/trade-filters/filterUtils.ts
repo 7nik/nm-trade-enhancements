@@ -48,7 +48,8 @@ export type Filters = {
     limFreebieSetts: boolean,
     unlimSetts: boolean,
     rieSetts: boolean,
-    favorited: boolean,
+    favoritedCards: boolean,
+    favoritedSetts: boolean,
     /**
      * 0 - off, 1 - no trading cards, 2 - only trading cards
      */
@@ -59,6 +60,43 @@ export type FilterSet = {
     includeSett: boolean,
     filters: Filters,
 }
+
+export const DEFAULT_FILTERS = {
+    collection: [0, Number.POSITIVE_INFINITY],
+
+    shared: false,
+    incompleteSetts: false,
+    sett: null,
+
+    oopSetts: false,
+    limCreditSetts: false,
+    limFreebieSetts: false,
+    unlimSetts: false,
+    rieSetts: false,
+
+    wishlisted: false,
+    favoritedCards: false,
+    favoritedSetts: false,
+    tradingCards: 0,
+    cardName: "",
+
+    common: false,
+    uncommon: false,
+    rare: false,
+    veryRare: false,
+    extraRare: false,
+    chase: false,
+    variant: false,
+    legendary: false,
+
+    oppositeOwns: [0, Number.POSITIVE_INFINITY],
+    holderOwns: [1, Number.POSITIVE_INFINITY],
+    cardCount: [1, Number.POSITIVE_INFINITY],
+
+    notOwned: false,
+    duplicatesOnly: false,
+    hiddenSetts: [],
+} as Filters;
 
 /**
  * Checks whether the value is a Range
@@ -103,7 +141,7 @@ export function isEqualToFilterSet (filters: Filters, fset: FilterSet) {
             }
         } else {
             const val1 = filters[prop];
-            const val2 = fset.filters[prop];
+            const val2 = fset.filters[prop] ?? DEFAULT_FILTERS[prop];
             // prop is a range
             if (isRange(val1) && isRange(val2)) {
                 if (!areRangesEqual(val1, val2)) {
@@ -118,67 +156,33 @@ export function isEqualToFilterSet (filters: Filters, fset: FilterSet) {
     return true;
 }
 
-export const DEFAULT_FILTERS = {
-    collection: [0, Number.POSITIVE_INFINITY],
-
-    shared: false,
-    incompleteSetts: false,
-    sett: null,
-
-    oopSetts: false,
-    limCreditSetts: false,
-    limFreebieSetts: false,
-    unlimSetts: false,
-    rieSetts: false,
-
-    wishlisted: false,
-    favorited: false,
-    tradingCards: 0,
-    cardName: "",
-
-    common: false,
-    uncommon: false,
-    rare: false,
-    veryRare: false,
-    extraRare: false,
-    chase: false,
-    variant: false,
-    legendary: false,
-
-    oppositeOwns: [0, Number.POSITIVE_INFINITY],
-    holderOwns: [1, Number.POSITIVE_INFINITY],
-    cardCount: [1, Number.POSITIVE_INFINITY],
-
-    notOwned: false,
-    duplicatesOnly: false,
-    hiddenSetts: [],
-} as Filters;
-
 type SettType = "oop"|"limCredit"|"limFree"|"unlim"|"rie";
 const settType: Record<number, SettType> = {};
 const loading: Record<number, Promise<NM.Sett>> = {};
 /**
  * Get the sett type
  */
-export async function getSettType (settId: number) {
+export function getSettType (settId: number) {
     if (settId in settType) return settType[settId];
-    const sett = settId in loading
-        ? await loading[settId]
-        : await (loading[settId] = NMApi.sett.get(settId));
-    let type: SettType;
-    if (sett.discontinued || sett.percent_sold_out === 100) {
-        type = "oop";
-    } else if (sett.version !== 2 && sett.freebies_discontinued) {
-        type = "limCredit";
-    } else if (sett.version !== 2) {
-        type = "limFree";
-    } else if (new Date(sett.discontinue_date).getTime() - Date.now() < 365 * 86_400_000) {
-        type = "unlim";
-    } else {
-        type = "rie";
-    }
-    settType[settId] = type;
-    return type;
+    const promise = settId in loading
+        ? loading[settId]
+        : (loading[settId] = NMApi.sett.get(settId));
+    return promise.then((sett) => {
+        let type: SettType;
+        if (sett.discontinued || sett.percent_sold_out === 100) {
+            type = "oop";
+        } else if (sett.version !== 2 && sett.freebies_discontinued) {
+            type = "limCredit";
+        } else if (sett.version !== 2) {
+            type = "limFree";
+        } else if (new Date(sett.discontinue_date).getTime() - Date.now() < 365 * 86_400_000) {
+            type = "unlim";
+        } else {
+            type = "rie";
+        }
+        settType[settId] = type;
+        return type;
+    });
 }
 
 /**
@@ -206,8 +210,13 @@ export function getFilterLabel<N extends keyof Filters> (
             tip,
         };
         case "notOwned": return null;
-        case "favorited": return {
+        case "favoritedCards": return {
             prefix: "C",
+            icons: ["liked"],
+            tip,
+        };
+        case "favoritedSetts": return {
+            prefix: "S",
             icons: ["liked"],
             tip,
         };
@@ -346,10 +355,13 @@ export function getFilterHint (name: keyof Filters, isItYou: boolean, partner: N
         case "incompleteSetts": return isItYou
             ? `Series that ${partner.first_name} hasn't completed`
             : "Series that you haven't completed";
+        case "favoritedSetts": return isItYou
+            ? `Series ${partner.first_name} favorited`
+            : "Series you favorited";
         case "wishlisted": return isItYou
             ? `Cards ${partner.first_name} wishlisted`
             : "Cards you wishlisted";
-        case "favorited": return isItYou
+        case "favoritedCards": return isItYou
             ? `Cards ${partner.first_name} favorited`
             : "Cards you favorited";
         case "duplicatesOnly": return isItYou
@@ -405,7 +417,7 @@ export function filters2query (filters: Filters, oppositeOwnerId: number) {
         variant: filters.variant,
         legendary: filters.legendary,
         // extra
-        favoritedBy: filters.favorited ? oppositeOwnerId : null,
+        favoritedBy: filters.favoritedCards ? oppositeOwnerId : null,
         tradingCards: filters.tradingCards === 2,
     };
 }

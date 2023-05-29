@@ -33,9 +33,8 @@ function getPrintCounts (userId: number) {
         }
         return () => {
             // do not delete the current user
-            if (userId !== currentUser.id) {
-                map.delete(userId);
-                debug(userId, "' owned cards removing");
+            if (userId !== currentUser.id && map.delete(userId)) {
+                debug(userId, "'s owned cards will be removed");
             }
         };
     });

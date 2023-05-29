@@ -46,11 +46,12 @@ async function loadOwnership (userId: number) {
 async function removeOwnership (userId: number) {
     if (userId === currentUser.id) return;
     if (loading.has(userId)) await loading.get(userId);
-    data.delete(userId);
-    debug(userId, "'s collections unloaded");
+    if (data.delete(userId)) {
+        debug(userId, "'s collections will be unloaded");
+    }
 }
 
-type Progress = {
+export type Progress = {
     name: string,
     permalink: fullURL,
     core: {
@@ -76,10 +77,36 @@ type Progress = {
 }
 
 class UserCollections {
+    #promise: Promise<void> | null;
     #collections: MetricsMap;
+    #userId;
 
     constructor (userId: number) {
-        this.#collections = data.get(userId) ?? {};
+        this.#userId = userId;
+        this.#collections = {};
+        this.#promise = loadOwnership(userId).then(() => {
+            this.#collections = data.get(userId)!;
+            this.#promise = null;
+        });
+    }
+
+    /**
+     * Whether the data is still loading
+     */
+    get isLoading () {
+        return this.#promise !== null;
+    }
+
+    /**
+     * Method to wait for finishing the loading
+     * @returns Promise of completing the data loading
+     */
+    waitLoading () {
+        return this.#promise ?? Promise.resolve();
+    }
+
+    freeUp () {
+        removeOwnership(this.#userId);
     }
 
     /**
@@ -136,11 +163,4 @@ class UserCollections {
     }
 }
 
-export default async function getData (userId: number) {
-    if (!data.has(userId)) await loadOwnership(userId);
-    return {
-        userCollections: new UserCollections(userId),
-        freeData: removeOwnership.bind(null, userId),
-    };
-}
-export type { UserCollections, Progress };
+export default UserCollections;
