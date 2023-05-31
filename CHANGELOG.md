@@ -1,5 +1,9 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.2.1
+* Fixed initialization of traded cards filter with wrong value
+* Fixed initialization of filter set selector on the partner side with no selected value
+
 ## 3.2.0
 * Trade window: added favorite cards filter
 * Trade window: added favorite series filter
