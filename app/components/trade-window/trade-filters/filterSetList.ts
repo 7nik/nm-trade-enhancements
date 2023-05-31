@@ -14,23 +14,25 @@ type FilterSetOld = Omit<FilterSet, "filters"> & {
     },
 };
 
+let loaded = false;
 // eslint-disable-next-line sonarjs/cognitive-complexity
 const filterSetList: Writable<FilterSet[]> = writable<FilterSet[]>([], (set) => {
-    console.log("loading fsets");
-    let resave = false;
+    if (loaded) return;
     const fsets = loadValue<FilterSetOld[]>("filterSets", []);
+    let changed = false;
     // the Infinity value cannot be stored in JSON, so
     // during serialization it gets replaced with null
     // now we need to fix it back
     for (const fset of fsets) {
         // update fields to new version
+        // TODO: remove. Added 31.05.2023
         if (!("tradingCards" in fset.filters)) {
             fset.filters.tradingCards = Number(fset.filters.notInTrades ?? 0) as 0|1;
-            resave = true;
+            changed = true;
         }
         if ("notInTrades" in fset.filters) {
             delete fset.filters.notInTrades;
-            resave = true;
+            changed = true;
         }
         let prop: keyof Filters;
         for (prop in fset.filters as Filters) {
@@ -42,9 +44,10 @@ const filterSetList: Writable<FilterSet[]> = writable<FilterSet[]>([], (set) => 
             }
         }
     }
-    if (resave) {
+    if (changed) {
         saveValue("filterSets", fsets);
     }
+    loaded = true;
     set(fsets as FilterSet[]);
 });
 
