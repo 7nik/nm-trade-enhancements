@@ -7,19 +7,33 @@ import { confirm, createDialog } from "../../dialogs/modals";
 import NameFilterSet from "../../dialogs/NameFilterSet.svelte";
 import { isRange } from "./filterUtils";
 
+type FilterSetOld = Omit<FilterSet, "filters"> & {
+    filters: Omit<FilterSet["filters"], "tradingCards"> & {
+        notInTrades?: boolean,
+        tradingCards?: 0|1|2
+    },
+};
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 const filterSetList: Writable<FilterSet[]> = writable<FilterSet[]>([], (set) => {
-    const fsets = loadValue<FilterSet[]>("filterSets", []);
+    console.log("loading fsets");
+    let resave = false;
+    const fsets = loadValue<FilterSetOld[]>("filterSets", []);
     // the Infinity value cannot be stored in JSON, so
     // during serialization it gets replaced with null
     // now we need to fix it back
     for (const fset of fsets) {
+        // update fields to new version
+        if (!("tradingCards" in fset.filters)) {
+            fset.filters.tradingCards = Number(fset.filters.notInTrades ?? 0) as 0|1;
+            resave = true;
+        }
         if ("notInTrades" in fset.filters) {
-            // @ts-ignore - backward compatibility
-            fset.filters.tradingCards = +fset.filters.notInTrades;
+            delete fset.filters.notInTrades;
+            resave = true;
         }
         let prop: keyof Filters;
-        for (prop in fset.filters) {
+        for (prop in fset.filters as Filters) {
             if (prop === "hiddenSetts") continue;
             const val = fset.filters[prop];
             if (isRange(val) && (val as (number|null)[]).includes(null)) {
@@ -28,7 +42,10 @@ const filterSetList: Writable<FilterSet[]> = writable<FilterSet[]>([], (set) => 
             }
         }
     }
-    set(fsets);
+    if (resave) {
+        saveValue("filterSets", fsets);
+    }
+    set(fsets as FilterSet[]);
 });
 
 /**
@@ -41,7 +58,9 @@ async function saveFilterSet (filters: Filters) {
     if (!data) return null;
     const filterSet = {
         ...data,
-        filters: { ...filters },
+        filters: {
+            ...filters,
+        },
     };
     // no need to save these data
     if (!filterSet.includeSett) {
