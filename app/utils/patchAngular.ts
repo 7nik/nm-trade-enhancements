@@ -94,14 +94,13 @@ function patchArtResource (artResource: Services.ArtResource) {
     debug("artResource patched");
 }
 
+let patched = false;
 /**
  * Apply the patches
  */
 function applyPatches () {
-    if (!document.querySelector(`body>[ng-controller="publicNavigationController"]`)
-        || document.querySelector(".error-page")
-    ) {
-        // nothing to patch on such pages
+    if (patched || !window.angular) {
+        if (!patched) debug("nothing to patch");
         return;
     }
     let applied = false;
@@ -129,6 +128,7 @@ function applyPatches () {
         window.location.hash = "#reloaded";
         window.location.reload();
     });
+    patched = true;
 }
 
 export default function addPatches (
@@ -145,5 +145,5 @@ if (document.readyState === "complete") {
         window.location.reload();
     }
 } else {
-    document.addEventListener("readystatechange", applyPatches, { once: true });
+    document.addEventListener("readystatechange", applyPatches);
 }
