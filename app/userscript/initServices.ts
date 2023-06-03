@@ -107,23 +107,44 @@ async function initConfigs () {
     } while (!script.textContent?.includes("artModule.value"));
 
     debug("config found");
-    const config = Object.assign(
-        {},
-        // extract and parse all the configs
-        ...[...script.textContent!.matchAll(/artModule.value\("\w+",\s*({[^;]*})\);/g)]
-            // .map(([_, json]) => eval(json))
-            .map(([, json]) => json
-                // remove comments
-                .replaceAll(/\n\s+\/\/.*\n/g, "")
-                // wrap all identifiers into double quotes
-                .replaceAll(/'?([\w-]+)'?(:[\s\w"'([{])/g, (_, $0, $1) => `"${$0}"${$1}`)
-                // replace single-quoted strings wind double-quoted ones
-                .replaceAll(/:\s*'(.*)'\s*([,}])/g, (_, $0, $1) => `:"${$0}"${$1}`)
-                // remove trailing commas
-                .replaceAll(/,\s*}/g, "}"))
-            .map((json) => JSON.parse(json)),
-    );
-    initValue("config", config);
+    try {
+        const config = Object.assign(
+            {},
+            // extract and parse all the configs
+            ...[...script.textContent!.matchAll(/artModule.value\("\w+",\s*({[^;]*})\);/g)]
+                // .map(([_, json]) => eval(json))
+                .map(([, json]) => json
+                    // remove comments
+                    .replaceAll(/\n\s+\/\/.*\n/g, "")
+                    // wrap all identifiers into double quotes
+                    .replaceAll(/\n\s+'?([\w-]+)'?(:[\s\w"'([{])/g, (_, $0, $1) => `\n"${$0}"${$1}`)
+                    // replace single-quoted strings wind double-quoted ones
+                    .replaceAll(/:\s*'(.*)'\s*([,}])/g, (_, $0, $1) => `:"${$0}"${$1}`)
+                    // remove trailing commas
+                    .replaceAll(/,\s*}/g, "}"))
+                .map((json) => JSON.parse(json)),
+        );
+        initValue("config", config);
+    } catch (ex) {
+        error("Failed to parse config", ex);
+        // fallback init with a bare minimum
+        // anyway this shouldn't change ever and most isn't used in US
+        initValue("config", {
+            defaultAvatarUrl: "https://d1kpgjj5yyvdcv.cloudfront.net/assets/img/default_avatar.png",
+            defaultImageUrl: "https://d1kpgjj5yyvdcv.cloudfront.net/assets/img/diamond_avatar.png",
+            MESSAGES_KEY: "messages",
+            MILESTONE_COMPLETED_KEY: "completed",
+            MILESTONE_RECENT_KEY: "recent",
+            MILESTONE_SUGGESTION_KEY: "suggestion",
+            "node-api-endpoint": window.location.host === "www.neonmob.com"
+                ? "https://napi.neonmob.com"
+                : "https://napi-staging.neonmob.com",
+            "po-animation-assets": "https://d1kpgjj5yyvdcv.cloudfront.net/assets/animations",
+            "profile-milestones": "/", // should be like "/7nik/milestones/"
+            "social_network.conversation": 189,
+            TRADES_KEY: "trades",
+        } as any);
+    }
 }
 
 // eslint-disable-next-line unicorn/prefer-top-level-await
@@ -140,6 +161,7 @@ async function initCurrentUser () {
         if (!document.querySelector(`body>[ng-controller="publicNavigationController"]`)
             || document.querySelector(".error-page")
         ) {
+            debug("this page has not user info");
             return;
         }
         error("couldn't load the user info");
