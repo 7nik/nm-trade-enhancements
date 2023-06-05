@@ -94,13 +94,22 @@ function patchArtResource (artResource: Services.ArtResource) {
     debug("artResource patched");
 }
 
+/**
+ * Check if the page can be patched
+ */
+function canPatch () {
+    return "angular" in window && !window.location.pathname.startsWith("/redeem/");
+}
+
 let patched = false;
 /**
  * Apply the patches
  */
 function applyPatches () {
-    if (patched || !window.angular) {
-        if (!patched) debug("nothing to patch");
+    if (patched) return;
+    if (!canPatch()) {
+        patched = true;
+        debug("nothing to patch");
         return;
     }
     let applied = false;
@@ -140,7 +149,7 @@ export default function addPatches (
 }
 
 if (document.readyState === "complete") {
-    if (window.location.hash !== "#reloaded") {
+    if (canPatch() && window.location.hash !== "#reloaded") {
         window.location.hash = "#reloaded";
         window.location.reload();
     }
