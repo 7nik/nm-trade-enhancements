@@ -172,10 +172,12 @@ async function filterByOwnedCount (ownerId: number, filters: SearchParams, cardI
     if (cardIds.length === 0) return cardIds;
     const owned = new OwnedCards(ownerId);
     await owned.waitLoading();
+    owned.stop();
     cardIds = cardIds.filter((id) => owned.getPrintCount(id) > (filters.duplicatesOnly ? 1 : 0));
     if (filters.notOwnedBy) {
         const owned2 = new OwnedCards(filters.notOwnedBy);
         await owned2.waitLoading();
+        owned2.stop();
         cardIds = cardIds.filter((id) => owned2.getPrintCount(id) === 0);
     }
     return cardIds;

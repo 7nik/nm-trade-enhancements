@@ -12,10 +12,12 @@
             cardInfo.set(userId, new OwnedCards(userId));
         }
         const ownedCards = cardInfo.get(userId)!;
-        return derived(
-            ownedCards.getPrintCount(cardId, true),
-            (count) => (ownedCards.isLoading ? defCount : count),
-        );
+        return ownedCards.isLoading
+            ? derived(
+                [ownedCards.getPrintCount(cardId, true), ownedCards.isLoadingStore],
+                ([count, loading]) => (loading ? defCount : count),
+            )
+            : ownedCards.getPrintCount(cardId, true);
     }
 </script>
 <!-- @component

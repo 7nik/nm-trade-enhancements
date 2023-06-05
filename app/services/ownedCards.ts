@@ -1,6 +1,6 @@
 import type { Readable, Unsubscriber, Writable } from "svelte/store";
 
-import { derived, get, writable } from "svelte/store";
+import { derived, writable } from "svelte/store";
 import NMApi from "../utils/NMApi";
 import { liveListProvider } from "../utils/NMLiveApi";
 import { debug, LazyMap } from "../utils/utils";
@@ -50,13 +50,10 @@ class OwnedCards {
 
     constructor (userId: number) {
         this.#store = getPrintCounts(userId);
-        this.#loading = derived(
-            this.#store,
-            (cardCounts) => Object.keys(cardCounts).length === 0,
-        );
         this.#unsubscribe = this.#store.subscribe((cardCounts) => {
             this.#cardCounts = cardCounts;
         });
+        this.#loading = Object.keys(this.#cardCounts).length === 0;
     }
 
     /**
@@ -70,7 +67,14 @@ class OwnedCards {
      * Whether the data is still loading
      */
     get isLoading () {
-        return get(this.#loading);
+        return this.#loading;
+    }
+
+    /**
+     * Store with a flag of the data loading
+     */
+    get isLoadingStore () {
+        return derived(this.#store, (data) => Object.keys(data).length === 0);
     }
 
     /**
@@ -78,14 +82,16 @@ class OwnedCards {
      * @returns Promise of completing the data loading
      */
     waitLoading () {
-        return new Promise<void>((res) => {
-            let unsubscribe: Unsubscriber | null = null;
-            unsubscribe = this.#loading.subscribe((loading) => {
-                if (loading) return;
-                unsubscribe?.();
-                res();
-            });
-        });
+        return this.#loading
+            ? new Promise<void>((res) => {
+                let unsubscribe: Unsubscriber | null = null;
+                unsubscribe = this.isLoadingStore.subscribe((loading) => {
+                    if (loading) return;
+                    unsubscribe?.();
+                    res();
+                });
+            })
+            : Promise.resolve();
     }
 
     /**
