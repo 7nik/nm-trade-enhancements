@@ -1,5 +1,9 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.2.4
+* Fixed crashing on the redeem page
+* Fixed not displaying the number of print copies in some cases
+
 ## 3.2.3
 * Fixed crashing during parsing configs with notifications (tips)
 
