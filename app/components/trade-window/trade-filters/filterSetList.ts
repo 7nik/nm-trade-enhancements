@@ -74,6 +74,7 @@ async function saveFilterSet (filters: Filters) {
             id: filterSet.filters.sett.id,
             name: filterSet.filters.sett.name,
         };
+        filterSet.filters.hiddenSetts = [];
     }
     for (const sett of filterSet.filters.hiddenSetts) {
         sett.tip = "";
