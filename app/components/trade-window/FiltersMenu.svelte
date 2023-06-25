@@ -98,7 +98,7 @@
     const holderOwnsNumbers = [1, 2, 3, 4, 5, 10, 20, 50, 100, Number.POSITIVE_INFINITY];
     const oppositeOwnsNumbers = [0, ...holderOwnsNumbers];
     // eslint-disable-next-line max-len, comma-spacing
-    const cardCountNumbers = [1,10,50,100,250,500,750,1e3,1.5e3,2e3,3e3,4e3,5e3,7.5e3,1e4,1.5e4,2e4,3e4,4e4,5e4,7.5e4,1e5,Number.POSITIVE_INFINITY];
+    const cardCountNumbers = [1,10,50,100,200,300,400,500,750,1e3,1.5e3,2e3,3e3,4e3,5e3,7.5e3,1e4,1.5e4,2e4,3e4,4e4,5e4,7.5e4,1e5,Number.POSITIVE_INFINITY];
     // eslint-disable-next-line max-len, comma-spacing
     const collectionNumbers = [0,1,2,3,4,5,6,7,8,9,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,110,120,130,140,150,160,170,180,190,200,Number.POSITIVE_INFINITY];
 
