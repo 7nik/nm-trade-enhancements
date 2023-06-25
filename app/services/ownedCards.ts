@@ -45,22 +45,25 @@ function getPrintCounts (userId: number) {
 class OwnedCards {
     #cardCounts: Record<number, number> = {};
     #store;
-    #unsubscribe;
-    #loading;
+    #loading = true;
 
     constructor (userId: number) {
         this.#store = getPrintCounts(userId);
-        this.#unsubscribe = this.#store.subscribe((cardCounts) => {
+        // we only modify the `cardCounts` so it's enough to get it only once
+        const unsubscribe = this.#store.subscribe((cardCounts) => {
             this.#cardCounts = cardCounts;
+            if (Object.keys(cardCounts).length > 0) {
+                this.#loading = false;
+            }
         });
-        this.#loading = Object.keys(this.#cardCounts).length === 0;
+        this.waitLoading().then(unsubscribe);
     }
 
     /**
      * Update the #store
      */
     #update () {
-        this.#store.set(this.#cardCounts);
+        this.#store.update((x) => x);
     }
 
     /**
@@ -159,13 +162,6 @@ class OwnedCards {
             }
         }
         this.#update();
-    }
-
-    /**
-     * Stop to listen for changes of owned cards
-     */
-    stop () {
-        this.#unsubscribe();
     }
 }
 

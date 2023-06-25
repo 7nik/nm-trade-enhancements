@@ -90,10 +90,6 @@ export default (
         hideSett,
         saveFilters,
         showSett,
-        stop () {
-            holdersCards.stop();
-            oppositesCards.stop();
-        },
     });
 
     Promise.all([

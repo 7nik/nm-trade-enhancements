@@ -124,7 +124,6 @@
     onDestroy(() => {
         cardInfoUsage[actors.partner.id] -= 1;
         if (cardInfoUsage[actors.partner.id] === 0) {
-            cardInfo.get(actors.partner.id)?.stop();
             cardInfo.delete(actors.partner.id);
         }
     });

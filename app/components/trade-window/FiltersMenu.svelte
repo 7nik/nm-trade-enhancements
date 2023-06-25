@@ -7,7 +7,7 @@
     import type { rarityCss } from "../../utils/NMTypes";
     import type { Actors } from "../TradeWindow.svelte";
 
-    import { createEventDispatcher, getContext, onDestroy } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { derived } from "svelte/store";
     import DoubleRange from "../elements/DoubleRange.svelte";
     import Dropdown from "../elements/Dropdown.svelte";
@@ -47,9 +47,6 @@
             favoriteSetts,
         },
     } = model;
-    onDestroy(() => {
-        model.stop();
-    });
 
     export const {
         applyFilters,
