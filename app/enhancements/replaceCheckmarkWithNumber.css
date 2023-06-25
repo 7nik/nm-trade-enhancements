@@ -1,0 +1,16 @@
+.set-checklist--piece-list>li {
+    padding: 2px 10px 2px 25px;
+}
+.set-checklist--piece-list>li [class*=icon-] {
+    left: 4px;
+}
+.set-checklist--piece-list>li .icon-checkmark[data-count]:not([data-count="1"]) {
+    width: 13px;
+    white-space: nowrap;
+    display: flex;
+    justify-content: center;
+}
+.set-checklist--piece-list>li .icon-checkmark[data-count]:not([data-count="1"])::before {
+    content: attr(data-count);
+    font-family: locator-web,Helvetica Neue,Helvetica,Arial,sans-serif;
+}

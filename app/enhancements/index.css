@@ -2,6 +2,7 @@
 @import url(./addTradePreview.css);
 @import url(./addTradeWindowEnhancements.css);
 @import url(./addWishlistButton.css);
+@import url(./replaceCheckmarkWithNumber.css);
 @import url(./skipPromoPage.css);
 
 /* to avoid jumps of the sidebar buttons in the header */

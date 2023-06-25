@@ -12,6 +12,7 @@ import "./fixAutoWithdrawnTrade";
 import "./makePiecePeekable";
 import "./patchPieceService";
 import "./patchWebSockets";
+import "./replaceCheckmarkWithNumber";
 import "./sortCardsInTradePreview";
 
 // hide all tips after clicking

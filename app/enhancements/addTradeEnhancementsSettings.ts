@@ -7,6 +7,8 @@ type Scope = angular.IScope & {
     updatePromo: () => void,
     muteVideo: boolean,
     updateVideoMuting: () => void,
+    replaceCheckmarkWithNumber: boolean,
+    updateCheckmarkReplacing: () => void,
 }
 
 // the nm.account.settings module is available only at the account settings page
@@ -25,6 +27,10 @@ if (window.location.pathname.startsWith("/account/")) {
                 $scope.muteVideo = loadValue("muteVideo", true);
                 $scope.updateVideoMuting = () => {
                     saveValue("muteVideo", $scope.muteVideo);
+                };
+                $scope.replaceCheckmarkWithNumber = loadValue("replaceCheckmark", false);
+                $scope.updateCheckmarkReplacing = () => {
+                    saveValue("replaceCheckmark", $scope.replaceCheckmarkWithNumber);
                 };
                 debug("nmTradeEnhancementsSettingsController initiated");
             },
@@ -77,6 +83,27 @@ if (window.location.pathname.startsWith("/account/")) {
                                     NMTE will show you the original animation for
                                     better quality. But the original animation,
                                     unlike previews, may contain an audio.
+                                </small>
+                            </label>
+                        </span>
+                    </div>
+                    <div class="field checkbox-slider--field">
+                        <span class=input>
+                            <span class=checkbox-slider>
+                                <input
+                                    type=checkbox
+                                    class=checkbox-slider--checkbox
+                                    id=nmte-mute
+                                    ng-model=replaceCheckmarkWithNumber
+                                    ng-change=updateCheckmarkReplacing()
+                                >
+                                <span class=checkbox-slider--knob></span>
+                            </span>
+                            <label class=checkbox-slider--label for=nmte-mute>
+                                Replace the checkmark with a number.
+                                <small class="text-subdued">
+                                    On the series page, display the number of owned copies,
+                                    if it's 2 or more, instead of the checkmark.
                                 </small>
                             </label>
                         </span>
