@@ -119,6 +119,12 @@ Also, it will appear when you hover over the icon of using the card in trading.
 ![](./img/trade%20preview%20series%20page.png)
 ![](./img/trade%20preview%20collection%20page.jpg)
 
+## Number of copies instead of the checkmark
+If you want, in the settings you can enable displaying the number of
+owned copies instead of the checkmark, when it's 2 or more.
+
+![](./img/checkmark%20replacement.png)
+
 ## Single click instead of hundreds
 Just select the rarities you want to get or nothing if you want everything and
 wishlist all these unowned cards in one click!

@@ -1,5 +1,11 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.3.0
+* Added optional replacing the checkmark on
+the series page with the number of owned cards (#3)
+* Fixed not finding cards of non-collected series when the series is chosen
+* Misc UI improvements
+
 ## 3.2.4
 * Fixed crashing on the redeem page
 * Fixed not displaying the number of print copies in some cases
