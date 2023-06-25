@@ -28,7 +28,7 @@ export function createDialog<
             props,
         });
         dialog!.$on("closed", (ev: CustomEvent<any>) => {
-            dialog!.$destroy();
+            dialog?.$destroy();
             dialog = null;
             resolve(ev.detail);
         });
