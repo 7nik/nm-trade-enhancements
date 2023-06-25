@@ -403,7 +403,7 @@ export function filters2query (filters: Filters, oppositeOwnerId: number) {
     return {
         cardId: null,
         cardName: filters.cardName || null,
-        sharedWith: filters.shared ? oppositeOwnerId : null,
+        sharedWith: !filters.sett && filters.shared ? oppositeOwnerId : null,
         notOwnedBy: filters.notOwned ? oppositeOwnerId : null,
         wishlistedBy: filters.wishlisted ? oppositeOwnerId : null,
         settId: filters.sett?.id || null,
