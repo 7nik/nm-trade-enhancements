@@ -34,6 +34,13 @@ type Paginated<Data> = Data & {
     retrieveNext: () => Promise<Paginated<Data>> | null;
 }
 
+type DiscardPrint = {
+    piece_id: number,
+    count: number,
+    last_print?: boolean,
+    responder_discard?: boolean,
+}
+
 // eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace Services {
 
@@ -268,8 +275,8 @@ declare namespace Services {
         addPrintOwnerships: (user: NM.User | ArtUser, pieces: NM.Print[] | number[]) => void,
         removePrintOwnerships: (user: NM.User | ArtUser, pieces: NM.Print[] | number[]) => void,
         removePrintOwnership: (user: NM.User | ArtUser, pieceOrId: NM.Print | number, count?: number) => void,
-        removePrintOwnershipsDiscard: (user: NM.User | ArtUser, pieces: (NM.Print&{count:number})[]) => void,
-        removePrintOwnershipDiscard: (user: NM.User | ArtUser, piece: NM.Print&{count:number}) => void,
+        removePrintOwnershipsDiscard: (user: NM.User | ArtUser, pieces: DiscardPrint[]) => void,
+        removePrintOwnershipDiscard: (user: NM.User | ArtUser, piece: DiscardPrint) => void,
         getPieceCount: (user: NM.User | ArtUser, pieces: NM.Print[] | number[]) => number,
         hasPiece: (user: NM.User | ArtUser, pieceOrId: NM.Print | number) => boolean,
         getPrintCount: (user: NM.User | ArtUser, pieceOrId: NM.Print | number) => number,

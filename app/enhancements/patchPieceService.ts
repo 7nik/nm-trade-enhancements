@@ -38,7 +38,7 @@ addPatches((angular) => {
                 return typeof printOrId === "number" ? printOrId : printOrId.id;
             }
 
-            const aps: Services.ArtPieceService = {
+            const self: Services.ArtPieceService = {
                 NO_USER_ERROR: "NO_USER_ERROR",
                 SERVER_ERROR: "SERVER_ERROR",
                 /**
@@ -61,7 +61,7 @@ addPatches((angular) => {
                  * @param printOrId - a card or its ID
                  */
                 addPrintOwnership (user, printOrId) {
-                    aps.addPrintOwnerships(user, [printOrId] as NM.Print[]|number[]);
+                    self.addPrintOwnerships(user, [printOrId] as NM.Print[]|number[]);
                 },
                 /**
                  * Add prints to owned ones
@@ -98,7 +98,7 @@ addPatches((angular) => {
                  * @param size - the requested size
                  */
                 getImageRatio (user, print, size) {
-                    const { width, height } = aps.getImageData(user, print, size);
+                    const { width, height } = self.getImageData(user, print, size);
                     return width / height;
                 },
                 /**
@@ -110,7 +110,7 @@ addPatches((angular) => {
                  * @returns array of urls
                  */
                 getImageUrls (user, prints, size, isPublic) {
-                    return prints.map((p) => aps.getImageData(user, p, size, isPublic).url);
+                    return prints.map((p) => self.getImageData(user, p, size, isPublic).url);
                 },
                 /**
                  * Number of cards the user owns among the given list
@@ -118,7 +118,7 @@ addPatches((angular) => {
                  * @param printsOrIds - the list of cards or IDs
                  */
                 getPieceCount (user, printsOrIds: (NM.Print|number)[]) {
-                    return printsOrIds.filter((p) => aps.hasPiece(user, p)).length;
+                    return printsOrIds.filter((p) => self.hasPiece(user, p)).length;
                 },
                 /**
                  * Get the number of copies the user owns
@@ -144,7 +144,7 @@ addPatches((angular) => {
                  * @param printOrId - the card of its ID
                  */
                 hasPiece (user, printOrId) {
-                    return aps.getPrintCount(user, printOrId) > 0;
+                    return self.getPrintCount(user, printOrId) > 0;
                 },
                 /**
                  * Whether it is a new card for the user
@@ -152,7 +152,7 @@ addPatches((angular) => {
                  * @returns whether the user owns only one copy
                  */
                 isNewForYou (printOrId) {
-                    return aps.getPrintCount(artUser, printOrId) === 1;
+                    return self.getPrintCount(artUser, printOrId) === 1;
                 },
                 /**
                  * Preloads images of the given cards
@@ -163,7 +163,7 @@ addPatches((angular) => {
                  * @returns promise of all the images
                  */
                 preloadImages (user, prints, size, isPublic) {
-                    return ImageService.preloadAll(aps.getImageUrls(user, prints, size, isPublic));
+                    return ImageService.preloadAll(self.getImageUrls(user, prints, size, isPublic));
                 },
                 /**
                  * Preload images of the given cards
@@ -174,7 +174,7 @@ addPatches((angular) => {
                  * @returns promise of preloading the first image
                  */
                 preloadImagesSeries (user, prints, size, isPublic) {
-                    const urls = aps.getImageUrls(user, prints, size, isPublic);
+                    const urls = self.getImageUrls(user, prints, size, isPublic);
                     if (urls.length === 0) return Promise.resolve();
                     const promise = ImageService.preload(urls.shift()!);
                     promise.finally(function fn () {
@@ -190,7 +190,7 @@ addPatches((angular) => {
                  * @param printOrId - the card or its ID
                  */
                 removePrintOwnership (user, printOrId) {
-                    aps.removePrintOwnerships(user, [printOrId] as NM.Print[]|number[]);
+                    self.removePrintOwnerships(user, [printOrId] as NM.Print[]|number[]);
                 },
                 /**
                  * Remove one copy of each given card
@@ -206,7 +206,7 @@ addPatches((angular) => {
                  * @param print - the card and the number to remove
                  */
                 removePrintOwnershipDiscard (user, print) {
-                    aps.removePrintOwnershipsDiscard(user, [print]);
+                    self.removePrintOwnershipsDiscard(user, [print]);
                 },
                 /**
                  * Removes copies from the cards
@@ -214,7 +214,7 @@ addPatches((angular) => {
                  * @param prints - the cards and number of copies to remove
                  */
                 removePrintOwnershipsDiscard (user, prints) {
-                    getCounts(user)?.removeMultiplePrints(prints.map((p) => [p.id, p.count]));
+                    getCounts(user)?.removeMultiplePrints(prints.map((p) => [p.piece_id, p.count]));
                 },
                 /**
                  * Try to toggle favoritism of the card
@@ -232,7 +232,7 @@ addPatches((angular) => {
                     });
                 },
             };
-            return aps;
+            return self;
         },
     ]);
 });
