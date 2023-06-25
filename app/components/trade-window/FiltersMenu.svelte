@@ -176,14 +176,14 @@
             icons={["like", "liked"]}
             hint={getHint("favoritedSetts")}
         />
-        <Dropdown list={$collections ?? []} bind:value={$filters.sett} let:item
+        <Dropdown list={$collections ?? []} bind:value={$filters.sett} let:item let:selected
             hint={$collections ? "Choose a Series" : "Loading series..."}
             emptyListText="No series matching the filters"
         >
             <!-- if collections list is loaded then user collections loaded too -->
             {@const cl = (isItYou ? $oppositeCollections : $ownerCollections).getProgress(item.id)}
             {@const cr = (isItYou ? $ownerCollections : $oppositeCollections).getProgress(item.id)}
-            <div class="collection">
+            <div class="collection" class:selected>
                 <div class="name">
                     {#if $favoriteSetts.has(item.id)}<Icon icon="liked" size="1em"/>{/if}
                     {item.name}
@@ -410,7 +410,7 @@
     .collection .name {
         padding-top: 3px;
     }
-    .collection:hover .name {
+    .collection.selected .name {
         background-color: #4BBBF5;
         color: white;
     }
