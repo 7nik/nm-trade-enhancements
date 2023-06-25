@@ -46,46 +46,79 @@
         ? lim(start, steps, list.indexOf(value[1]) / steps)
         : lim(0, 1, (value[1] - min) / steps);
 
-    // limit the value by minimum and maximum
+    /**
+     * Limit the value by minimum and maximum
+     * @param min - minimal value
+     * @param max - maximum value
+     * @param val - the value to limit
+     */
     // eslint-disable-next-line no-shadow
     function lim (min: number, max: number, val: number) {
         return Math.max(min, Math.min(max, val));
     }
-    // convert 0-1 range to output value
+
+    /**
+     * Convert 0-1 range to output value
+     * @param val - the value to convert into the output units
+     */
     function toStep (val: number) {
         return list
             ? list[Math.floor(lim(0, steps, val * (steps + 1)))]
             : Math.floor(lim(min, max, val * steps));
     }
 
+    let timer: NodeJS.Timer;
+    /**
+     * Updates the value with a delay
+     * @param idx - which part of the value update
+     * @param val - the new value in 0-1 format
+     */
+    function setValue (idx: number, val: number) {
+        // "round" the value
+        val = list
+            ? list.indexOf(toStep(val)) / steps
+            : (toStep(val) - min) / steps;
+        // check for changes and update the inner value
+        if (idx) {
+            if (val === end) return;
+            end = val;
+        } else {
+            if (val === start) return;
+            start = val;
+        }
+
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            value = idx ? [value[0], toStep(val)] : [toStep(val), value[1]];
+        }, 300);
+    }
+
     function startDrag (ev: MouseEvent, isLeft: boolean) {
         ev.preventDefault();
-        const { left,  width } = (ev.target as HTMLElement)
-            .closest(".slider")!.getBoundingClientRect();
+        const elem = ev.target as HTMLElement;
+        elem.classList.add("dragging");
+        const { left,  width } = elem.closest(".slider")!.getBoundingClientRect();
         window.addEventListener("mousemove", move);
         window.addEventListener(
             "mouseup",
-            () => window.removeEventListener("mousemove", move),
+            () => {
+                window.removeEventListener("mousemove", move);
+                elem.classList.remove("dragging");
+            },
             { once: true },
         );
         function move ({ clientX: x }: MouseEvent) {
             if (isLeft) {
-                const newValue = toStep(Math.round(lim(0, end, (x - left) / width) * steps) / steps);
-                if (newValue !== value[0]) {
-                    value = [newValue, value[1]];
-                }
+                setValue(0, lim(0, end, (x - left) / width));
             } else {
-                const newValue = toStep(Math.round(lim(start, 1, (x - left) / width) * steps) / steps);
-                if (newValue !== value[1]) {
-                    value = [value[0], newValue];
-                }
+                setValue(1, lim(start, 1, (x - left) / width));
             }
         }
     }
 
     // try to locate the title at the center of the slider but without intersecting the labels
     let titleWidth = 0.4;
-    let  titlePos = 0.5;
+    let titlePos = 0.5;
     $: {
         const left = 0.5 - titleWidth / 2;
         const right = 0.5 + titleWidth / 2;
@@ -133,11 +166,11 @@
     <div class="range"></div>
     <div class="handles">
         <div class="handle" on:mousedown={(ev) => startDrag(ev, true)}>
-            <div class="label">{num2text(value[0])}</div>
+            <div class="label">{num2text(toStep(start))}</div>
         </div>
         {#if start < 1}
             <div class="handle" on:mousedown={(ev) => startDrag(ev, false)}>
-                <div class="label">{num2text(value[1])}</div>
+                <div class="label">{num2text(toStep(end))}</div>
             </div>
         {/if}
         <div class="title" style:--title-pos="{titlePos * 100}%" use:getWidth>{title}</div>
@@ -169,7 +202,7 @@
     }
     .handle {
         position: absolute;
-        left: calc(var(--start));
+        left: var(--start);
         top: calc(-50% - 6px);
         width: 15px;
         height: 15px;
@@ -180,6 +213,15 @@
     }
     .handle ~ .handle {
         left: calc(var(--end));
+    }
+    .handle:global(.dragging) {
+        width: 12px;
+        height: 12px;
+        left: calc(var(--start) + 1px);
+        top: calc(-50% - 4px);
+    }
+    .handle ~ .handle:global(.dragging) {
+        left: calc(var(--end) + 1px);
     }
     .label, .title {
         position: absolute;
