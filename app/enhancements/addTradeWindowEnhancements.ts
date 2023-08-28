@@ -9,6 +9,7 @@ import TradeWindow from "../components/TradeWindow.svelte";
 import config from "../services/config";
 import currentUser from "../services/currentUser";
 import NMApi from "../utils/NMApi";
+import { liveListProvider } from "../utils/NMLiveApi";
 import addPatches from "../utils/patchAngular";
 import { debug } from "../utils/utils";
 
@@ -242,6 +243,20 @@ addPatches((angular) => {
                 });
                 artOverlay.show("trade-modal");
             };
+
+            // if we are on a series page of a card from the accepted trade,
+            // send a signal to re-render the page to display the changes
+            liveListProvider("trades").on("remove", async (tradeEvent) => {
+                if (tradeEvent.verb_phrase !== "accepted") return;
+                const trade = await NMApi.trade.get(tradeEvent.object.id);
+                const seriesNames = trade.bidder_offer.prints.concat(trade.responder_offer.prints)
+                    .map((print) => print.sett_name);
+                const currentSeries = document.querySelector(".set-header--title a")
+                    ?.textContent?.trim();
+                if (seriesNames.includes(currentSeries!)) {
+                    artSubscriptionService.broadcast("trade-accepted", tradeEvent);
+                }
+            });
 
             debug("new trade window injected");
         },
