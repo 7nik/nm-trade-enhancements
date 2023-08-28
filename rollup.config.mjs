@@ -31,7 +31,8 @@ export default {
         format: "es",
         name: "userscript",
         file: "packages/userscript.user.js",
-        banner: usHeader.toString(),
+        banner: `${usHeader}\n(async()=>{`,
+        footer: `})();`,
     },
     plugins: [
         svelte({
