@@ -153,6 +153,14 @@
         width = "";
         height = "";
     }
+    // Firefox is unable to play gif as video
+    if (data.sources?.filter((s) => s.mime_type !== "image/gif").length === 0)  {
+        data.type = "image";
+    }
+    // add fallback sources for cases when browser cannot play the original
+    if (data.type === "video" && size === "original") {
+        data.sources?.push(...getPrintData(print, "large").sources!);
+    }
     const showReplica = !hideIcons && "is_replica" in print && print.is_replica;
     const showLimited = !hideIcons && "version" in print && print.version === /* lim sett */ 3;
 
