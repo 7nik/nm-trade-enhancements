@@ -5,7 +5,7 @@
     import type NM from "../../utils/NMTypes";
     import type { Actors } from "../TradeWindow.svelte";
 
-    import { getContext, setContext } from "svelte";
+    import { getContext, setContext, tick } from "svelte";
     import { firstName } from "../../services/user";
     import { linky } from "../../utils/utils";
     import Avatar from "../elements/Avatar.svelte";
@@ -57,6 +57,19 @@
             }
         }
     }
+    async function showSearch (ev: Event) {
+        state = "search";
+        const ul = (ev.currentTarget as HTMLElement).closest("article")
+            ?.nextElementSibling
+            ?.querySelector("ul");
+        if (ul) {
+            // wait when the list will be shown
+            await tick();
+            // kick the list to continue to load cards if needed
+            ul.dispatchEvent(new Event("scroll"))
+        }
+    }
+
     function toggleBio () {
         state = state === "bio" ? "offer" : "bio";
     }
@@ -72,31 +85,31 @@
 {#if state === "offer" || state === "bio"}
     <article>
         <header>
-        <Avatar user={cardOwner} />
-                <div>
-                    <TradeGrade user={cardOwner} />
-                    {firstName(cardOwner)} will give
-                    {#if cardOwner.bio || isItYou}
-                        <div class="bio"
-                            class:bio-shown={state === "bio"}
-                            on:click={toggleBio}
-                        >
-                            <span class=disclosure-triangle class:open={state === "bio"}>▶</span>
-                            <span class=bio-text>{cardOwner.bio || "Add a bio"}</span>
-                            <span class=bio-action>
-                                {state === "bio" ? "Hide" : "Show"} full bio
-                            </span>
-                        </div>
-                    {/if}
-                </div>
-                {#if canEdit}
-                    <Button icon={canAddItems ? "add" : ""} size="mini"
-                        disabled={!canAddItems}
-                        on:click={() => { state = "search"; }}
+            <Avatar user={cardOwner} />
+            <div>
+                <TradeGrade user={cardOwner} />
+                {firstName(cardOwner)} will give
+                {#if cardOwner.bio || isItYou}
+                    <div class="bio"
+                        class:bio-shown={state === "bio"}
+                        on:click={toggleBio}
                     >
-                        {canAddItems ? "Add" : "5 max"}
-                    </Button>
+                        <span class=disclosure-triangle class:open={state === "bio"}>▶</span>
+                        <span class=bio-text>{cardOwner.bio || "Add a bio"}</span>
+                        <span class=bio-action>
+                            {state === "bio" ? "Hide" : "Show"} full bio
+                        </span>
+                    </div>
                 {/if}
+            </div>
+            {#if canEdit}
+                <Button icon={canAddItems ? "add" : ""} size="mini"
+                    disabled={!canAddItems}
+                    on:click={showSearch}
+                >
+                    {canAddItems ? "Add" : "5 max"}
+                </Button>
+            {/if}
         </header>
         <section class="offer">
             {#if offer.length === 0}

@@ -216,46 +216,46 @@
     {/if}
 
     <section class=print-list>
-        {#if $filteredPrints.length > 0}
-            <ul bind:this={viewport} on:scroll={loadMorePrints}>
-                {#each $filteredPrints as print (print.id)}
-                    <PrintDetails {print} >
-                        <Button size="mini" icon="add" hint="Add one"
-                            on:click={() => addPrint(print)}
-                        />
-                        <span slot="series" class="card-actions">
-                            {#if !$isSettSelected}
-                                <Icon icon="search" size="10px"
-                                    hint="Select this series"
-                                    on:click={() => filtersMenu.selectSett(print)}
-                                />
-                                <Icon icon="close" size="10px"
-                                    hint="Hide this series"
-                                    on:click={() => filtersMenu.hideSett(print)}
-                                />
-                            {/if}
-                        </span>
-                    </PrintDetails>
-                {/each}
-                {#if loading}
+        <ul bind:this={viewport} on:scroll={loadMorePrints}>
+            {#each $filteredPrints as print (print.id)}
+                <PrintDetails {print} >
+                    <Button size="mini" icon="add" hint="Add one"
+                        on:click={() => addPrint(print)}
+                    />
+                    <span slot="series" class="card-actions">
+                        {#if !$isSettSelected}
+                            <Icon icon="search" size="10px"
+                                hint="Select this series"
+                                on:click={() => filtersMenu.selectSett(print)}
+                            />
+                            <Icon icon="close" size="10px"
+                                hint="Hide this series"
+                                on:click={() => filtersMenu.hideSett(print)}
+                            />
+                        {/if}
+                    </span>
+                </PrintDetails>
+            {/each}
+            {#if loading}
+                {#if $filteredPrints.length > 0}
                     <li class=loading-more-results>
                         <Icon icon="loader" size="32px"/>
                     </li>
+                {:else}
+                    <div class=loading-results>
+                        <Icon icon="loader" size="50px"/>
+                    </div>
                 {/if}
-            </ul>
-        {:else if loading}
-            <div class=loading-results>
-                <Icon icon="loader" size="50px"/>
-            </div>
-        {:else}
-            <div class=empty-result>
-                <span>😭</span>
-                <i>
-                    {isItYou ? "You don't" : `${actors.partner.first_name} doesn't`}
-                    have any cards matching that search.
-                </i>
-            </div>
-        {/if}
+            {:else if $filteredPrints.length === 0}
+                <li class=empty-result>
+                    <span>😭</span>
+                    <i>
+                        {isItYou ? "You don't" : `${actors.partner.first_name} doesn't`}
+                        have any cards matching that search.
+                    </i>
+                </li>
+            {/if}
+        </ul>
     </section>
 </article>
 
@@ -357,6 +357,9 @@
         white-space: normal;
         font-size: 10px;
         color: #9f96a8;
+        max-height: 25%;
+        overflow: auto;
+        flex-shrink: 0;
     }
     .hidden-series span {
         white-space: nowrap;
@@ -387,6 +390,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        height: 100%;
     }
     .empty-result span {
         font-size: 60px;
