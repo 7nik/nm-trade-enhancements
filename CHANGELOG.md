@@ -1,5 +1,13 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.3.1
+* Fixed not running in Safari (old version only?)
+* Fixed not playing animated cards in some cases
+* Fixed stopping to load cards in some cases
+* Fixed not updating active filters at the first change
+* Now the collection page will be updated if
+one of its cards is involved in an accepted trade
+
 ## 3.3.0
 * Added optional replacing the checkmark on
 the series page with the number of owned cards (#3)
