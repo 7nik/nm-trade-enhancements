@@ -48,9 +48,8 @@ function Observable<T extends object> (object: T) {
             }
             if (stores[p as keyof T]) {
                 stores[p as keyof T]!.set(value);
-            } else {
-                target[p as keyof T] = value;
             }
+            target[p as keyof T] = value;
             return true;
         },
     }) as T & { s: typeof publicStores };
@@ -150,7 +149,7 @@ export default (
         };
 
         // update tips of the hidden setts
-        if (data.filters.hiddenSetts.length > 0) {
+        if (!data.filters.sett && data.filters.hiddenSetts.length > 0) {
             const hSetts = [] as HiddenSett[];
             // eslint-disable-next-line no-shadow
             for (const sett of data.filters.hiddenSetts) {
