@@ -1,5 +1,8 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.3.2
+* Improve compatibility with touch devices
+
 ## 3.3.1
 * Fixed not running in Safari (old version only?)
 * Fixed not playing animated cards in some cases

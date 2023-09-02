@@ -93,21 +93,23 @@
         }, 300);
     }
 
-    function startDrag (ev: MouseEvent, isLeft: boolean) {
+    function startDrag (ev: MouseEvent | TouchEvent, isLeft: boolean) {
         ev.preventDefault();
+        const isTouch = ev instanceof TouchEvent;
         const elem = ev.target as HTMLElement;
         elem.classList.add("dragging");
         const { left,  width } = elem.closest(".slider")!.getBoundingClientRect();
-        window.addEventListener("mousemove", move);
+        window.addEventListener(isTouch ? "touchmove" : "mousemove", move);
         window.addEventListener(
-            "mouseup",
+            isTouch ? "touchend" : "mouseup",
             () => {
-                window.removeEventListener("mousemove", move);
+                window.removeEventListener(isTouch ? "touchmove" : "mousemove", move);
                 elem.classList.remove("dragging");
             },
             { once: true },
         );
-        function move ({ clientX: x }: MouseEvent) {
+        function move (ev: MouseEvent | TouchEvent) {
+            const x = ev instanceof MouseEvent ? ev.clientX : ev.touches[0].clientX;
             if (isLeft) {
                 setValue(0, lim(0, end, (x - left) / width));
             } else {
@@ -165,11 +167,17 @@
 <span class="slider" style:--start="{start * 100}%" style:--end="{end * 100}%">
     <div class="range"></div>
     <div class="handles">
-        <div class="handle" on:mousedown={(ev) => startDrag(ev, true)}>
+        <div class="handle"
+            on:mousedown={(ev) => startDrag(ev, true)}
+            on:touchstart={(ev) => startDrag(ev, true)}
+        >
             <div class="label">{num2text(toStep(start))}</div>
         </div>
         {#if start < 1}
-            <div class="handle" on:mousedown={(ev) => startDrag(ev, false)}>
+            <div class="handle"
+                on:mousedown={(ev) => startDrag(ev, false)}
+                on:touchstart={(ev) => startDrag(ev, false)}
+            >
                 <div class="label">{num2text(toStep(end))}</div>
             </div>
         {/if}

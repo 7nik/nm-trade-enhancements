@@ -192,6 +192,19 @@ export default <Params, C extends ContentType>(
             if (!param) return;
             showTooltip(elem, typeof provider === "function" ? () => provider(param!) : provider);
         });
+        elem.addEventListener("touchstart", (ev) => {
+            if (!param) return;
+            ev.preventDefault();
+            showTooltip(elem, typeof provider === "function" ? () => provider(param!) : provider);
+
+            const backdrop = document.createElement("div");
+            backdrop.classList.add("backdrop");
+            backdrop.addEventListener("touchstart", () => {
+                hideTooltip();
+                backdrop.remove();
+            }, { once: true });
+            attachTip(backdrop);
+        });
         return {
             update (p) {
                 param = p;

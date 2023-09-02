@@ -148,6 +148,8 @@
         filterMenuBtn.style.setProperty("--left", `${left}px`);
         filterMenuBtn.style.setProperty("--top", `${top}px`);
     }
+
+    let holdMenuOpened = false;
 </script>
 
 <svelte:window on:resize={updateFilterMenuPosition}/>
@@ -156,11 +158,22 @@
     <header>
         <Avatar user={cardOwner} />
         Add cards {isItYou ? "you" : cardOwner.first_name} will give
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <span class="edit-filters-btn"
+            class:opened={holdMenuOpened}
             on:mouseenter={updateFilterMenuPosition}
+            on:click|self={() => {
+                holdMenuOpened = false;
+            }}
             bind:this={filterMenuBtn}
         >
-            <Button type="subdued-light" size="mini">Edit filters</Button>
+            <Button type="subdued-light" size="mini"
+                on:click={() => {
+                    console.log("open");
+                    holdMenuOpened = true;
+                    updateFilterMenuPosition();
+                }}
+            >Edit filters</Button>
             <div class="filters-menu">
                 <FiltersMenu
                     {sett}
@@ -169,6 +182,7 @@
                 />
             </div>
         </span>
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <span class=close-btn on:click={() => dispatch("close")}>
             <Icon icon="close"/>
         </span>
@@ -298,10 +312,19 @@
         }
     }
     .edit-filters-btn > :global(:first-child:hover + .filters-menu),
-    .edit-filters-btn > :global(:first-child:active + .filters-menu),
+    .edit-filters-btn.opened > :global(.filters-menu),
     .filters-menu:hover {
         visibility: visible;
         transition-delay: 0s;
+    }
+    .edit-filters-btn.opened:after {
+        content: "";
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
     }
     .close-btn {
         align-self: flex-start;

@@ -37,3 +37,13 @@
 #nmte-tips > div[data-placement=left] .arrow svg {
     transform: rotate(-90deg);
 }
+
+#nmte-tips > .backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    opacity: 0;
+}
