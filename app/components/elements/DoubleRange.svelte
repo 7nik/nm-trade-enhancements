@@ -95,7 +95,7 @@
 
     function startDrag (ev: MouseEvent | TouchEvent, isLeft: boolean) {
         ev.preventDefault();
-        const isTouch = ev instanceof TouchEvent;
+        const isTouch = ev.type.startsWith("touch");
         const elem = ev.target as HTMLElement;
         elem.classList.add("dragging");
         const { left,  width } = elem.closest(".slider")!.getBoundingClientRect();
@@ -109,7 +109,7 @@
             { once: true },
         );
         function move (ev: MouseEvent | TouchEvent) {
-            const x = ev instanceof MouseEvent ? ev.clientX : ev.touches[0].clientX;
+            const x = ("touches" in ev ? ev.touches[0] : ev).clientX;
             if (isLeft) {
                 setValue(0, lim(0, end, (x - left) / width));
             } else {

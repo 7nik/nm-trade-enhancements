@@ -1,5 +1,8 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.3.3
+* Fixed the range slider broken in 3.3.2
+
 ## 3.3.2
 * Improve compatibility with touch devices
 
