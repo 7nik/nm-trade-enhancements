@@ -60,7 +60,7 @@ function tooltip<C extends ContentType> (type: C, params: TooltipParams) {
     arrowElem.innerHTML = ARROW;
 
     let tip: HTMLElement | null = null;
-    // let instance: Instance | null = null;
+    let currentTarget: HTMLElement | null = null;
     let closing: NodeJS.Timeout | null = null;
     let stopListeners: (() => void) | null = null;
 
@@ -70,6 +70,7 @@ function tooltip<C extends ContentType> (type: C, params: TooltipParams) {
         stopListeners?.();
         stopListeners = null;
         closing = null;
+        currentTarget = null;
     }
 
     function startHiding () {
@@ -86,7 +87,11 @@ function tooltip<C extends ContentType> (type: C, params: TooltipParams) {
         closing = null;
     }
 
-    async function startShowing (elem: HTMLElement, contentProvider: ContentProvider<C>) {
+    async function startShowing (
+        elem: HTMLElement,
+        contentProvider: ContentProvider<C>,
+        touch = false,
+    ) {
         if (fullParams.singleton) {
             cancelHiding();
         } else {
@@ -95,7 +100,7 @@ function tooltip<C extends ContentType> (type: C, params: TooltipParams) {
         }
         let canceled = false;
         // do delay if needed
-        if (fullParams.showDelay && !(fullParams.singleton && tip)) {
+        if (fullParams.showDelay && !touch && !(fullParams.singleton && tip)) {
             elem.addEventListener("mouseleave", () => { canceled = true; }, { once: true });
             await delay(fullParams.showDelay);
             if (canceled) return;
@@ -106,14 +111,14 @@ function tooltip<C extends ContentType> (type: C, params: TooltipParams) {
         if (canceled) return;
         // ensure the tooltip still need to be shown
         if (content && document.contains(elem)) {
-            show(elem, content);
+            show(elem, content, touch);
         } else if (tip) {
             // if singleton is shown
             hide();
         }
     }
 
-    function show (elem: HTMLElement, content: HTMLElement | string) {
+    function show (elem: HTMLElement, content: HTMLElement | string, touch: boolean) {
         // create the tooltip and add the content
         if (tip) {
             stopListeners?.();
@@ -129,53 +134,68 @@ function tooltip<C extends ContentType> (type: C, params: TooltipParams) {
         }
         tip.prepend(arrowElem);
         if (fullParams.interactive) {
-            tip.addEventListener("mouseleave", startHiding);
-            tip.addEventListener("mouseenter", cancelHiding);
+            if (!touch) {
+                tip.addEventListener("mouseleave", startHiding);
+                tip.addEventListener("mouseenter", cancelHiding);
+            }
             tip.addEventListener("click", hide);
         }
         attachTip(tip);
 
-        // display to tooltip
-        const stopTip = autoUpdate(elem, tip, () => {
-            if (!tip || !document.contains(elem)) {
-                hide();
-                return;
-            }
-            computePosition(elem, tip, {
-                placement: fullParams.placement,
-                middleware: [
-                    offset(8),
-                    shift(),
-                    flip(),
-                    arrow({ element: arrowElem }),
-                ],
-            }).then(({
-                x, y, placement, middlewareData,
-            }) => {
-                if (tip) {
-                    tip.style.left = `${x}px`;
-                    tip.style.top = `${y}px`;
-                    tip.dataset.placement = placement;
-                }
-                if (middlewareData.arrow) {
-                    arrowElem.style.left = `${middlewareData.arrow.x}px`;
-                    arrowElem.style.top = `${middlewareData.arrow.y}px`;
-                }
-            });
-        });
+        // display the tooltip
+        const stopTracking = autoUpdate(elem, tip, trackTip.bind(null, elem));
+        currentTarget = elem;
         // Listeners to hide the tooltip
-        elem.addEventListener("mouseleave", startHiding);
-        elem.addEventListener("mouseenter", cancelHiding);
-        elem.addEventListener("click", hide);
+        if (touch) {
+            elem.addEventListener("touchstart", hide);
+        } else {
+            elem.addEventListener("mouseleave", startHiding);
+            elem.addEventListener("mouseenter", cancelHiding);
+            elem.addEventListener("click", hide);
+        }
         stopListeners = () => {
-            elem.removeEventListener("mouseleave", startHiding);
-            elem.removeEventListener("mouseenter", cancelHiding);
-            elem.removeEventListener("click", hide);
-            stopTip();
+            if (touch) {
+                elem.removeEventListener("touchstart", hide);
+            } else {
+                elem.removeEventListener("mouseleave", startHiding);
+                elem.removeEventListener("mouseenter", cancelHiding);
+                elem.removeEventListener("click", hide);
+            }
+            stopTracking();
         };
     }
 
-    return [startShowing, hide] as const;
+    function trackTip (elem: HTMLElement) {
+        if (!tip || !document.contains(elem)) {
+            hide();
+            return;
+        }
+        computePosition(elem, tip, {
+            placement: fullParams.placement === "left" && window.innerWidth <= 640
+                ? "top"
+                : fullParams.placement,
+            middleware: [
+                offset(8),
+                shift(),
+                flip(),
+                arrow({ element: arrowElem }),
+            ],
+        }).then(({
+            x, y, placement, middlewareData,
+        }) => {
+            if (tip) {
+                tip.style.left = `${x}px`;
+                tip.style.top = `${y}px`;
+                tip.dataset.placement = placement;
+            }
+            if (middlewareData.arrow) {
+                arrowElem.style.left = `${middlewareData.arrow.x}px`;
+                arrowElem.style.top = `${middlewareData.arrow.y}px`;
+            }
+        });
+    }
+
+    return [startShowing, hide, () => currentTarget] as const;
 }
 
 type ContentGenerator<T, C extends ContentType> =
@@ -186,30 +206,61 @@ export default <Params, C extends ContentType>(
     params: TooltipParams,
     provider: ContentGenerator<Params, C>,
 ): Action<HTMLElement, Params> => {
-    const [showTooltip, hideTooltip] = tooltip(type, params);
-    return (elem: HTMLElement, param?: Params) => {
-        elem.addEventListener("mouseenter", () => {
-            if (!param) return;
-            showTooltip(elem, typeof provider === "function" ? () => provider(param!) : provider);
-        });
-        elem.addEventListener("touchstart", (ev) => {
-            if (!param) return;
-            ev.preventDefault();
-            showTooltip(elem, typeof provider === "function" ? () => provider(param!) : provider);
+    const [showTooltip, hideTooltip, getCurrentTarget] = tooltip(type, params);
 
-            const backdrop = document.createElement("div");
-            backdrop.classList.add("backdrop");
-            backdrop.addEventListener("touchstart", () => {
-                hideTooltip();
-                backdrop.remove();
-            }, { once: true });
-            attachTip(backdrop);
+    function hideTip (target: any) {
+        if (getCurrentTarget() === target) {
+            hideTooltip();
+        }
+    }
+
+    // eslint-disable-next-line sonarjs/cognitive-complexity
+    return (target: HTMLElement, param?: Params) => {
+        target.addEventListener("mouseenter", () => {
+            // if nothing to show or is already displayed
+            if (!param || getCurrentTarget() === target) return;
+            showTooltip(
+                target,
+                typeof provider === "function" ? () => provider(param!) : provider,
+            );
+        });
+        target.addEventListener("touchstart", (ev) => {
+            if (!param) return;
+            if (target.tagName === "A" || target.firstElementChild?.tagName === "A") {
+                if (getCurrentTarget() === target) {
+                    hideTip(target);
+                    return;
+                }
+                ev.preventDefault();
+            }
+            showTooltip(
+                target,
+                typeof provider === "function" ? () => provider(param!) : provider,
+                true,
+            );
+
+            if (type === "element") {
+                let skip = true;
+                window.addEventListener("touchend", function fn (event) {
+                    if (container.contains(event.target as HTMLElement)) return;
+                    if (skip) {
+                        skip = false;
+                    } else {
+                        hideTip(target);
+                        window.removeEventListener("touchend", fn, { capture: true });
+                    }
+                }, { capture: true });
+            } else {
+                setTimeout(() => hideTip(target), type === "text" ? 1500 : 3000);
+            }
         });
         return {
             update (p) {
                 param = p;
             },
-            destroy: hideTooltip,
+            destroy () {
+                hideTip(target);
+            },
         };
     };
 };

@@ -325,6 +325,7 @@
         left: 0;
         width: 100vw;
         height: 100vh;
+        z-index: 1;
     }
     .close-btn {
         align-self: flex-start;
@@ -435,5 +436,10 @@
     }
     ul :global(li:hover .card-actions) {
         opacity: 1;
+    }
+    @media (any-hover: none) {
+        .card-actions {
+            opacity: 1;
+        }
     }
 </style>

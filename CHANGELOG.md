@@ -1,10 +1,14 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.3.4
+* Fixed sometimes falsy "No cards" in the trade window at start
+* Improved compatibility with touch devices
+
 ## 3.3.3
 * Fixed the range slider broken in 3.3.2
 
 ## 3.3.2
-* Improve compatibility with touch devices
+* Improved compatibility with touch devices
 
 ## 3.3.1
 * Fixed not running in Safari (old version only?)
