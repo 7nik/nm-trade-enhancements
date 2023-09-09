@@ -52,7 +52,7 @@
 
     // keys to ensure that the function result is still actual
     let loadPrintsKey = 0;
-    let loadMorePrintsKey = 0;
+    let loadMorePrintsKey = -1;
     onDestroy(() => {
         // replacing stores with new ones after component destruction causes
         // calling the `unsubscribe` method for the second time and this throws errors
