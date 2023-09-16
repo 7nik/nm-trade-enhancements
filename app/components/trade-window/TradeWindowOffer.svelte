@@ -82,104 +82,101 @@
     }
 </script>
 
-{#if state === "offer" || state === "bio"}
-    <article>
-        <header>
-            <Avatar user={cardOwner} />
-            <div>
-                <TradeGrade user={cardOwner} />
-                {firstName(cardOwner)} will give
-                {#if cardOwner.bio || isItYou}
-                    <div class="bio"
-                        class:bio-shown={state === "bio"}
-                        on:click={toggleBio}
-                    >
-                        <span class=disclosure-triangle class:open={state === "bio"}>▶</span>
-                        <span class=bio-text>{cardOwner.bio || "Add a bio"}</span>
-                        <span class=bio-action>
-                            {state === "bio" ? "Hide" : "Show"} full bio
-                        </span>
+<article class:hidden={canEdit && state === "search"}>
+    <header>
+        <Avatar user={cardOwner} />
+        <div>
+            <TradeGrade user={cardOwner} />
+            {firstName(cardOwner)} will give
+            {#if cardOwner.bio || isItYou}
+                <div class="bio"
+                    class:bio-shown={state === "bio"}
+                    on:click={toggleBio}
+                >
+                    <span class=disclosure-triangle class:open={state === "bio"}>▶</span>
+                    <span class=bio-text>{cardOwner.bio || "Add a bio"}</span>
+                    <span class=bio-action>
+                        {state === "bio" ? "Hide" : "Show"} full bio
+                    </span>
+                </div>
+            {/if}
+        </div>
+        {#if canEdit}
+            <Button icon={canAddItems ? "add" : ""} size="mini"
+                disabled={!canAddItems}
+                on:click={showSearch}
+            >
+                {canAddItems ? "Add" : "5 max"}
+            </Button>
+        {/if}
+    </header>
+    <section class="offer">
+        {#if offer.length === 0}
+            <div class=trade-tips>
+                <div>
+                    <div>
+                        <h3>Add up to 5 items {isItYou ? "you" : cardOwner.name} will give</h3>
+                        {#if isItYou}
+                            <div class="text-subdued text-small">
+                                Tips for new traders. Try offering:<br>
+                                – Cards they don't own<br>
+                                – Cards you have duplicates of<br>
+                                – Fair rarity trades
+                                    (<Icon icon="uncommon" hint="Uncommon"/>
+                                    for <Icon icon="uncommon" hint="Uncommon"/>)<br>
+                                – Two for one trades
+                                    (<Icon icon="uncommon" hint="Uncommon"/>
+                                    + <Icon icon="uncommon" hint="Uncommon"/>
+                                    for <Icon icon="rare" hint="rare"/>)
+                            </div>
+                        {/if}
                     </div>
+                </div>
+            </div>
+        {:else}
+            <ul>
+                {#each offer as print (print.id)}
+                    <PrintDetails
+                        bind:print
+                        showPrintNumber={isItYou && canEdit ? "list" : "yes"}
+                    >
+                        {#if canEdit}
+                            <Button type="danger" size="mini" icon="minus"
+                                hint="Remove it"
+                                on:click={() => removePrint(print)}
+                            />
+                        {/if}
+                    </PrintDetails>
+                {/each}
+            </ul>
+        {/if}
+        {#if state === "bio"}
+            <div class=full-bio>
+                {#each linky(cardOwner.bio) as text, i}
+                    {#if i % 2}
+                        <a target="_blank" rel="noreferrer" href={text}>{text}</a>
+                    {:else}
+                        {text}
+                    {/if}
+                {/each}
+                {#if isItYou}
+                    <br><br>
+                    <a href="{actors.you.links.profile}/collection"
+                        target="_blank" rel="noreferrer"
+                    >
+                        <Button type="subdued-light" size="max">
+                            Edit Your Bio
+                        </Button>
+                    </a>
                 {/if}
             </div>
-            {#if canEdit}
-                <Button icon={canAddItems ? "add" : ""} size="mini"
-                    disabled={!canAddItems}
-                    on:click={showSearch}
-                >
-                    {canAddItems ? "Add" : "5 max"}
-                </Button>
-            {/if}
-        </header>
-        <section class="offer">
-            {#if offer.length === 0}
-                <div class=trade-tips>
-                    <div>
-                        <div>
-                            <h3>Add up to 5 items {isItYou ? "you" : cardOwner.name} will give</h3>
-                            {#if isItYou}
-                                <div class="text-subdued text-small">
-                                    Tips for new traders. Try offering:<br>
-                                    – Cards they don't own<br>
-                                    – Cards you have duplicates of<br>
-                                    – Fair rarity trades
-                                        (<Icon icon="uncommon" hint="Uncommon"/>
-                                        for <Icon icon="uncommon" hint="Uncommon"/>)<br>
-                                    – Two for one trades
-                                        (<Icon icon="uncommon" hint="Uncommon"/>
-                                        + <Icon icon="uncommon" hint="Uncommon"/>
-                                        for <Icon icon="rare" hint="rare"/>)
-                                </div>
-                            {/if}
-                        </div>
-                    </div>
-                </div>
-            {:else}
-                <ul>
-                    {#each offer as print (print.id)}
-                        <PrintDetails
-                            bind:print
-                            showPrintNumber={isItYou && canEdit ? "list" : "yes"}
-                        >
-                            {#if canEdit}
-                                <Button type="danger" size="mini" icon="minus"
-                                    hint="Remove it"
-                                    on:click={() => removePrint(print)}
-                                />
-                            {/if}
-                        </PrintDetails>
-                    {/each}
-                </ul>
-            {/if}
-            {#if state === "bio"}
-                <div class=full-bio>
-                    {#each linky(cardOwner.bio) as text, i}
-                        {#if i % 2}
-                            <a target="_blank" rel="noreferrer" href={text}>{text}</a>
-                        {:else}
-                            {text}
-                        {/if}
-                    {/each}
-                    {#if isItYou}
-                        <br><br>
-                        <a href="{actors.you.links.profile}/collection"
-                            target="_blank" rel="noreferrer"
-                        >
-                            <Button type="subdued-light" size="max">
-                                Edit Your Bio
-                            </Button>
-                        </a>
-                    {/if}
-                </div>
-            {/if}
-        </section>
-    </article>
-{/if}
+        {/if}
+    </section>
+</article>
 
-<!-- state === "search" -->
 {#if canEdit}
     <!-- just hide this block to not re-render the huge list -->
-    <section class="searcher" class:show={state === "search"}>
+    <section class="searcher" class:hidden={state !== "search"}>
         <TradeWindowEditOffer
             {sett}
             {offer}
@@ -285,12 +282,12 @@
         text-decoration: none;
     }
     .searcher {
-        display: none;
-    }
-    .searcher.show {
         display: flex;
         flex: 1;
         overflow: initial;
+    }
+    .hidden {
+        display: none;
     }
     @media screen and (min-width: 961px) {
         section {
@@ -305,10 +302,11 @@
             min-height: 50%;
         }
         .searcher {
+            display: flex;
             position: absolute;
-            top: 100vh;
+            top: 0;
             left: 0;
-            bottom: -100vh;
+            bottom: 0;
             right: 0;
             z-index: 1;
             border-radius: 6px;
@@ -316,10 +314,9 @@
             background: white;
             transition: top .2s ease-in-out, bottom .2s ease-in-out;
         }
-        .searcher.show {
-            display: flex;
-            top: 0;
-            bottom: 0;
+        .searcher.hidden {
+            top: 100vh;
+            bottom: -100vh;
         }
     }
 </style>

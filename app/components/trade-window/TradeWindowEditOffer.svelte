@@ -130,14 +130,13 @@
         const buttonWidth = button.offsetWidth;
         const menuWidth = filterContainer.offsetWidth;
         let left = 0;
-        let top = 0;
+        let top = -10;
         let parent = button;
         do {
             left += parent.offsetLeft;
             top += parent.offsetTop;
             parent = parent.offsetParent as HTMLElement;
         } while (parent);
-        top = top - button.offsetTop + 5;
         left = left + buttonWidth / 2 - menuWidth / 2;
         const windowWidth = window.innerWidth;
         const sidebarWidth = windowWidth < 640 ? 0 : 360;
@@ -145,6 +144,7 @@
             left = windowWidth - menuWidth - sidebarWidth - 5;
         }
         if (left < 5) left = 5;
+        if (top < 5) top = 5;
         filterMenuBtn.style.setProperty("--left", `${left}px`);
         filterMenuBtn.style.setProperty("--top", `${top}px`);
     }

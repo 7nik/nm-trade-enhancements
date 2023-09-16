@@ -1,5 +1,8 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.3.5
+* Fixed scroll reset in the trade window in Firefox
+
 ## 3.3.4
 * Fixed sometimes falsy "No cards" in the trade window at start
 * Improved compatibility with touch devices
