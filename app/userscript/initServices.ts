@@ -108,8 +108,23 @@ async function initConfigs () {
 
     debug("config found");
     try {
+        let domain = window.location.hostname.split(".")[0].replace("www", "");
+        domain &&= `-${domain}`;
         const config = Object.assign(
-            {},
+            {
+                defaultImageUrl: "https://d1ld1je540hac5.cloudfront.net/assets/img/diamond_avatar.png",
+                defaultAvatarUrl: "https://d1ld1je540hac5.cloudfront.net/assets/img/default_avatar.png",
+                "po-animation-assets": "https://d1ld1je540hac5.cloudfront.net/assets/animations",
+                // "social_network.conversation": 189,
+                // MESSAGES_KEY: "messages",
+                // TRADES_KEY: "trades",
+                // MILESTONE_SUGGESTION_KEY: "suggestion",
+                // MILESTONE_RECENT_KEY: "recent",
+                // MILESTONE_COMPLETED_KEY: "completed",
+                // "profile-milestones": "/USERNAME/milestones/",
+                // eslint-disable-next-line sonarjs/no-nested-template-literals
+                "node-api-endpoint": `https://napi${domain}.neonmob.com`,
+            },
             // extract and parse all the configs
             ...[...script.textContent!.matchAll(/artModule.value\("\w+",\s*({[^;]*})\);/g)]
                 // .map(([_, json]) => eval(json))
