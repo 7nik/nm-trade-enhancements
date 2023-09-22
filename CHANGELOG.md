@@ -1,5 +1,9 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.4.0
+* Added ability to export and import settings
+* "Fixed" not loading configs sometimes
+
 ## 3.3.5
 * Fixed scroll reset in the trade window in Firefox
 

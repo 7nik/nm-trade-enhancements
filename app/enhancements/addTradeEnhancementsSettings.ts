@@ -9,6 +9,8 @@ type Scope = angular.IScope & {
     updateVideoMuting: () => void,
     replaceCheckmarkWithNumber: boolean,
     updateCheckmarkReplacing: () => void,
+    serializedSettings: string,
+    loadSettings: (elem: HTMLInputElement) => void,
 }
 
 // the nm.account.settings module is available only at the account settings page
@@ -24,14 +26,36 @@ if (window.location.pathname.startsWith("/account/")) {
                 $scope.updatePromo = () => {
                     saveValue("openPromo", !$scope.disableAutoOpeningPromo);
                 };
+
                 $scope.muteVideo = loadValue("muteVideo", true);
                 $scope.updateVideoMuting = () => {
                     saveValue("muteVideo", $scope.muteVideo);
                 };
+
                 $scope.replaceCheckmarkWithNumber = loadValue("replaceCheckmark", false);
                 $scope.updateCheckmarkReplacing = () => {
                     saveValue("replaceCheckmark", $scope.replaceCheckmarkWithNumber);
                 };
+
+                $scope.serializedSettings = "data:application/json,".concat(JSON.stringify({
+                    openPromo: !$scope.disableAutoOpeningPromo,
+                    muteVideo: $scope.muteVideo,
+                    replaceCheckmark: $scope.replaceCheckmarkWithNumber,
+                    filterSets: loadValue("filterSets", []),
+                }));
+                $scope.loadSettings = async (elem) => {
+                    const [file] = elem.files ?? [];
+                    if (!file) return;
+                    const json = JSON.parse(await file.text());
+                    console.log(json);
+                    for (const [key, value] of Object.entries(json)) {
+                        saveValue(key, value);
+                    }
+                    $scope.disableAutoOpeningPromo = !json.openPromo;
+                    $scope.muteVideo = json.muteVideo;
+                    $scope.replaceCheckmarkWithNumber = json.replaceCheckmark;
+                };
+
                 debug("nmTradeEnhancementsSettingsController initiated");
             },
         ]);
@@ -46,7 +70,7 @@ if (window.location.pathname.startsWith("/account/")) {
                 `<fieldset class="nmte-settings--fieldset"
                     data-ng-controller=nmTradeEnhancementsSettingsController
                 >
-                    <h2 class=strike-through-header>Trade Enhancements</h2>
+                    <h2 class=strike-through-header>NeonMob Trade Enhancements</h2>
                     <div class="field checkbox-slider--field">
                         <span class=input>
                             <span class=checkbox-slider>
@@ -108,6 +132,24 @@ if (window.location.pathname.startsWith("/account/")) {
                             </label>
                         </span>
                     </div>
+                    <h3 style="text-align:center;padding:10px">
+                        Import/export NMTE settings
+                    </h3>
+                    <div style="display:flex;gap:10px;">
+                        <a href={{serializedSettings}}
+                            download="NMTE-settings.json"
+                            style="flex:1"
+                        >
+                            <button class="btn subdued" style="width:100%">Export settings</button>
+                        </a>
+                        <label style="flex:1" tabindex=-1>
+                            <input type="file" accept="application/json"
+                                onchange=angular.element(this).scope().loadSettings(this)
+                                style="display:none"
+                            />
+                            <span class="btn subdued" style="width:100%">Import settings</span>
+                        </label>
+                    <div>
                 </fieldset>`,
         }],
     });
