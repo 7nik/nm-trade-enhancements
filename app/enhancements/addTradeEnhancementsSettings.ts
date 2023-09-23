@@ -9,7 +9,7 @@ type Scope = angular.IScope & {
     updateVideoMuting: () => void,
     replaceCheckmarkWithNumber: boolean,
     updateCheckmarkReplacing: () => void,
-    serializedSettings: string,
+    serializedSettings: (ev: Event) => void,
     loadSettings: (elem: HTMLInputElement) => void,
 }
 
@@ -37,12 +37,15 @@ if (window.location.pathname.startsWith("/account/")) {
                     saveValue("replaceCheckmark", $scope.replaceCheckmarkWithNumber);
                 };
 
-                $scope.serializedSettings = "data:application/json,".concat(JSON.stringify({
-                    openPromo: !$scope.disableAutoOpeningPromo,
-                    muteVideo: $scope.muteVideo,
-                    replaceCheckmark: $scope.replaceCheckmarkWithNumber,
-                    filterSets: loadValue("filterSets", []),
-                }));
+                $scope.serializedSettings = (ev) => {
+                    (ev.currentTarget as HTMLAnchorElement)
+                        .href = URL.createObjectURL(new Blob([JSON.stringify({
+                            openPromo: !$scope.disableAutoOpeningPromo,
+                            muteVideo: $scope.muteVideo,
+                            replaceCheckmark: $scope.replaceCheckmarkWithNumber,
+                            filterSets: loadValue("filterSets", []),
+                        })], { type: "application/json" }));
+                };
                 $scope.loadSettings = async (elem) => {
                     const [file] = elem.files ?? [];
                     if (!file) return;
@@ -136,8 +139,9 @@ if (window.location.pathname.startsWith("/account/")) {
                         Import/export NMTE settings
                     </h3>
                     <div style="display:flex;gap:10px;">
-                        <a href={{serializedSettings}}
+                        <a href=#
                             download="NMTE-settings.json"
+                            ng-click=serializedSettings($event)
                             style="flex:1"
                         >
                             <button class="btn subdued" style="width:100%">Export settings</button>
