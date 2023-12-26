@@ -93,7 +93,7 @@
 
     const ownedCards = new OwnedCards(currentUser.id);
 
-    const muted = loadValue("muteVideo", true);
+    const muteVideo = loadValue("muteVideo", true);
 </script>
 <!-- @component
     Renders a print image or video with RE/LE icon
@@ -145,6 +145,8 @@
     if (print.asset_type === "video" && size === "xlarge") {
         size = !isPublic && $ownsPrint ? "original" : "large";
     }
+    // sound can be only in the original video
+    const muted = muteVideo || size !== "original";
 
     const data = getPrintData(print, size);
     // eslint-disable-next-line prefer-const
@@ -186,7 +188,7 @@
 <div style:width style:height style:aspect-ratio={ratio} use:makePeekable >
     {#if data.type === "video" && data.sources && !grayOut}
         <video
-            poster={data.url} {width} {height} autoplay loop {muted}
+            poster={data.url} {width} {height} autoplay loop {muted} playsinline
             on:click={(ev) => ev.currentTarget.play()}
             on:contextmenu|preventDefault
             use:stopHiddenVideo

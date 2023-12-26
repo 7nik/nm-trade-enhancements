@@ -1,5 +1,11 @@
 # NeonMob Trade Enhancements changelog
 
+## 3.4.2
+* Prevent animated cards from automatically going fullscreen
+
+## 3.4.1
+* Fixed downloading truncated settings
+
 ## 3.4.0
 * Added ability to export and import settings
 * "Fixed" not loading configs sometimes
